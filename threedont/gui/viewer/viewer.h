@@ -1,5 +1,7 @@
 #ifndef __VIEWER_H__
 #define __VIEWER_H__
+
+#include <QOpenGLWidget>
 #include <QColor>
 #include <QCoreApplication>
 #include <QImage>
@@ -14,7 +16,6 @@
 #include <QTimer>
 #include <QVector3D>
 #include <QWheelEvent>
-#include <QWindow>
 #include <QtCore/qmath.h>
 #include <fstream>
 #include <iostream>
@@ -34,48 +35,16 @@
 
 // #define TEST_FINE_RENDER
 
-class Viewer : public QWindow, protected OpenGLFuncs {
+class Viewer : public QOpenGLWidget, protected OpenGLFuncs {
   Q_OBJECT
 public:
-  explicit Viewer() : QWindow() {
-    setSurfaceType(QSurface::OpenGLSurface);
-    QSurfaceFormat f;
-    f.setProfile(QSurfaceFormat::CompatibilityProfile);
-    f.setDepthBufferSize(16);
-    setFormat(f);
-    resize(1, 1);
-    create();
-
-    // create OpenGL context
-    _context = new QOpenGLContext();
-    _context->setFormat(format());
-    _context->create();
-
-    // associate OpenGL functions with _context
-
-    _context->makeCurrent(this);
-    initializeOpenGLFunctions();
-    _context->doneCurrent();
-
-    // set font
-    QFont font("Courier", 12);
-
-    // initialize various viewer objects
-    _background = new Background(this, _context);
-    _floor_grid = new FloorGrid(this, _context);
-    _look_at = new LookAt(this, _context);
-    _points = new PointCloud(this, _context);
-    _selection_box = new SelectionBox(this, _context);
-    _text = new Text(this, _context, font);
-    _dolly = new CameraDolly();
-
+  Viewer(QWidget *parent = nullptr): QOpenGLWidget(parent) {
     // initalize various states
     _socket_waiting_on_enter_key = nullptr;
     _timer_fine_render_delay = nullptr;
     _fine_render_state = INACTIVE;
     _render_time = std::numeric_limits<double>::infinity();
     _show_text = true;
-    _render_scheduled = false;
 
     // set up TCP server for receiving commands from Python terminal (client)
     _server = new QTcpServer();
@@ -101,6 +70,39 @@ public:
     delete _server;
   }
 
+   void initializeGL() override {
+    // f.setDepthBufferSize(16); TODO port to QOpenGLWidget
+    // associate OpenGL functions with _context
+
+    initializeOpenGLFunctions();
+
+    // set font
+    QFont font("Courier", 12);
+
+    // initialize various viewer objects
+    _background = new Background();
+    _floor_grid = new FloorGrid(this);
+    _look_at = new LookAt();
+    _points = new PointCloud(this);
+    _selection_box = new SelectionBox();
+    _text = new Text(this, font);
+    _dolly = new CameraDolly();
+  }
+
+  void resizeGL(int w, int h) override {
+    Q_UNUSED(w);
+    Q_UNUSED(h);
+    _camera.setAspectRatio((float) width() / height());
+    qreal pixelRatio = this->devicePixelRatio();
+    glViewport(0, 0, width() * pixelRatio, height() * pixelRatio);
+    update();
+  }
+
+  void paintGL() override {
+    renderPoints();
+    renderPointsFine(); // TODO if enabled
+  }
+
   int getServerPort() {
     return _server->serverPort();
   }
@@ -109,6 +111,7 @@ signals:
   void singlePointSelected(unsigned int);
 
 protected:
+
   void keyPressEvent(QKeyEvent *ev) override {
     qDebug() << "Viewer: key pressed" << ev->key();
     _dolly->stop();
@@ -147,8 +150,7 @@ protected:
     } else if (ev->key() == Qt::Key_C) {
       _camera.setLookAtPosition(_points->computeSelectionCentroid());
       _camera.save();
-      renderPoints();
-      renderPointsFine();
+      update();
     } else if ((ev->key() == Qt::Key_Enter || ev->key() == Qt::Key_Return) &&
                _socket_waiting_on_enter_key) {
       const char *msg = "x";
@@ -156,11 +158,10 @@ protected:
       _socket_waiting_on_enter_key->disconnectFromHost();
       _socket_waiting_on_enter_key = nullptr;
     } else {
-      QWindow::keyPressEvent(ev);
+      QWidget::keyPressEvent(ev);
       return;
     }
-    renderPoints();
-    renderPointsFine();
+    update();
   }
 
   void mouseDoubleClickEvent(QMouseEvent *ev) override {
@@ -177,8 +178,7 @@ protected:
                 ps[3 * indices[0] + 2]);
     _camera.setLookAtPosition(p);
     _camera.save();
-    renderPoints();
-    renderPointsFine();
+    update();
   }
 
   void mousePressEvent(QMouseEvent *ev) override {
@@ -190,13 +190,13 @@ protected:
           _selection_box->click(win2ndc(_pressPos), SelectionBox::SUB);
         else
           _selection_box->click(win2ndc(_pressPos), SelectionBox::ADD);
-        renderPoints();
+        update(); // TODO make fast update
       }
     } else if (ev->buttons() & Qt::RightButton) {
       _points->clearSelected();
-      renderPoints();
+      update(); // TODO make fast update
     } else {
-      QWindow::mousePressEvent(ev);
+      QWidget::mousePressEvent(ev);
     }
   }
 
@@ -215,12 +215,9 @@ protected:
           _camera.rotate(QVector2D(ev->scenePosition() - _pressPos));
       }
 
-      if (!_render_scheduled) {
-        _render_scheduled = true;
-        QMetaObject::invokeMethod(this, "renderNow", Qt::QueuedConnection); // schedule rendering
-      }
+      update(); // TODO make fast update
     } else {
-      QWindow::mouseMoveEvent(ev);
+      QWidget::mouseMoveEvent(ev);
     }
   }
 
@@ -250,12 +247,10 @@ protected:
       }
 
       _selection_box->release();
-      renderPoints();
-      renderPointsFine();
+      update();
     } else if (mouse_moved) {
       _camera.save();
-      renderPoints();
-      renderPointsFine();
+      update();
     }
   }
 
@@ -264,31 +259,8 @@ protected:
     // note: angleDelta() is in units of 1/8 degree
     _camera.zoom(ev->angleDelta().y() / 120.0f);
     _camera.save();
-    if (!_render_scheduled) {
-      _render_scheduled = true;
-      QMetaObject::invokeMethod(this, "renderNow", Qt::QueuedConnection); // schedule rendering
-    }
-    renderPointsFine(500);
-  }
-
-  void exposeEvent(QExposeEvent *ev) override {
-    Q_UNUSED(ev);
-    renderPoints();
-    renderPointsFine(1000);
-  }
-
-  void resizeEvent(QResizeEvent *ev) override {
-    Q_UNUSED(ev);
-    _camera.setAspectRatio((float) width() / height());
-    _context->makeCurrent(this);
-    qreal pixelRatio = this->devicePixelRatio();
-    glViewport(0, 0, width() * pixelRatio, height() * pixelRatio);
-    _context->doneCurrent();
-  }
-
-  Q_INVOKABLE void renderNow() {
-    _render_scheduled = false;
-    renderPoints();
+    update(); // TODO make fast update
+    // TODO schedule fine rendering
   }
 
 private slots:
@@ -321,21 +293,18 @@ private slots:
         _camera = QtCamera(_points->getBox());
         _camera.setAspectRatio((float) width() / height());
         _floor_grid->setFloorLevel(_points->getFloor());
-        renderPoints();
-        renderPointsFine();
+        update();
         break;
       }
       case 2: { // clear points
         _points->clearPoints();
-        renderPoints();
-        renderPointsFine();
+        update();
         break;
       }
       case 3: { // reset view to fit all
         _camera = QtCamera(_points->getBox());
         _camera.setAspectRatio((float) width() / height());
-        renderPoints();
-        renderPointsFine();
+        update();
         break;
       }
       case 4: { // set viewer property
@@ -451,8 +420,7 @@ private slots:
           // unrecognized property name, do nothing
           // todo: consider doing something
         }
-        renderPoints();
-        renderPointsFine();
+        update();
         break;
       }
       case 5: { // get viewer property
@@ -529,7 +497,7 @@ private slots:
         // receive property name string
         std::string filename(stringLength, 'x');
         comm::receiveBytes((char *) &filename[0], stringLength, clientConnection);
-        printScreen(filename);
+        printScreen(filename); // TODO fix opengl context
         break;
       }
       case 7: { // wait for enter
@@ -609,8 +577,7 @@ private slots:
                            clientConnection);
 
         _points->loadAttributes(payload);
-        renderPoints();
-        renderPointsFine();
+        update();
         break;
       }
       default: // unrecognized message type
@@ -652,12 +619,10 @@ private slots:
         _chunk_offset = 0;
 
         // draw background and grid
-        _context->makeCurrent(this);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         _background->draw();
         _floor_grid->draw(_camera);
-        _context->doneCurrent();
 #endif
         _fine_render_state = CHUNK;
         QCoreApplication::processEvents();
@@ -674,11 +639,9 @@ private slots:
         qDebug() << "fine render: processed " << _chunk_offset << ", "
                  << chunk_size << ", " << t << std::endl;
 #else
-        _context->makeCurrent(this);
         if (chunk_size > 0)
           _points->draw(&_refined_indices[_chunk_offset],
                         (unsigned int) chunk_size, _camera, _selection_box);
-        _context->doneCurrent();
 #endif
         _chunk_offset += chunk_size;
         if (_chunk_offset == _refined_indices.size())
@@ -693,10 +656,8 @@ private slots:
 #ifdef TEST_FINE_RENDER
         qDebug() << "fine render: finalized" << std::endl;
 #else
-        _context->makeCurrent(this);
         _look_at->draw(_camera);
         displayInfo();
-        if (this->isExposed()) _context->swapBuffers(this);
         _context->doneCurrent();
 #endif
         _fine_render_state = INACTIVE;
@@ -714,7 +675,7 @@ private slots:
 
   void playCameraAnimation() {
     if (_dolly->done()) {
-      renderPointsFine();
+      update();
       return;
     }
     CameraPose pose = _dolly->getPose();
@@ -723,7 +684,7 @@ private slots:
     _camera.setTheta(pose.theta());
     _camera.setCameraDistance(qMax(0.1f, pose.d()));
     _camera.save();
-    renderPoints();
+    update(); // TODO make fast update
     QTimer::singleShot(15, this, SLOT(playCameraAnimation()));
   }
 
@@ -735,7 +696,6 @@ private:
   }
 
   void printScreen(std::string filename) {
-    _context->makeCurrent(this);
     int w = width() * this->devicePixelRatio();
     int h = height() * this->devicePixelRatio();
     GLubyte *pixels = new GLubyte[4 * w * h];
@@ -758,7 +718,6 @@ private:
     QString qstr_filename = QString::fromStdString(filename);
     image.save(qstr_filename);
     delete[] pixels;
-    _context->doneCurrent();
   }
 
   void displayInfo() {
@@ -874,7 +833,6 @@ private:
   }
 
   void renderPoints() {
-    if (!_context->makeCurrent(this)) return;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -887,7 +845,6 @@ private:
     _selection_box->draw();
     _render_time = vltools::getTime() - _render_time;
     displayInfo();
-    if (this->isExposed()) _context->swapBuffers(this);
     _context->doneCurrent();
   }
 
@@ -926,8 +883,6 @@ private:
   QTcpSocket *_socket_waiting_on_enter_key;
   double _render_time;
   bool _show_text;
-
-  bool _render_scheduled;
 };
 
 #endif // __VIEWER_H__

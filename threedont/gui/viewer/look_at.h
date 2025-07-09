@@ -8,11 +8,9 @@
 
 class LookAt : protected OpenGLFuncs {
 public:
-  LookAt(QWindow *window, QOpenGLContext *context)
-      : _context(context), _window(window), _visible(true) {
-    _context->makeCurrent(_window);
+  LookAt()
+      : _visible(true) {
     initializeOpenGLFunctions();
-    _context->doneCurrent();
     compileProgram();
   }
   void draw(const QtCamera &camera) {
@@ -86,15 +84,11 @@ private:
             "void main() {\n"
             "  fragColor = vec4(vcolor, 1.0);\n"
             "}\n";
-    _context->makeCurrent(_window);
     _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
     _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
     _program.link();
-    _context->doneCurrent();
   }
 
-  QOpenGLContext *_context;
-  QWindow *_window;
   QOpenGLShaderProgram _program;
   bool _visible;
 };

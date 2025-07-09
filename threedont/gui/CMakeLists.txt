@@ -26,7 +26,7 @@ elseif (UNIX)
 endif ()
 
 target_include_directories(gui PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(gui Qt6::Widgets Qt6::Network Qt6::OpenGL Eigen3::Eigen ${Python_LIBRARIES})
+target_link_libraries(gui Qt6::Widgets Qt6::Network Qt6::OpenGL Qt6::OpenGLWidgets Eigen3::Eigen ${Python_LIBRARIES})
 
 # install in source directory for development
 if (THREEDONT_DEVELOP_BUILD)

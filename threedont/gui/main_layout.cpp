@@ -12,11 +12,8 @@ MainLayout::MainLayout(ControllerWrapper *controllerWrapper, QWidget *parent)
   ui->errorLabel->setVisible(false);
   ui->statusbar->showMessage(tr("Loading..."));
 
-  viewer = new Viewer();
-  viewer->setFlags(Qt::FramelessWindowHint);
-  QWidget *container = createWindowContainer(viewer, this);
-  container->setFocusPolicy(Qt::StrongFocus);
-  setCentralWidget(container);
+  viewer = new Viewer(this);
+  setCentralWidget(viewer);
   ui->statusbar->showMessage(tr("Ready"), 5000);
 
   connect(qApp, &QCoreApplication::aboutToQuit, this, &MainLayout::cleanupOnExit);
@@ -36,15 +33,6 @@ void MainLayout::closeEvent(QCloseEvent *event) {
   qDebug() << "Closing main layout";
   controllerWrapper->stop();
   event->accept();
-}
-
-bool MainLayout::eventFilter(QObject *obj, QEvent *event) {
-  if (event->type() == QEvent::MouseButtonPress) {
-    ui->centralwidget->setFocus();
-    viewer->requestActivate();
-    return true;
-  }
-  return QObject::eventFilter(obj, event);
 }
 
 void MainLayout::cleanupOnExit() {

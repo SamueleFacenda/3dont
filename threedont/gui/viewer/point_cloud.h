@@ -9,7 +9,6 @@
 #include "timer.h"
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
-#include <QWindow>
 #include <vector>
 
 inline void checkOpenGLError(const char *context) {
@@ -23,9 +22,8 @@ inline void checkOpenGLError(const char *context) {
 
 class PointCloud : protected OpenGLFuncs {
 public:
-  PointCloud(QWindow *window, QOpenGLContext *context)
-      : _context(context),
-        _window(window),
+  PointCloud(QOpenGLWidget* parent)
+      : _parent(parent),
         _point_size(0.0f),
         _num_points(0),
         _buffer_positions(0),
@@ -37,9 +35,7 @@ public:
         _color_map_min(0.0f),
         _color_map_max(1.0f),
         _color_map_auto(true) {
-    _context->makeCurrent(_window);
     initializeOpenGLFunctions();
-    _context->doneCurrent();
     compileProgram();
   }
 
@@ -55,8 +51,6 @@ public:
 
     _full_box = vltools::Box3<float>();
     _full_box.addPoints(&_positions[0], _num_points);
-
-    _context->makeCurrent(_window);
 
     // create a buffer for storing position vectors
     glGenBuffers(1, &_buffer_positions);
@@ -98,7 +92,6 @@ public:
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, _num_points * sizeof(unsigned int),
                  nullptr, GL_DYNAMIC_DRAW);
 
-    _context->doneCurrent();
     _attributes.reset();
     initColors();
   }
@@ -112,14 +105,12 @@ public:
     _octree_ids.clear();
     _selected_ids.clear();
     _full_box = vltools::Box3<float>();
-    _context->makeCurrent(_window);
     glDeleteBuffers(1, &_buffer_positions);
     glDeleteBuffers(1, &_buffer_colors);
     glDeleteBuffers(1, &_buffer_scalars);
     glDeleteBuffers(1, &_buffer_sizes);
     glDeleteBuffers(1, &_buffer_selection_mask);
     glDeleteBuffers(1, &_buffer_octree_ids);
-    _context->doneCurrent();
     _octree.buildTree(_positions, _sizes, 32);
     _attributes.reset();
   }
@@ -159,9 +150,9 @@ public:
 
     _program.bind();
     _program.setUniformValue(
-            "width", (float) _window->devicePixelRatio() * _window->width());
+            "width", (float) _parent->devicePixelRatio() * _parent->width());
     _program.setUniformValue(
-            "height", (float) _window->devicePixelRatio() * _window->height());
+            "height", (float) _parent->devicePixelRatio() * _parent->height());
     _program.setUniformValue("point_size", _point_size);
     _program.setUniformValue("mvpMatrix", camera.computeMVPMatrix(_full_box));
     _program.setUniformValue(
@@ -242,12 +233,12 @@ public:
     float min_z_near = 0.1f;
     if (camera.getProjectionMode() == QtCamera::PERSPECTIVE)
       _octree.getIndices(indices, camera, camera.getVerticalFOV(), -min_z_near,
-                         _window->width(), _window->height(), fudge_factor);
+                         _parent->width(), _parent->height(), fudge_factor);
     else {
       float t =
               camera.getCameraDistance() * tan(0.5f * camera.getVerticalFOV());
-      float r = (float) _window->width() / _window->height() * t;
-      _octree.getIndicesOrtho(indices, camera, r, t, _window->height(),
+      float r = (float) _parent->width() / _parent->height() * t;
+      _octree.getIndicesOrtho(indices, camera, r, t, _parent->height(),
                               fudge_factor);
     }
   }
@@ -259,7 +250,6 @@ public:
     //    2. rgba             N              N
     //    3. array of scalar  Y              Y
     //    4. array of rgba    N              Y
-    _context->makeCurrent(_window);
     int curr_attr_idx = (int) _attributes.currentIndex();
     bool use_color_map = _attributes.dim(curr_attr_idx) == 1;
     bool broadcast_attr = _attributes.size(curr_attr_idx) == 1;
@@ -303,7 +293,6 @@ public:
     }
 
     glBindTexture(GL_TEXTURE_1D, 0);
-    _context->doneCurrent();
     if (_color_map_auto)
       setColorMapScale(1.0f, 0.0f);
   }
@@ -366,7 +355,7 @@ public:
       mergeIndices(_selected_ids, new_indices);
     else // box.getType() == SelectionBox::SUB
       removeIndices(_selected_ids, new_indices);
-    updateSelectionMask();
+    updateSelectionMask(); // TODO uses opengl check contex availability
   }
 
   void queryNearPoint(std::vector<unsigned int> &indices, const QPointF &point,
@@ -376,8 +365,8 @@ public:
                     ? Octree::PERSPECTIVE
                     : Octree::ORTHOGRAPHIC;
     _octree.getClickIndices(
-            indices, point.x(), _window->height() - point.y() - 1.0f, 5.0f,
-            _window->width(), _window->height(), camera.getVerticalFOV(), 0.1f,
+            indices, point.x(), _parent->height() - point.y() - 1.0f, 5.0f,
+            _parent->width(), _parent->height(), camera.getVerticalFOV(), 0.1f,
             camera, projection_mode);
   }
 
@@ -545,11 +534,9 @@ private:
             "  float weight = clamp((outer_radius - length(frag_center - gl_FragCoord.xy)) / (outer_radius - inner_radius), 0, 1);\n"
             "  fragColor = frag_color * vec4(1, 1, 1, weight);\n"
             "}\n";
-    _context->makeCurrent(_window);
     _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
     _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
     _program.link();
-    _context->doneCurrent();
   }
 
   static void mergeIndices(std::vector<unsigned int> &x,
@@ -599,11 +586,9 @@ private:
     std::vector<float> selection_mask(_positions.size() / 3, 0.0f);
     for (std::size_t i = 0; i < _selected_ids.size(); i++)
       selection_mask[_selected_ids[i]] = 1.0f;
-    _context->makeCurrent(_window);
     glBindBuffer(GL_ARRAY_BUFFER, _buffer_selection_mask);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * _positions.size() / 3,
                     (GLvoid *) &selection_mask[0]);
-    _context->doneCurrent();
   }
 
   static std::size_t countSelected(const std::vector<unsigned int> &x,
@@ -630,8 +615,7 @@ private:
     return a + 1;
   }
 
-  QOpenGLContext *_context;
-  QWindow *_window;
+  QOpenGLWidget *_parent;
   QOpenGLShaderProgram _program;
 
   float _point_size;

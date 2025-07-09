@@ -93,18 +93,15 @@ private:
 
 class FloorGrid : protected OpenGLFuncs {
 public:
-  FloorGrid(QWindow *window, QOpenGLContext *context)
-      : _context(context),
-        _window(window),
-        _visible(true),
+  FloorGrid(QOpenGLWidget* parent)
+      : _visible(true),
+        _parent(parent),
         _grid_line_color(0.7f, 0.7f, 0.7f, 1.0f),
         _grid_floor_color(0.3f, 0.3f, 0.3f, 0.5f),
         _grid_floor_z(0.0f),
         _cell_size(1.0f),
         _line_weight(0.0f) {
-    _context->makeCurrent(_window);
     initializeOpenGLFunctions();
-    _context->doneCurrent();
 
     compilePerspProgram();
     compileOrthoProgram();
@@ -218,13 +215,11 @@ private:
             "  vec4 c = line_color * weight + floor_color * (1.0 - weight);\n"
             "  fragColor = vec4(c.xyz, c.w * blur_weight);\n"
             "}\n";
-    _context->makeCurrent(_window);
     _persp_program.addShaderFromSourceCode(QOpenGLShader::Vertex,
                                            vsCode.c_str());
     _persp_program.addShaderFromSourceCode(QOpenGLShader::Fragment,
                                            fsCode.c_str());
     _persp_program.link();
-    _context->doneCurrent();
   }
   void compileOrthoProgram() {
     std::string vsCode =
@@ -274,17 +269,14 @@ private:
 
             "  fragColor = floor_color * (1.0 - weight) + line_color * (weight);\n"
             "}\n";
-    _context->makeCurrent(_window);
     _ortho_program.addShaderFromSourceCode(QOpenGLShader::Vertex,
                                            vsCode.c_str());
 
     _ortho_program.addShaderFromSourceCode(QOpenGLShader::Fragment,
                                            fsCode.c_str());
     _ortho_program.link();
-    _context->doneCurrent();
   }
   void loadSquare() {
-    _context->makeCurrent(_window);
     float points[12] = {
             0.0f, 0.0f, 0.0f,
             1.0f, 0.0f, 0.0f,
@@ -304,13 +296,10 @@ private:
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6,
                  (GLvoid *) indices, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    _context->doneCurrent();
   }
   void unloadSquare() {
-    _context->makeCurrent(_window);
     glDeleteBuffers(1, &_buffer_square);
     glDeleteBuffers(1, &_buffer_square_indices);
-    _context->doneCurrent();
   }
   float normalizeAngle(float angle) {
     // normalizes to interval [-pi,pi]
@@ -324,7 +313,7 @@ private:
     float eye[3];
     camera.getCameraPosition(eye);
     float eye_floor_height = fabs(eye[2] - z_floor);
-    return sqrt(cell_size * eye_floor_height * _window->height() /
+    return sqrt(cell_size * eye_floor_height * _parent->height() /
                 projected_cell_size / (2 * tan(45.0f / 2.0f / 180.0f * PI)));
   }
   bool computeHorizon(float &h_lo, float &h_hi, float cell_size,
@@ -366,7 +355,7 @@ private:
     camera.getLookAtPosition(lookat);
     float d = camera.getCameraDistance() + fabs(lookat[2] - z_floor);
     float d_0 =
-            _window->height() / 2.0f / tan(alpha / 2.0f) / projected_cell_size;
+            _parent->height() / 2.0f / tan(alpha / 2.0f) / projected_cell_size;
     float x = log(d / d_0) / log(10.0f);
     float x_ = floor(x);
     line_weight = 1.0f - (x - x_);
@@ -382,8 +371,8 @@ private:
     z_floor = camera.getViewAxis() != QtCamera::ARBITRARY_AXIS ? 0.0f : z_floor;
 
     float delta_pixels = 1.0f; // in pixels;
-    float delta_image = delta_pixels / _window->height() /
-                        _window->devicePixelRatio() * 2.0f * t;
+    float delta_image = delta_pixels / _parent->height() /
+                        _parent->devicePixelRatio() * 2.0f * t;
     float eps_x, eps_y;
     {
       if (camera.getViewAxis() == QtCamera::ARBITRARY_AXIS) {
@@ -479,9 +468,9 @@ private:
     float h_lo, h_hi;
     computeHorizon(h_lo, h_hi, weighted_cell_size, camera, z_floor);
     float t = tan(45.0f / 2.0f / 180.0f * PI);
-    float r = t * _window->width() / _window->height();
+    float r = t * _parent->width() / _parent->height();
     float line_width =
-            1.2f / _window->height() / _window->devicePixelRatio() * 2.0f * t;
+            1.2f / _parent->height() / _parent->devicePixelRatio() * 2.0f * t;
 
     _persp_program.bind();
     _persp_program.setUniformValue("eye", camera.getCameraPosition());
@@ -515,10 +504,9 @@ private:
     glEnable(GL_DEPTH_TEST);
   }
 
+  QOpenGLWidget *_parent;
   QOpenGLShaderProgram _ortho_program;
   QOpenGLShaderProgram _persp_program;
-  QOpenGLContext *_context;
-  QWindow *_window;
   bool _visible;
 
   GLuint _buffer_square;

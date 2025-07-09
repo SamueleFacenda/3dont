@@ -37,6 +37,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] use oxrdflib in rdflib as query engine
 - [ ] embed virtuoso in the application
 - [ ] fix OpenGL
+- [ ] move from QTcpServer to QLocalServer
  
 ## License
 

@@ -9,7 +9,7 @@ option(THREEDONT_DEVELOP_BUILD "Enable development build" OFF)
 
 find_package(OpenGL REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(Qt6 CONFIG REQUIRED COMPONENTS Widgets Network OpenGL Core)
+find_package(Qt6 CONFIG REQUIRED COMPONENTS Widgets Network OpenGL OpenGLWidgets Core)
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 add_subdirectory(threedont)

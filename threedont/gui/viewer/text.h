@@ -34,35 +34,29 @@ class Text : public OpenGLFuncs {
   };
 
 public:
-  Text(QWindow *window, QOpenGLContext *context, const QFont &f)
-      : _context(context),
-        _window(window),
+  Text(QOpenGLWidget* parent, const QFont &f)
+      : _parent(parent),
         font(f),
         fontMetrics(f),
         pixelFont(f),
         pixelFontMetrics(f),
         xOffset(1),
         yOffset(1) {
-    _context->makeCurrent(_window);
     initializeOpenGLFunctions();
-    _context->doneCurrent();
 
     // font sizes in units of pixels
     // (I don't really know how this works... this is a hack)
-    if (_window->devicePixelRatio() != 1.0)
+    if (_parent->devicePixelRatio() != 1.0)
       pixelFont.setPixelSize(
-              qRound(_window->devicePixelRatio() * font.pointSize()));
+              qRound(_parent->devicePixelRatio() * font.pointSize()));
     pixelFontMetrics = QFontMetrics(pixelFont);
   }
 
   virtual ~Text() { clearCache(); }
 
   void clearCache() {
-    if (_context == nullptr) return;
-    _context->makeCurrent(_window);
     foreach (GLuint texture, textures)
       glDeleteTextures(1, &texture);
-    _context->doneCurrent();
     textures.clear();
     characters.clear();
   }
@@ -83,10 +77,8 @@ public:
 
   QRectF renderText(float x, float y, const QString &text,
                     const QVector4D &color = QVector4D(1, 1, 1, 1)) {
-    if (_context == nullptr) return QRectF();
-
-    x = 2.0f * x / _window->width() - 1.0f;
-    y = 2.0f * y / _window->height() - 1.0f;
+    x = 2.0f * x / _parent->width() - 1.0f;
+    y = 2.0f * y / _parent->height() - 1.0f;
 
     glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
     glPushMatrix();
@@ -109,8 +101,8 @@ public:
         glBindTexture(GL_TEXTURE_2D, texture);
       }
 
-      float w = c.width * 2.0f / _window->width();
-      float h = c.height * 2.0f / _window->height();
+      float w = c.width * 2.0f / _parent->width();
+      float h = c.height * 2.0f / _parent->height();
 
       rect.setHeight(qMax(rect.height(), (qreal) c.height));
       rect.setWidth(rect.width() + c.width);
@@ -202,9 +194,8 @@ private:
     xOffset += width;
     return character;
   }
-
-  QOpenGLContext *_context;
-  QWindow *_window;
+  
+  QOpenGLWidget *_parent;
 
   QFont font;
   QFontMetrics fontMetrics;

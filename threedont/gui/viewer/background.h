@@ -6,14 +6,10 @@
 #include <QWindow>
 class Background : protected OpenGLFuncs {
 public:
-  Background(QWindow *window, QOpenGLContext *context)
-      : _context(context),
-        _window(window),
-        _bg_color_top(0.0f, 0.0f, 0.0f, 1.0f),
+  Background()
+      : _bg_color_top(0.0f, 0.0f, 0.0f, 1.0f),
         _bg_color_bottom(0.23f, 0.23f, 0.44f, 1.0f) {
-    _context->makeCurrent(_window);
     initializeOpenGLFunctions();
-    _context->doneCurrent();
     compileProgram();
   }
   void draw() {
@@ -82,15 +78,11 @@ private:
             "  fragColor = mix(colorBottom, colorTop, coordinate.y);\n"
             "}\n";
 
-    _context->makeCurrent(_window);
     _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
     _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
     _program.link();
-    _context->doneCurrent();
   }
 
-  QOpenGLContext *_context;
-  QWindow *_window;
   QOpenGLShaderProgram _program;
   QVector4D _bg_color_top;
   QVector4D _bg_color_bottom;

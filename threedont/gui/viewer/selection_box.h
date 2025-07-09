@@ -13,11 +13,9 @@ public:
                     SUB = 1,
                     NONE = 2 };
 
-  SelectionBox(QWindow *window, QOpenGLContext *context)
-      : _context(context), _window(window), _select_mode(NONE) {
-    _context->makeCurrent(_window);
+  SelectionBox()
+      : _select_mode(NONE) {
     initializeOpenGLFunctions();
-    _context->doneCurrent();
     compileProgram();
   }
 
@@ -98,15 +96,11 @@ private:
             "void main() {\n"
             "  fragColor = vec4(1.0, 1.0, 0.0, 1.0);\n"
             "}\n";
-    _context->makeCurrent(_window);
     _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
     _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
     _program.link();
-    _context->doneCurrent();
   }
 
-  QOpenGLContext *_context;
-  QWindow *_window;
   QOpenGLShaderProgram _program;
 
   SelectMode _select_mode;
