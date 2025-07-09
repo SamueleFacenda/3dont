@@ -65,8 +65,6 @@ public:
     delete _text;
     delete _dolly;
 
-    // deletion of context must occur after viewer objects
-    delete _context;
     delete _server;
   }
 
@@ -658,7 +656,6 @@ private slots:
 #else
         _look_at->draw(_camera);
         displayInfo();
-        _context->doneCurrent();
 #endif
         _fine_render_state = INACTIVE;
         break;
@@ -845,7 +842,6 @@ private:
     _selection_box->draw();
     _render_time = vltools::getTime() - _render_time;
     displayInfo();
-    _context->doneCurrent();
   }
 
   QPointF win2ndc(QPointF p) {
@@ -857,7 +853,6 @@ private:
 
   QTcpServer *_server;
   QPointF _pressPos;
-  QOpenGLContext *_context;
 
   QtCamera _camera;
   FloorGrid *_floor_grid;
