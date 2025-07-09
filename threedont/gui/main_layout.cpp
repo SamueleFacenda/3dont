@@ -258,4 +258,8 @@ QStringList MainLayout::getPropertiesMapping(const QStringList &properties, cons
   return PropertiesMappingDialog::getPropertiesMapping(this, properties, words, defaults);
 }
 
+void MainLayout::on_actionRotate_camera_around_triggered() {
+  controllerWrapper->rotateAround();
+}
+
 #include "moc_main_layout.cpp"

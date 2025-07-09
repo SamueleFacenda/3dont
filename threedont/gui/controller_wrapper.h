@@ -47,6 +47,7 @@ public:
   void createProject(const std::string &projectName, const std::string& dbUrl, const std::string& graphUri, const std::string &ontologyNamespace);
   void askProjectList();
   void setColorScale(double min, double max);
+  void rotateAround();
 };
 
 #endif // THREEDONT_CONTROLLER_WRAPPER_H

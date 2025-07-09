@@ -102,3 +102,7 @@ void ControllerWrapper::askProjectList() {
 void ControllerWrapper::setColorScale(double min, double max) {
   callPythonMethod(controller, "set_color_scale", "dd", min, max);
 }
+
+void ControllerWrapper::rotateAround() {
+  callPythonMethod(controller, "rotate_around", "");
+}

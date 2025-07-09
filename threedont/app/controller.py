@@ -2,6 +2,7 @@ import logging
 import sys
 from queue import Queue
 from urllib.error import URLError
+from math import pi
 
 from SPARQLWrapper.SPARQLExceptions import QueryBadFormed
 
@@ -243,3 +244,11 @@ class Controller:
 
     def set_color_scale(self, low, high):
         self.viewer_client.color_map('jet', (low, high))
+
+    def rotate_around(self, n_steps=12):
+        theta = self.viewer_client.get('theta')[0]
+        distance = self.viewer_client.get('r')[0]
+        current_phi = self.viewer_client.get('phi')[0]
+        lookat = self.viewer_client.get('lookat')
+        poses = [[*lookat, i * pi * 2 / n_steps + current_phi, theta, distance] for i in range(n_steps + 1)]
+        self.viewer_client.play(poses, repeat=True)
