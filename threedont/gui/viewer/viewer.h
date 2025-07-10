@@ -75,7 +75,6 @@ public:
 
    void initializeGL() override {
     // f.setDepthBufferSize(16); TODO port to QOpenGLWidget
-    // associate OpenGL functions with _context
 
     initializeOpenGLFunctions();
 
@@ -503,7 +502,7 @@ private slots:
         // receive property name string
         std::string filename(stringLength, 'x');
         comm::receiveBytes((char *) &filename[0], stringLength, clientConnection);
-        printScreen(filename); // TODO fix opengl context
+        printScreen(filename);
         break;
       }
       case 7: { // wait for enter
@@ -714,6 +713,7 @@ private:
 
   void printScreen(std::string filename) {
     // WARNING!! This function probably crashes
+    makeCurrent();
     int w = width() * this->devicePixelRatio();
     int h = height() * this->devicePixelRatio();
     GLubyte *pixels = new GLubyte[4 * w * h];
@@ -736,6 +736,7 @@ private:
     QString qstr_filename = QString::fromStdString(filename);
     image.save(qstr_filename);
     delete[] pixels;
+    doneCurrent();
   }
 
   void displayInfo() {
