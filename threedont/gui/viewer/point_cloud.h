@@ -63,16 +63,16 @@ public:
 
     // create a buffer for storing color vectors
     glGenBuffers(1, &_buffer_colors);
-//    std::vector<float> default_colors(_num_points * 4);
-//    for(size_t i = 0; i < _num_points; ++i) {
-//      default_colors[i*4 + 0] = 1.0f; // R
-//      default_colors[i*4 + 1] = 1.0f; // G
-//      default_colors[i*4 + 2] = 1.0f; // B
-//      default_colors[i*4 + 3] = 1.0f; // A
-//    }
-//    glBindBuffer(GL_ARRAY_BUFFER, _buffer_colors);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * default_colors.size(),
-//                 (GLvoid *) &default_colors[0], GL_STATIC_DRAW);
+    //  std::vector<float> default_colors(_num_points * 4);
+    //  for(size_t i = 0; i < _num_points; ++i) {
+    //    default_colors[i*4 + 0] = 1.0f; // R
+    //    default_colors[i*4 + 1] = 1.0f; // G
+    //    default_colors[i*4 + 2] = 1.0f; // B
+    //    default_colors[i*4 + 3] = 1.0f; // A
+    //  }
+    //  glBindBuffer(GL_ARRAY_BUFFER, _buffer_colors);
+    //  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * default_colors.size(),
+    //               (GLvoid *) &default_colors[0], GL_STATIC_DRAW);
 
     // create a buffer for storing per point scalars
     glGenBuffers(1, &_buffer_scalars);
@@ -160,7 +160,7 @@ public:
     _program.setUniformValue("mvpMatrix", camera.computeMVPMatrix(_full_box));
     _program.setUniformValue(
             "box_min", box ? box->getBox().topLeft()
-                           : QPointF());                  // topLeft in Qt is bottom left in NDC
+                           : QPointF());  // topLeft in Qt is bottom left in NDC
     _program.setUniformValue("box_max", box ? box->getBox().bottomRight()
                                             : QPointF()); // top right in NDC
     _program.setUniformValue("eye", camera.getCameraPosition());
@@ -209,7 +209,7 @@ public:
     }
 
     glActiveTexture(GL_TEXTURE0 + 0);
-    glBindTexture(GL_TEXTURE_1D, _texture_color_map);
+    glBindTexture(GL_TEXTURE_2D, _texture_color_map);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer_octree_ids);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
@@ -248,57 +248,52 @@ public:
 
   void initColors() {
     // prepare OpenGL buffers and textures for current attribute set
-    // four cases:            use colormap   upload array to gpu
-    //    1. scalar           Y              N
-    //    2. rgba             N              N
-    //    3. array of scalar  Y              Y
-    //    4. array of rgba    N              Y
+    // four cases:           use colormap  upload array to gpu
+    //   1. scalar           Y             N
+    //   2. rgba             N             N
+    //   3. array of scalar  Y             Y
+    //   4. array of rgba    N             Y
     int curr_attr_idx = (int) _attributes.currentIndex();
     bool use_color_map = _attributes.dim(curr_attr_idx) == 1;
     bool broadcast_attr = _attributes.size(curr_attr_idx) == 1;
     const std::vector<float> &attr = _attributes[curr_attr_idx];
-    glEnable(GL_TEXTURE_1D);
-    checkOpenGLError("before active texture");
-    glActiveTexture(GL_TEXTURE0 + 0);
-    checkOpenGLError("active texture");
+
+    glActiveTexture(GL_TEXTURE0);
     glDeleteTextures(1, &_texture_color_map);
-    checkOpenGLError("delete texture");
     glGenTextures(1, &_texture_color_map);
-    checkOpenGLError("gen texture");
-    glBindTexture(GL_TEXTURE_1D, _texture_color_map);
-    checkOpenGLError("bind texture");
+
+    glBindTexture(GL_TEXTURE_2D, _texture_color_map);
+
     if (use_color_map) {
-      // use client provided color map
-      glTexImage1D(GL_TEXTURE_1D, 0, 4, (int) _color_map.size() / 4, 0, GL_RGBA,
-                   GL_FLOAT, (GLvoid *) &_color_map[0]);
-      checkOpenGLError("tex image");
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      // not sure why this is needed, but it is
-      // glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, 0);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)_color_map.size() / 4, 1, 0, GL_RGBA,
+                   GL_FLOAT, &_color_map[0]);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     } else {
-      // use color map that always returns white
       float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 1, 0, GL_RGBA, GL_FLOAT,
-                   (GLvoid *) white);
-      checkOpenGLError("tex image");
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_FLOAT, white);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
-    // load color/scalar buffer if size > 1
+
+    // Upload attribute buffer (scalar or RGBA) if needed
     GLuint attr_buffer = use_color_map ? _buffer_scalars : _buffer_colors;
     if (!broadcast_attr) {
       glBindBuffer(GL_ARRAY_BUFFER, attr_buffer);
       glBufferData(GL_ARRAY_BUFFER, sizeof(float) * attr.size(),
-                   (GLvoid *) &attr[0], GL_STATIC_DRAW);
+                   &attr[0], GL_STATIC_DRAW);
     }
 
-    glBindTexture(GL_TEXTURE_1D, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     if (_color_map_auto)
       setColorMapScale(1.0f, 0.0f);
   }
+
 
   void setColorMap(const std::vector<float> &color_map) {
     _color_map.resize(color_map.size());
@@ -471,7 +466,7 @@ private:
             "uniform int draw_selection_box;\n"
             "uniform int box_select_mode;  // 0 - add, 1 - remove, 2 - no box\n"
             "uniform mat4 mvpMatrix;\n"
-            "uniform sampler1D color_map;\n"
+            "uniform sampler2D color_map;\n"
             "uniform float scalar_min;\n"
             "uniform float scalar_max;\n"
             "uniform float color_map_n;\n"
@@ -498,7 +493,7 @@ private:
             "  p /= p.w;\n"
             "  float tex_coord = clamp((scalar - scalar_min) / (scalar_max - scalar_min), 0.0, 1.0);\n"
             "  tex_coord = (tex_coord - 0.5) * (color_map_n - 1.0) / color_map_n + 0.5;\n"
-            "  vec4 color_s = tex_coord != tex_coord ? vec4(0, 0, 0, 1) : texture(color_map, tex_coord);\n"
+            "  vec4 color_s = tex_coord != tex_coord ? vec4(0, 0, 0, 1) : texture(color_map, vec2(tex_coord, 0.5));\n"
             "  vec4 color_r = color_s * color;\n"
             "  if (box_select_mode == 2)\n"
             "    frag_color = selected == 1.0 ? vec4(1, 1, 0, 1) : color_r;\n"
@@ -522,21 +517,20 @@ private:
             "}\n";
     std::string fsCode =
             "#version 330 core\n"
-            // "precision highp float;\n"
-            // "precision highp int;\n"
             "\n"
-            "uniform float point_size;\n"
             "in vec4 frag_color;\n"
-            "in vec2 frag_center;\n"
             "in float inner_radius;\n"
             "in float outer_radius;\n"
             "\n"
             "out vec4 fragColor;\n"
             "\n"
             "void main() {\n"
-            "  float weight = clamp((outer_radius - length(frag_center - gl_FragCoord.xy)) / (outer_radius - inner_radius), 0, 1);\n"
-            "  fragColor = frag_color * vec4(1, 1, 1, weight);\n"
+            "  vec2 centeredCoord = gl_PointCoord - vec2(0.5);\n"
+            "  float dist = length(centeredCoord) * outer_radius * 2.0;\n"
+            "  float weight = clamp((outer_radius - dist) / (outer_radius - inner_radius), 0.0, 1.0);\n"
+            "  fragColor = frag_color * vec4(1.0, 1.0, 1.0, weight);\n"
             "}\n";
+
     _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
     _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
     _program.link();

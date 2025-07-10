@@ -74,9 +74,10 @@ public:
   }
 
    void initializeGL() override {
-    // f.setDepthBufferSize(16); TODO port to QOpenGLWidget
-
     initializeOpenGLFunctions();
+    qDebug() << "OpenGL Version:" << (char*)glGetString(GL_VERSION);
+    qDebug() << "OpenGL Vendor:" << (char*)glGetString(GL_VENDOR);
+    qDebug() << "OpenGL Renderer:" << (char*)glGetString(GL_RENDERER);
 
     // set font
     QFont font("Courier", 12);
@@ -93,6 +94,10 @@ public:
     auto logger = new QOpenGLDebugLogger(this);
     if (logger->initialize()) {
       connect(logger, &QOpenGLDebugLogger::messageLogged, this, [](const QOpenGLDebugMessage &msg) {
+        // print only HighSeverity and MediumSeverity messages
+        if (msg.severity() != QOpenGLDebugMessage::HighSeverity &&
+            msg.severity() != QOpenGLDebugMessage::MediumSeverity)
+          return;
         qDebug() << "OpenGL Debug Message:" << msg;
       });
       logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
@@ -856,7 +861,7 @@ private:
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_POINT_SPRITE); // TODO maybe is deprecated
+    // glEnable(GL_POINT_SPRITE); // TODO maybe is deprecated
     _render_time = vltools::getTime();
     _background->draw();
     _floor_grid->draw(_camera);
