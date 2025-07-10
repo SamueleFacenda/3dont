@@ -89,6 +89,17 @@ public:
     _selection_box = new SelectionBox();
     _text = new Text(this, font);
     _dolly = new CameraDolly();
+
+    auto logger = new QOpenGLDebugLogger(this);
+    if (logger->initialize()) {
+      connect(logger, &QOpenGLDebugLogger::messageLogged, this, [](const QOpenGLDebugMessage &msg) {
+        qDebug() << "OpenGL Debug Message:" << msg;
+      });
+      logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
+      logger->enableMessages();
+    } else {
+      qWarning() << "Failed to initialize OpenGL debug logger.";
+    }
   }
 
   void resizeGL(int w, int h) override {

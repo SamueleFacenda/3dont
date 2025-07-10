@@ -282,6 +282,7 @@ private:
             1.0f, 0.0f, 0.0f,
             1.0f, 1.0f, 0.0f,
             0.0f, 1.0f, 0.0f};
+    _buffer_square = 0;
     glGenBuffers(1, &_buffer_square);
     glBindBuffer(GL_ARRAY_BUFFER, _buffer_square);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points,

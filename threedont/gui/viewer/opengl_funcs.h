@@ -1,14 +1,12 @@
 #ifndef __OPENGLFUNCS_H__
 #define __OPENGLFUNCS_H__
 #include <QOpenGLFunctions>
+#include <QOpenGLFunctions_3_3_Core>
 
-class OpenGLFuncs : public QOpenGLFunctions {
+class OpenGLFuncs : public QOpenGLFunctions_3_3_Core {
   // extends QOpenGLFunctions with some helper and error checking functions
 public:
-  OpenGLFuncs() : QOpenGLFunctions() {}
-
-  OpenGLFuncs(QOpenGLContext *context) : QOpenGLFunctions(context) {}
-
+  OpenGLFuncs() : QOpenGLFunctions_3_3_Core() {}
   GLint getBufferSize(GLuint bufferId) {
     GLint bufferSize = 0;
     glBindBuffer(GL_ARRAY_BUFFER, bufferId);
