@@ -167,7 +167,7 @@ private:
 
     painter.drawText(0, pixelFontMetrics.ascent(), c);
     painter.end();
-    QImage image = pixmap.toImage().mirrored();
+    QImage image = pixmap.toImage().flipped();
 
     if (xOffset + width >= TEXTURE_SIZE) {
       xOffset = 1;
