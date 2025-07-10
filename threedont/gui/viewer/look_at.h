@@ -39,8 +39,7 @@ public:
     GLuint buffer_positions;
     glGenBuffers(1, &buffer_positions);
     glBindBuffer(GL_ARRAY_BUFFER, buffer_positions);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 18, positions,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 18, positions, GL_STATIC_DRAW);
     _program.enableAttributeArray("position");
     _program.setAttributeArray("position", GL_FLOAT, 0, 3);
 

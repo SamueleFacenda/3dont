@@ -25,8 +25,7 @@ public:
     GLuint square;
     glGenBuffers(1, &square);
     glBindBuffer(GL_ARRAY_BUFFER, square);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points, GL_STATIC_DRAW);
 
     unsigned int indices[6] = {
             0, 1, 2,
@@ -34,8 +33,7 @@ public:
     GLuint square_indices;
     glGenBuffers(1, &square_indices);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, square_indices);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6,
-                 (GLvoid *) indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, (GLvoid *) indices, GL_STATIC_DRAW);
 
     _program.bind();
     _program.setUniformValue("colorBottom", _bg_color_bottom);

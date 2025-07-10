@@ -31,15 +31,13 @@ public:
                         1.0f, 0.0f, 0.0f,
                         1.0f, 1.0f, 0.0f,
                         0.0f, 1.0f, 0.0f};
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points, GL_STATIC_DRAW);
 
     GLuint buffer_indices;
     glGenBuffers(1, &buffer_indices);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_indices);
     unsigned int indices[5] = {0, 1, 2, 3, 0};
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 5, indices,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 5, indices, GL_STATIC_DRAW);
 
     _program.bind();
     _program.setUniformValue("box_min", _box.topLeft());

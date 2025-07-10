@@ -284,8 +284,7 @@ private:
             0.0f, 1.0f, 0.0f};
     glGenBuffers(1, &_buffer_square);
     glBindBuffer(GL_ARRAY_BUFFER, _buffer_square);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     unsigned int indices[6] = {
@@ -293,8 +292,7 @@ private:
             0, 2, 3};
     glGenBuffers(1, &_buffer_square_indices);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer_square_indices);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6,
-                 (GLvoid *) indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, (GLvoid *) indices, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   }
   void unloadSquare() {

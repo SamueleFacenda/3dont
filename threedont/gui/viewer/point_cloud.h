@@ -58,8 +58,7 @@ public:
     // create a buffer for storing position vectors
     glGenBuffers(1, &_buffer_positions);
     glBindBuffer(GL_ARRAY_BUFFER, _buffer_positions);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * _positions.size(),
-                 (GLvoid *) &_positions[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * _positions.size(), (GLvoid *) &_positions[0], GL_STATIC_DRAW);
 
     // create a buffer for storing color vectors
     glGenBuffers(1, &_buffer_colors);
@@ -80,20 +79,17 @@ public:
     // create buffer for storing centroid sizes
     glGenBuffers(1, &_buffer_sizes);
     glBindBuffer(GL_ARRAY_BUFFER, _buffer_sizes);
-    glBufferData(GL_ARRAY_BUFFER, _sizes.size() * sizeof(float),
-                 (GLvoid *) &_sizes[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _sizes.size() * sizeof(float), (GLvoid *) &_sizes[0], GL_STATIC_DRAW);
 
     // create buffer for storing selection mask
     glGenBuffers(1, &_buffer_selection_mask);
     glBindBuffer(GL_ARRAY_BUFFER, _buffer_selection_mask);
-    glBufferData(GL_ARRAY_BUFFER, _positions.size() / 3 * sizeof(float), nullptr,
-                 GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _positions.size() / 3 * sizeof(float), nullptr, GL_STATIC_DRAW);
 
     // create buffer for storing point indices obtained from octree
     glGenBuffers(1, &_buffer_octree_ids);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer_octree_ids);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _num_points * sizeof(unsigned int),
-                 nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _num_points * sizeof(unsigned int), nullptr, GL_DYNAMIC_DRAW);
 
     _attributes.reset();
     initColors();
@@ -284,8 +280,7 @@ public:
     GLuint attr_buffer = use_color_map ? _buffer_scalars : _buffer_colors;
     if (!broadcast_attr) {
       glBindBuffer(GL_ARRAY_BUFFER, attr_buffer);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * attr.size(),
-                   &attr[0], GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * attr.size(), &attr[0], GL_STATIC_DRAW);
     }
 
     glBindTexture(GL_TEXTURE_2D, 0);
