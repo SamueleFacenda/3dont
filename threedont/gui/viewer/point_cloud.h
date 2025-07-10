@@ -11,6 +11,9 @@
 #include <QOpenGLShaderProgram>
 #include <vector>
 
+// from 0 to 1
+#define FAST_RENDERING_LOD 0.35f
+
 inline void checkOpenGLError(const char *context) {
   GLenum error = glGetError();
   if (error != GL_NO_ERROR) {
@@ -130,7 +133,7 @@ public:
 
   // render methods
   void draw(const QtCamera &camera, const SelectionBox *box = nullptr) {
-    queryLOD(_octree_ids, camera, 0.25f); // TODO make this a parameter
+    queryLOD(_octree_ids, camera, FAST_RENDERING_LOD);
     if (_octree_ids.empty()) return;
     draw(&_octree_ids[0], (unsigned int) _octree_ids.size(), camera, box);
   }

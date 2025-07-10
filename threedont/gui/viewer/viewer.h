@@ -43,8 +43,13 @@ public:
     _socket_waiting_on_enter_key = nullptr;
     _timer_fine_render_delay = nullptr;
     _fine_render_state = INACTIVE;
+    _fine_rendering_available = false;
     _render_time = std::numeric_limits<double>::infinity();
     _show_text = true;
+
+    _timer_fine_render_delay = new QTimer(this);
+    _timer_fine_render_delay->setSingleShot(true);
+    connect(_timer_fine_render_delay, SIGNAL(timeout()), this, SLOT(drawRefinedPointsDelayed()));
 
     // set up TCP server for receiving commands from Python terminal (client)
     _server = new QTcpServer();
@@ -93,12 +98,16 @@ public:
     _camera.setAspectRatio((float) width() / height());
     qreal pixelRatio = this->devicePixelRatio();
     glViewport(0, 0, width() * pixelRatio, height() * pixelRatio);
-    update();
+    updateSlow();
   }
 
   void paintGL() override {
-    renderPoints();
-    renderPointsFine(); // TODO if enabled
+    // don't overwrite fine rendering result and keep the fine rendered buffer for swapping
+    // (swapping is done only after paintGL() calls, so this is necessary since fine rendering is asynchronous to paintGL() calls)
+    if (_fine_rendering_available)
+      _fine_rendering_available = false;
+    else
+      renderPoints();
   }
 
   int getServerPort() {
@@ -148,7 +157,7 @@ protected:
     } else if (ev->key() == Qt::Key_C) {
       _camera.setLookAtPosition(_points->computeSelectionCentroid());
       _camera.save();
-      update();
+      updateSlow();
     } else if ((ev->key() == Qt::Key_Enter || ev->key() == Qt::Key_Return) &&
                _socket_waiting_on_enter_key) {
       const char *msg = "x";
@@ -159,7 +168,7 @@ protected:
       QWidget::keyPressEvent(ev);
       return;
     }
-    update();
+    updateSlow();
   }
 
   void mouseDoubleClickEvent(QMouseEvent *ev) override {
@@ -176,7 +185,7 @@ protected:
                 ps[3 * indices[0] + 2]);
     _camera.setLookAtPosition(p);
     _camera.save();
-    update();
+    updateSlow();
   }
 
   void mousePressEvent(QMouseEvent *ev) override {
@@ -188,11 +197,11 @@ protected:
           _selection_box->click(win2ndc(_pressPos), SelectionBox::SUB);
         else
           _selection_box->click(win2ndc(_pressPos), SelectionBox::ADD);
-        update(); // TODO make fast update
+        updateFast();
       }
     } else if (ev->buttons() & Qt::RightButton) {
       _points->clearSelected();
-      update(); // TODO make fast update
+      updateFast();
     } else {
       QWidget::mousePressEvent(ev);
     }
@@ -213,7 +222,7 @@ protected:
           _camera.rotate(QVector2D(ev->position() - _pressPos));
       }
 
-      update(); // TODO make fast update
+      updateFast();
     } else {
       QWidget::mouseMoveEvent(ev);
     }
@@ -245,10 +254,10 @@ protected:
       }
 
       _selection_box->release();
-      update();
+      updateSlow();
     } else if (mouse_moved) {
       _camera.save();
-      update();
+      updateSlow();
     }
   }
 
@@ -257,8 +266,7 @@ protected:
     // note: angleDelta() is in units of 1/8 degree
     _camera.zoom(ev->angleDelta().y() / 120.0f);
     _camera.save();
-    update(); // TODO make fast update
-    // TODO schedule fine rendering
+    updateSlow(350);
   }
 
 private slots:
@@ -291,18 +299,18 @@ private slots:
         _camera = QtCamera(_points->getBox());
         _camera.setAspectRatio((float) width() / height());
         _floor_grid->setFloorLevel(_points->getFloor());
-        update();
+        updateSlow();
         break;
       }
       case 2: { // clear points
         _points->clearPoints();
-        update();
+        updateSlow();
         break;
       }
       case 3: { // reset view to fit all
         _camera = QtCamera(_points->getBox());
         _camera.setAspectRatio((float) width() / height());
-        update();
+        updateSlow();
         break;
       }
       case 4: { // set viewer property
@@ -418,7 +426,7 @@ private slots:
           // unrecognized property name, do nothing
           // todo: consider doing something
         }
-        update();
+        updateSlow();
         break;
       }
       case 5: { // get viewer property
@@ -575,7 +583,7 @@ private slots:
                            clientConnection);
 
         _points->loadAttributes(payload);
-        update();
+        updateSlow();
         break;
       }
       default: // unrecognized message type
@@ -587,24 +595,22 @@ private slots:
   }
 
   void drawRefinedPointsDelayed() {
-    if (_fine_render_state == INACTIVE)
-      QTimer::singleShot(0, this, SLOT(drawRefinedPoints()));
     _fine_render_state = INITIALIZE;
-    delete _timer_fine_render_delay;
-    _timer_fine_render_delay = nullptr;
+    drawRefinedPoints();
   }
 
   void drawRefinedPoints() {
+    makeCurrent();
     switch (_fine_render_state) {
       case INACTIVE: {
 #ifdef TEST_FINE_RENDER
-        qDebug() << "should not be here" << std::endl;
+        qDebug() << "should not be here";
 #endif
         break;
       }
       case INITIALIZE: {
 #ifdef TEST_FINE_RENDER
-        qDebug() << "fine render: initialize" << std::endl;
+        qDebug() << "fine render: initialize";
         _max_chunk_size = 1;
         _chunk_offset = 0;
         _refined_indices.clear();
@@ -635,7 +641,7 @@ private slots:
         dummyCalculation(1000000);
         t = vltools::getTime() - t;
         qDebug() << "fine render: processed " << _chunk_offset << ", "
-                 << chunk_size << ", " << t << std::endl;
+                 << chunk_size << ", " << t;
 #else
         if (chunk_size > 0)
           _points->draw(&_refined_indices[_chunk_offset],
@@ -652,27 +658,31 @@ private slots:
       }
       case FINALIZE: {
 #ifdef TEST_FINE_RENDER
-        qDebug() << "fine render: finalized" << std::endl;
+        qDebug() << "fine render: finalized";
 #else
         _look_at->draw(_camera);
         displayInfo();
 #endif
         _fine_render_state = INACTIVE;
+        _fine_rendering_available = true; // fine rendering is done, can swap buffers
+        update();
         break;
       }
       case TERMINATE: {
 #ifdef TEST_FINE_RENDER
-        qDebug() << "fine render: terminate" << std::endl;
+        qDebug() << "fine render: terminate";
 #endif
+        // this is actually useless, no logic here to terminate
         _fine_render_state = INACTIVE;
         break;
       }
     }
+    doneCurrent();
   }
 
   void playCameraAnimation() {
     if (_dolly->done()) {
-      update();
+      updateSlow();
       return;
     }
     CameraPose pose = _dolly->getPose();
@@ -681,11 +691,21 @@ private slots:
     _camera.setTheta(pose.theta());
     _camera.setCameraDistance(qMax(0.1f, pose.d()));
     _camera.save();
-    update(); // TODO make fast update
+    updateFast();
     QTimer::singleShot(15, this, SLOT(playCameraAnimation()));
   }
 
 private:
+  void updateFast() {
+    update();
+  }
+
+  void updateSlow(int msec = 0) {
+    update();
+    _fine_render_state = TERMINATE;
+    _timer_fine_render_delay->start(msec);
+  }
+
   void dummyCalculation(int n) {
     _dummy_accumulator /= (float) n;
     for (int i = 0; i < n; i++)
@@ -693,6 +713,7 @@ private:
   }
 
   void printScreen(std::string filename) {
+    // WARNING!! This function probably crashes
     int w = width() * this->devicePixelRatio();
     int h = height() * this->devicePixelRatio();
     GLubyte *pixels = new GLubyte[4 * w * h];
@@ -819,16 +840,6 @@ private:
     _text->renderText(cursor_x, cursor_y, fps_text);
   }
 
-  void renderPointsFine(int msec = 0) {
-    // assumes timer points to valid memory if it is non nullptr
-    delete _timer_fine_render_delay;
-    _timer_fine_render_delay = new QTimer(this);
-    connect(_timer_fine_render_delay, SIGNAL(timeout()), this,
-            SLOT(drawRefinedPointsDelayed()));
-    _timer_fine_render_delay->start(msec);
-    if (_fine_render_state != INACTIVE) _fine_render_state = TERMINATE;
-  }
-
   void renderPoints() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -878,6 +889,7 @@ private:
   QTcpSocket *_socket_waiting_on_enter_key;
   double _render_time;
   bool _show_text;
+  bool _fine_rendering_available;
 };
 
 #endif // __VIEWER_H__

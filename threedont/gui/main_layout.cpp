@@ -13,6 +13,7 @@ MainLayout::MainLayout(ControllerWrapper *controllerWrapper, QWidget *parent)
   ui->statusbar->showMessage(tr("Loading..."));
 
   viewer = new Viewer(this);
+  viewer->setFocusPolicy(Qt::StrongFocus);
   setCentralWidget(viewer);
   ui->statusbar->showMessage(tr("Ready"), 5000);
 
