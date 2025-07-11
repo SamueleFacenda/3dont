@@ -6,14 +6,10 @@
 #include <QWindow>
 class Background : protected OpenGLFuncs {
 public:
-  Background(QWindow *window, QOpenGLContext *context)
-      : _context(context),
-        _window(window),
-        _bg_color_top(0.0f, 0.0f, 0.0f, 1.0f),
+  Background()
+      : _bg_color_top(0.0f, 0.0f, 0.0f, 1.0f),
         _bg_color_bottom(0.23f, 0.23f, 0.44f, 1.0f) {
-    _context->makeCurrent(_window);
     initializeOpenGLFunctions();
-    _context->doneCurrent();
     compileProgram();
   }
   void draw() {
@@ -29,8 +25,7 @@ public:
     GLuint square;
     glGenBuffers(1, &square);
     glBindBuffer(GL_ARRAY_BUFFER, square);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points, GL_STATIC_DRAW);
 
     unsigned int indices[6] = {
             0, 1, 2,
@@ -38,8 +33,7 @@ public:
     GLuint square_indices;
     glGenBuffers(1, &square_indices);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, square_indices);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6,
-                 (GLvoid *) indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, (GLvoid *) indices, GL_STATIC_DRAW);
 
     _program.bind();
     _program.setUniformValue("colorBottom", _bg_color_bottom);
@@ -82,15 +76,11 @@ private:
             "  fragColor = mix(colorBottom, colorTop, coordinate.y);\n"
             "}\n";
 
-    _context->makeCurrent(_window);
     _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
     _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
     _program.link();
-    _context->doneCurrent();
   }
 
-  QOpenGLContext *_context;
-  QWindow *_window;
   QOpenGLShaderProgram _program;
   QVector4D _bg_color_top;
   QVector4D _bg_color_bottom;

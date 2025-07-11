@@ -13,11 +13,9 @@ public:
                     SUB = 1,
                     NONE = 2 };
 
-  SelectionBox(QWindow *window, QOpenGLContext *context)
-      : _context(context), _window(window), _select_mode(NONE) {
-    _context->makeCurrent(_window);
+  SelectionBox()
+      : _select_mode(NONE) {
     initializeOpenGLFunctions();
-    _context->doneCurrent();
     compileProgram();
   }
 
@@ -33,15 +31,13 @@ public:
                         1.0f, 0.0f, 0.0f,
                         1.0f, 1.0f, 0.0f,
                         0.0f, 1.0f, 0.0f};
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points, GL_STATIC_DRAW);
 
     GLuint buffer_indices;
     glGenBuffers(1, &buffer_indices);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_indices);
     unsigned int indices[5] = {0, 1, 2, 3, 0};
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 5, indices,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 5, indices, GL_STATIC_DRAW);
 
     _program.bind();
     _program.setUniformValue("box_min", _box.topLeft());
@@ -98,15 +94,11 @@ private:
             "void main() {\n"
             "  fragColor = vec4(1.0, 1.0, 0.0, 1.0);\n"
             "}\n";
-    _context->makeCurrent(_window);
     _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
     _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
     _program.link();
-    _context->doneCurrent();
   }
 
-  QOpenGLContext *_context;
-  QWindow *_window;
   QOpenGLShaderProgram _program;
 
   SelectMode _select_mode;
