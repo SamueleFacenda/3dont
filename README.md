@@ -25,19 +25,20 @@ View, query and manually annotate pointclouds ontologies.
 - [x] nl queries
 - [x] select min max scalar
 - [x] block dock floating
+- [x] fix viewer focus issue
+- [x] fix OpenGL
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
 - [ ] add default to scalar queries equal to color
 - [ ] configure page (namespace)
-- [ ] fix viewer focus issue
 - [ ] better loading screen
 - [ ] gui error report (generic)
 - [ ] override config with cli arguments
 - [ ] use oxrdflib in rdflib as query engine
 - [ ] embed virtuoso in the application
-- [ ] fix OpenGL
 - [ ] move from QTcpServer to QLocalServer
+- [ ] dynamically compute fast rendering LOD (based on render time)
  
 ## License
 

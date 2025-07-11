@@ -34,7 +34,7 @@
 #include "timer.h"
 #include "alternative_frame_buffer.h"
 
-#define OPENGL_DEBUG
+// #define OPENGL_DEBUG
 
 class Viewer : public QOpenGLWidget, protected OpenGLFuncs {
   Q_OBJECT
@@ -45,7 +45,6 @@ public:
     _timer_fine_render_delay = nullptr;
     _fine_render_state = INACTIVE;
     _fine_rendering_available = false;
-    _fine_rendering_enabled = true;
     _render_time = std::numeric_limits<double>::infinity();
     _show_text = true;
 
@@ -125,13 +124,8 @@ public:
 
   void paintGL() override {
     if (_fine_rendering_available) {
+      // the buffer remains valid until an updateFast or updateSlow call
       _fine_render_fbo->displayTexture();
-      _fine_rendering_available = false;
-      _fine_rendering_enabled = true; // reset to default state (when scrolling this is necessary)
-    } else if (_fine_rendering_enabled) {
-      _fine_render_state = TERMINATE;
-      _timer_fine_render_delay->start(0);
-      // TODO make something here, old buffer is dirty
     } else {
       renderPoints();
     }
@@ -294,7 +288,7 @@ protected:
     _camera.zoom(ev->angleDelta().y() / 120.0f);
     _camera.save();
     updateFast();
-    scheduleFineRendering(350);
+    scheduleFineRendering(200);
   }
 
 private slots:
@@ -712,7 +706,7 @@ private slots:
 
 private:
   void updateFast() {
-    _fine_rendering_enabled = false;
+    _fine_rendering_available = false; // invalidate the fine rendering
     update();
   }
 
@@ -723,8 +717,10 @@ private:
   }
 
   void updateSlow() {
-    _fine_rendering_enabled = true;
-    update();
+    _fine_rendering_available = false;
+    update(); // do a fast rendering before fine rendering
+    _fine_render_state = TERMINATE;
+    _timer_fine_render_delay->start(0); // schedule a fine rendering
   }
 
   void printScreen(std::string filename) {
@@ -906,7 +902,6 @@ private:
   double _render_time;
   bool _show_text;
   bool _fine_rendering_available;
-  bool _fine_rendering_enabled;
 
 };
 
