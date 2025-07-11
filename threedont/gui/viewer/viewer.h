@@ -34,6 +34,8 @@
 #include "timer.h"
 #include "alternative_frame_buffer.h"
 
+#define OPENGL_DEBUG
+
 class Viewer : public QOpenGLWidget, protected OpenGLFuncs {
   Q_OBJECT
 public:
@@ -75,24 +77,10 @@ public:
 
    void initializeGL() override {
     initializeOpenGLFunctions();
+#ifdef OPENGL_DEBUG
     qDebug() << "OpenGL Version:" << (char*)glGetString(GL_VERSION);
     qDebug() << "OpenGL Vendor:" << (char*)glGetString(GL_VENDOR);
     qDebug() << "OpenGL Renderer:" << (char*)glGetString(GL_RENDERER);
-
-    // set font
-    QFont font("Courier", 12);
-
-    // initialize various viewer objects
-    _background = new Background();
-    _floor_grid = new FloorGrid(this);
-    _look_at = new LookAt();
-    _points = new PointCloud(this);
-    _selection_box = new SelectionBox();
-    _text = new Text(this, font);
-    _dolly = new CameraDolly();
-    _fine_render_fbo = new AlternativeFrameBuffer();
-    _fine_render_fbo->setupFineRenderBuffers(width() * devicePixelRatio(), height() * devicePixelRatio());
-
     auto logger = new QOpenGLDebugLogger(this);
     if (logger->initialize()) {
       connect(logger, &QOpenGLDebugLogger::messageLogged, this, [](const QOpenGLDebugMessage &msg) {
@@ -109,6 +97,20 @@ public:
     } else {
       qWarning() << "Failed to initialize OpenGL debug logger.";
     }
+#endif
+    // set font
+    QFont font("Courier", 12);
+
+    // initialize various viewer objects
+    _background = new Background();
+    _floor_grid = new FloorGrid(this);
+    _look_at = new LookAt();
+    _points = new PointCloud(this);
+    _selection_box = new SelectionBox();
+    _text = new Text(this, font);
+    _dolly = new CameraDolly();
+    _fine_render_fbo = new AlternativeFrameBuffer();
+    _fine_render_fbo->setupBuffers(width() * devicePixelRatio(), height() * devicePixelRatio());
   }
 
   void resizeGL(int w, int h) override {
@@ -117,22 +119,19 @@ public:
     _camera.setAspectRatio((float) width() / height());
     qreal pixelRatio = this->devicePixelRatio();
     glViewport(0, 0, width() * pixelRatio, height() * pixelRatio);
-    _fine_render_fbo->setupFineRenderBuffers(width() * pixelRatio, height() * pixelRatio);
+    _fine_render_fbo->setupBuffers(width() * pixelRatio, height() * pixelRatio);
     updateSlow();
   }
 
   void paintGL() override {
-    qDebug() << "Viewer: paintGL called with fine rendering state"
-             << _fine_render_state
-             << "and fine rendering available" << _fine_rendering_available
-              << "and fine rendering enabled" << _fine_rendering_enabled;
     if (_fine_rendering_available) {
-      _fine_render_fbo->displayFineRenderTexture();
+      _fine_render_fbo->displayTexture();
       _fine_rendering_available = false;
       _fine_rendering_enabled = true; // reset to default state (when scrolling this is necessary)
     } else if (_fine_rendering_enabled) {
       _fine_render_state = TERMINATE;
       _timer_fine_render_delay->start(0);
+      // TODO make something here, old buffer is dirty
     } else {
       renderPoints();
     }
@@ -629,7 +628,6 @@ private slots:
   }
 
   void renderPointsFine() {
-    qDebug() << "Viewer: renderPointsFine called with fine rendering state" << _fine_render_state;
     switch (_fine_render_state) {
       case INACTIVE: {
         break;
@@ -860,7 +858,6 @@ private:
   }
 
   void renderPoints() {
-    qDebug() << "Viewer: renderPoints called";
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);

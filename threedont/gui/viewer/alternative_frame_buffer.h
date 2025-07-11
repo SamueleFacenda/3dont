@@ -7,9 +7,9 @@ class AlternativeFrameBuffer: public OpenGLFuncs {
 public:
   AlternativeFrameBuffer() {
     initializeOpenGLFunctions();
-    glGenFramebuffers(1, &_fine_render_fbo);
-    glGenTextures(1, &_fine_render_texture);
-    glGenRenderbuffers(1, &_fine_render_depth_buffer);
+    glGenFramebuffers(1, &_fbo);
+    glGenTextures(1, &_texture);
+    glGenRenderbuffers(1, &_depth_buffer);
 
     _display_texture_program = new QOpenGLShaderProgram();
     _display_texture_program->addShaderFromSourceCode(QOpenGLShader::Vertex,
@@ -52,16 +52,16 @@ public:
   }
 
   void bind() {
-    glBindFramebuffer(GL_FRAMEBUFFER, _fine_render_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
   }
 
   void unbind() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   }
 
-  void setupFineRenderBuffers(int w, int h) {
+  void setupBuffers(int w, int h) {
     // Set up color texture
-    glBindTexture(GL_TEXTURE_2D, _fine_render_texture);
+    glBindTexture(GL_TEXTURE_2D, _texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -69,13 +69,13 @@ public:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     // Set up depth buffer
-    glBindRenderbuffer(GL_RENDERBUFFER, _fine_render_depth_buffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, _depth_buffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
 
     // Set up framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, _fine_render_fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _fine_render_texture, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _fine_render_depth_buffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _depth_buffer);
 
     // Check framebuffer completeness
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -88,7 +88,7 @@ public:
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
   }
 
-  void displayFineRenderTexture() {
+  void displayTexture() {
     // Save current OpenGL state
     GLboolean depth_test_enabled = glIsEnabled(GL_DEPTH_TEST);
     GLboolean blend_enabled = glIsEnabled(GL_BLEND);
@@ -104,7 +104,7 @@ public:
 
     // Bind the fine render texture
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _fine_render_texture);
+    glBindTexture(GL_TEXTURE_2D, _texture);
 
     // Use a simple shader program to display the texture
     // You'll need to create this shader program in initializeGL()
@@ -148,9 +148,9 @@ public:
 
 private:
 
-  GLuint _fine_render_fbo;
-  GLuint _fine_render_texture;
-  GLuint _fine_render_depth_buffer;
+  GLuint _fbo;
+  GLuint _texture;
+  GLuint _depth_buffer;
   QOpenGLShaderProgram* _display_texture_program;
   QOpenGLVertexArrayObject* _display_quad_vao;
   QOpenGLBuffer* _display_quad_vbo;
