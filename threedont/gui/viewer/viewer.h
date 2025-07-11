@@ -34,8 +34,6 @@
 #include "timer.h"
 #include "alternative_frame_buffer.h"
 
-// #define TEST_FINE_RENDER
-
 class Viewer : public QOpenGLWidget, protected OpenGLFuncs {
   Q_OBJECT
 public:
@@ -45,6 +43,7 @@ public:
     _timer_fine_render_delay = nullptr;
     _fine_render_state = INACTIVE;
     _fine_rendering_available = false;
+    _fine_rendering_enabled = true;
     _render_time = std::numeric_limits<double>::infinity();
     _show_text = true;
 
@@ -118,22 +117,25 @@ public:
     _camera.setAspectRatio((float) width() / height());
     qreal pixelRatio = this->devicePixelRatio();
     glViewport(0, 0, width() * pixelRatio, height() * pixelRatio);
-    _fine_render_fbo->setupFineRenderBuffers(width() * devicePixelRatio(), height() * devicePixelRatio());
+    _fine_render_fbo->setupFineRenderBuffers(width() * pixelRatio, height() * pixelRatio);
     updateSlow();
   }
 
   void paintGL() override {
-    // TODO make external update calls (like lost focus) trigger fine rendering
     qDebug() << "Viewer: paintGL called with fine rendering state"
              << _fine_render_state
-             << "and fine rendering available" << _fine_rendering_available;
-    // don't overwrite fine rendering result and keep the fine rendered buffer for swapping
-    // (swapping is done only after paintGL() calls, so this is necessary since fine rendering is asynchronous to paintGL() calls)
+             << "and fine rendering available" << _fine_rendering_available
+              << "and fine rendering enabled" << _fine_rendering_enabled;
     if (_fine_rendering_available) {
       _fine_render_fbo->displayFineRenderTexture();
       _fine_rendering_available = false;
-    } else if (_fine_render_state == INACTIVE || _fine_render_state == TERMINATE)
+      _fine_rendering_enabled = true; // reset to default state (when scrolling this is necessary)
+    } else if (_fine_rendering_enabled) {
+      _fine_render_state = TERMINATE;
+      _timer_fine_render_delay->start(0);
+    } else {
       renderPoints();
+    }
   }
 
   int getServerPort() {
@@ -292,7 +294,8 @@ protected:
     // note: angleDelta() is in units of 1/8 degree
     _camera.zoom(ev->angleDelta().y() / 120.0f);
     _camera.save();
-    updateSlow(350);
+    updateFast();
+    scheduleFineRendering(350);
   }
 
 private slots:
@@ -629,19 +632,9 @@ private slots:
     qDebug() << "Viewer: renderPointsFine called with fine rendering state" << _fine_render_state;
     switch (_fine_render_state) {
       case INACTIVE: {
-#ifdef TEST_FINE_RENDER
-        qDebug() << "should not be here";
-#endif
         break;
       }
       case INITIALIZE: {
-#ifdef TEST_FINE_RENDER
-        qDebug() << "fine render: initialize";
-        _max_chunk_size = 1;
-        _chunk_offset = 0;
-        _refined_indices.clear();
-        for (int i = 0; i < 10; i++) _refined_indices.push_back(i);
-#else
         _max_chunk_size = 50000;
         _chunk_offset = 0;
 
@@ -659,7 +652,6 @@ private slots:
 
         // get points at finest LOD, for the current image resolution
         _points->queryLOD(_refined_indices, _camera, 1.0f);
-#endif
         _fine_render_state = CHUNK;
         QTimer::singleShot(0, this, SLOT(renderPointsFine()));
         break;
@@ -667,13 +659,6 @@ private slots:
       case CHUNK: {
         std::size_t chunk_size = _refined_indices.size() - _chunk_offset;
         if (chunk_size > _max_chunk_size) chunk_size = _max_chunk_size;
-#ifdef TEST_FINE_RENDER
-        double t = vltools::getTime();
-        dummyCalculation(1000000);
-        t = vltools::getTime() - t;
-        qDebug() << "fine render: processed " << _chunk_offset << ", "
-                 << chunk_size << ", " << t;
-#else
         if (chunk_size > 0){
           makeCurrent();
           _fine_render_fbo->bind();
@@ -682,7 +667,6 @@ private slots:
           _fine_render_fbo->unbind();
           doneCurrent();
         }
-#endif
         _chunk_offset += chunk_size;
         if (_chunk_offset == _refined_indices.size())
           _fine_render_state = FINALIZE;
@@ -692,9 +676,6 @@ private slots:
         break;
       }
       case FINALIZE: {
-#ifdef TEST_FINE_RENDER
-        qDebug() << "fine render: finalized";
-#else
         makeCurrent();
         _fine_render_fbo->bind();
         _look_at->draw(_camera);
@@ -702,16 +683,13 @@ private slots:
         displayInfo();
         _fine_render_fbo->unbind();
         doneCurrent();
-#endif
+
         _fine_render_state = INACTIVE;
         _fine_rendering_available = true; // fine rendering is done, can swap buffers
         update();
         break;
       }
       case TERMINATE: {
-#ifdef TEST_FINE_RENDER
-        qDebug() << "fine render: terminate";
-#endif
         // this is actually useless, no logic here to terminate
         _fine_render_state = INACTIVE;
         break;
@@ -736,19 +714,19 @@ private slots:
 
 private:
   void updateFast() {
+    _fine_rendering_enabled = false;
     update();
   }
 
-  void updateSlow(int msec = 0) {
-    update();
+  void scheduleFineRendering(int msec = 0) {
     _fine_render_state = TERMINATE;
+    // overwrite any previous fine rendering timer
     _timer_fine_render_delay->start(msec);
   }
 
-  void dummyCalculation(int n) {
-    _dummy_accumulator /= (float) n;
-    for (int i = 0; i < n; i++)
-      _dummy_accumulator += sqrtf(pow(6.9f, log((float) i)));
+  void updateSlow() {
+    _fine_rendering_enabled = true;
+    update();
   }
 
   void printScreen(std::string filename) {
@@ -916,7 +894,6 @@ private:
   CameraDolly *_dolly;
   AlternativeFrameBuffer *_fine_render_fbo;
 
-  float _dummy_accumulator;
   enum FineRenderState { INACTIVE,
                          INITIALIZE,
                          CHUNK,
@@ -932,6 +909,7 @@ private:
   double _render_time;
   bool _show_text;
   bool _fine_rendering_available;
+  bool _fine_rendering_enabled;
 
 };
 

@@ -11,8 +11,8 @@
 #include <QOpenGLShaderProgram>
 #include <vector>
 
-// from 0 to 1
-#define FAST_RENDERING_LOD 1.0f
+// from 0 to 1 (1 is best quality)
+#define FAST_RENDERING_LOD 0.35f
 
 class PointCloud : protected OpenGLFuncs {
 public:
