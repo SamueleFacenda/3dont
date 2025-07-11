@@ -632,7 +632,6 @@ private slots:
 
         makeCurrent();
         _fine_render_fbo->bind();
-
         // draw background and grid
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -671,7 +670,7 @@ private slots:
         makeCurrent();
         _fine_render_fbo->bind();
         _look_at->draw(_camera);
-        // _selection_box->draw(); // not necessary in fine rendering
+        // _selection_box->draw(); // not necessary in fine rendering (the mouse is being used)
         displayInfo();
         _fine_render_fbo->unbind();
         doneCurrent();
