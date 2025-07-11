@@ -8,6 +8,7 @@ add_library(gui MODULE
         points_tree_view/graph_tree_model.cpp
         points_tree_view/graph_tree_item.cpp
         widgets/scale_legend.cpp
+        viewer/alternative_frame_buffer.h
 )
 
 target_sources(gui PRIVATE

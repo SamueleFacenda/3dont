@@ -12,16 +12,7 @@
 #include <vector>
 
 // from 0 to 1
-#define FAST_RENDERING_LOD 0.35f
-
-inline void checkOpenGLError(const char *context) {
-  GLenum error = glGetError();
-  if (error != GL_NO_ERROR) {
-    qWarning() << "OpenGL Error after" << context << ":" << error;
-    // You might want to map 'error' to a string representation for better debugging
-  }
-}
-
+#define FAST_RENDERING_LOD 1.0f
 
 class PointCloud : protected OpenGLFuncs {
 public:

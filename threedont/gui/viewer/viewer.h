@@ -32,6 +32,7 @@
 #include "selection_box.h"
 #include "text.h"
 #include "timer.h"
+#include "alternative_frame_buffer.h"
 
 // #define TEST_FINE_RENDER
 
@@ -90,6 +91,8 @@ public:
     _selection_box = new SelectionBox();
     _text = new Text(this, font);
     _dolly = new CameraDolly();
+    _fine_render_fbo = new AlternativeFrameBuffer();
+    _fine_render_fbo->setupFineRenderBuffers(width() * devicePixelRatio(), height() * devicePixelRatio());
 
     auto logger = new QOpenGLDebugLogger(this);
     if (logger->initialize()) {
@@ -115,15 +118,21 @@ public:
     _camera.setAspectRatio((float) width() / height());
     qreal pixelRatio = this->devicePixelRatio();
     glViewport(0, 0, width() * pixelRatio, height() * pixelRatio);
+    _fine_render_fbo->setupFineRenderBuffers(width() * devicePixelRatio(), height() * devicePixelRatio());
     updateSlow();
   }
 
   void paintGL() override {
+    // TODO make external update calls (like lost focus) trigger fine rendering
+    qDebug() << "Viewer: paintGL called with fine rendering state"
+             << _fine_render_state
+             << "and fine rendering available" << _fine_rendering_available;
     // don't overwrite fine rendering result and keep the fine rendered buffer for swapping
     // (swapping is done only after paintGL() calls, so this is necessary since fine rendering is asynchronous to paintGL() calls)
-    if (_fine_rendering_available)
+    if (_fine_rendering_available) {
+      _fine_render_fbo->displayFineRenderTexture();
       _fine_rendering_available = false;
-    else
+    } else if (_fine_render_state == INACTIVE || _fine_render_state == TERMINATE)
       renderPoints();
   }
 
@@ -613,11 +622,11 @@ private slots:
 
   void drawRefinedPointsDelayed() {
     _fine_render_state = INITIALIZE;
-    drawRefinedPoints();
+    renderPointsFine();
   }
 
-  void drawRefinedPoints() {
-    makeCurrent();
+  void renderPointsFine() {
+    qDebug() << "Viewer: renderPointsFine called with fine rendering state" << _fine_render_state;
     switch (_fine_render_state) {
       case INACTIVE: {
 #ifdef TEST_FINE_RENDER
@@ -633,21 +642,26 @@ private slots:
         _refined_indices.clear();
         for (int i = 0; i < 10; i++) _refined_indices.push_back(i);
 #else
-        // get points at finest LOD, for the current image resolution
-        _points->queryLOD(_refined_indices, _camera, 1.0f);
-
         _max_chunk_size = 50000;
         _chunk_offset = 0;
+
+        makeCurrent();
+        _fine_render_fbo->bind();
 
         // draw background and grid
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
         _background->draw();
         _floor_grid->draw(_camera);
+        _fine_render_fbo->unbind();
+        doneCurrent();
+
+        // get points at finest LOD, for the current image resolution
+        _points->queryLOD(_refined_indices, _camera, 1.0f);
 #endif
         _fine_render_state = CHUNK;
-        QCoreApplication::processEvents();
-        QTimer::singleShot(0, this, SLOT(drawRefinedPoints()));
+        QTimer::singleShot(0, this, SLOT(renderPointsFine()));
         break;
       }
       case CHUNK: {
@@ -660,25 +674,34 @@ private slots:
         qDebug() << "fine render: processed " << _chunk_offset << ", "
                  << chunk_size << ", " << t;
 #else
-        if (chunk_size > 0)
+        if (chunk_size > 0){
+          makeCurrent();
+          _fine_render_fbo->bind();
           _points->draw(&_refined_indices[_chunk_offset],
                         (unsigned int) chunk_size, _camera, _selection_box);
+          _fine_render_fbo->unbind();
+          doneCurrent();
+        }
 #endif
         _chunk_offset += chunk_size;
         if (_chunk_offset == _refined_indices.size())
           _fine_render_state = FINALIZE;
         else
           _fine_render_state = CHUNK;
-        QCoreApplication::processEvents();
-        QTimer::singleShot(0, this, SLOT(drawRefinedPoints()));
+        QTimer::singleShot(0, this, SLOT(renderPointsFine()));
         break;
       }
       case FINALIZE: {
 #ifdef TEST_FINE_RENDER
         qDebug() << "fine render: finalized";
 #else
+        makeCurrent();
+        _fine_render_fbo->bind();
         _look_at->draw(_camera);
+        // _selection_box->draw(); // not necessary in fine rendering
         displayInfo();
+        _fine_render_fbo->unbind();
+        doneCurrent();
 #endif
         _fine_render_state = INACTIVE;
         _fine_rendering_available = true; // fine rendering is done, can swap buffers
@@ -694,7 +717,6 @@ private slots:
         break;
       }
     }
-    doneCurrent();
   }
 
   void playCameraAnimation() {
@@ -860,6 +882,7 @@ private:
   }
 
   void renderPoints() {
+    qDebug() << "Viewer: renderPoints called";
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -891,6 +914,7 @@ private:
   LookAt *_look_at;
   Text *_text;
   CameraDolly *_dolly;
+  AlternativeFrameBuffer *_fine_render_fbo;
 
   float _dummy_accumulator;
   enum FineRenderState { INACTIVE,
@@ -908,6 +932,7 @@ private:
   double _render_time;
   bool _show_text;
   bool _fine_rendering_available;
+
 };
 
 #endif // __VIEWER_H__
