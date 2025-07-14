@@ -33,22 +33,39 @@ public:
     );
     _display_texture_program->link();
 
-    // Create VAO/VBO for full-screen quad
+    // Define constant quad data
+    float vertices[] = {
+            // positions     // texture coords
+            -1.0f, -1.0f,   0.0f, 0.0f,
+            1.0f, -1.0f,   1.0f, 0.0f,
+            1.0f,  1.0f,   1.0f, 1.0f,
+            -1.0f,  1.0f,   0.0f, 1.0f
+    };
+    unsigned int indices[] = {0, 1, 2, 2, 3, 0};
+
     _display_quad_vao = new QOpenGLVertexArrayObject();
     _display_quad_vao->create();
+    _display_quad_vao->bind(); // Bind the VAO to store the following settings
+
     _display_quad_vbo = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     _display_quad_vbo->create();
+    _display_quad_vbo->bind();
+    _display_quad_vbo->allocate(vertices, sizeof(vertices)); // Allocate and upload data now
+
     _display_quad_ebo = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
     _display_quad_ebo->create();
-
-    _display_quad_vao->bind();
-    _display_quad_vbo->bind();
-    _display_quad_vbo->allocate(4 * 4 * sizeof(float));
-
     _display_quad_ebo->bind();
-    unsigned int indices[] = {0, 1, 2, 2, 3, 0};
-    _display_quad_ebo->allocate(indices, sizeof(indices));
-    _display_quad_vao->release();
+    _display_quad_ebo->allocate(indices, sizeof(indices)); // Allocate and upload data now
+
+    // Configure vertex attributes. This state is stored in the VAO.
+    // Position attribute
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)nullptr);
+    // Texture coordinate attribute
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+    _display_quad_vao->release(); // Unbind the VAO
   }
 
   void bind() {
@@ -89,58 +106,31 @@ public:
   }
 
   void displayTexture() {
-    // Save current OpenGL state
+    // --- Save and Set OpenGL State ---
     GLboolean depth_test_enabled = glIsEnabled(GL_DEPTH_TEST);
     GLboolean blend_enabled = glIsEnabled(GL_BLEND);
     GLint current_program;
     glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
 
-    // Disable depth testing and blending for full-screen quad
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-
-    // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Bind the fine render texture
+    // --- Bind and Draw ---
+    _display_texture_program->bind();
+    _display_texture_program->setUniformValue("u_texture", 0);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _texture);
 
-    // Use a simple shader program to display the texture
-    // You'll need to create this shader program in initializeGL()
-    if (_display_texture_program) {
-      _display_texture_program->bind();
-      _display_texture_program->setUniformValue("u_texture", 0);
+    // All we need to do is bind the VAO. All VBO/EBO/Attribute data is already set.
+    _display_quad_vao->bind();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    _display_quad_vao->release();
 
-      // Render full-screen quad (vertices from -1 to 1 in NDC)
-      float vertices[] = {
-              -1.0f, -1.0f,  0.0f, 0.0f,  // Bottom-left
-              1.0f, -1.0f,  1.0f, 0.0f,  // Bottom-right
-              1.0f,  1.0f,  1.0f, 1.0f,  // Top-right
-              -1.0f,  1.0f,  0.0f, 1.0f   // Top-left
-      };
-      unsigned int indices[] = {
-              0, 1, 2,
-              2, 3, 0
-      };
+    _display_texture_program->release();
 
-      // You'll need to create VAO/VBO for this quad in initializeGL()
-      _display_quad_vao->bind();
-      _display_quad_vbo->bind();
-      _display_quad_vbo->write(0, vertices, sizeof(vertices));
-
-      glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-      glEnableVertexAttribArray(1);
-      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-      _display_quad_vao->release();
-      _display_texture_program->release();
-    }
-
-    // Restore OpenGL state
+    // --- Restore OpenGL State (no changes here) ---
     if (depth_test_enabled) glEnable(GL_DEPTH_TEST);
     if (blend_enabled) glEnable(GL_BLEND);
     glUseProgram(current_program);
