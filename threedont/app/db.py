@@ -54,7 +54,6 @@ class SparqlEndpoint:
                 all_results[key].extend(results[key])
 
             if len(results) == 0:
-                print(results)
                 raise EmptyResultSetException(query)
 
             any_key = next(iter(results.keys()))
@@ -114,13 +113,14 @@ class SparqlEndpoint:
         if not 's' in results or not 'x' in results:
             raise WrongResultFormatException(['s', 'x'], list(results.keys()))
 
-        minimum = float(min(results['x']))
-        maximum = float(max(results['x']))
-        # print(minimum, maximum)
+        # convert to float
+        results_x = np.array(results['x'], dtype=np.float32)
+        minimum = results_x.min()
+        maximum = results_x.max()
+        print("Scalar query min: ", minimum, " max: ", maximum)
         default = minimum - (maximum - minimum) / 10
-        # scalars = np.empty(len(self.colors), dtype=np.float32)
         scalars = np.full(len(self.colors), default, dtype=np.float32)
-        for subject, scalar in zip(results['s'], results['x']):
+        for subject, scalar in zip(results['s'], results_x):
             i = self.iri_to_id[subject]
             scalars[i] = scalar
         return scalars

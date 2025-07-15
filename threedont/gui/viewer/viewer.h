@@ -129,6 +129,7 @@ public:
     } else {
       renderPoints();
     }
+    // glFinish();
   }
 
   int getServerPort() {

@@ -80,7 +80,8 @@ public:
     // create buffer for storing point indices obtained from octree
     glGenBuffers(1, &_buffer_octree_ids);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer_octree_ids);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _num_points * sizeof(unsigned int), nullptr, GL_DYNAMIC_DRAW);
+    // uses _sizes.size() because we count also centroids
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _sizes.size() * sizeof(unsigned int), nullptr, GL_DYNAMIC_DRAW);
 
     _attributes.reset();
     initColors();
@@ -201,7 +202,7 @@ public:
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer_octree_ids);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
                     sizeof(unsigned int) * num_points, (GLvoid *) indices);
-    glDrawElements(GL_POINTS, num_points, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_POINTS, num_points, GL_UNSIGNED_INT, nullptr);
 
     if (!use_color_map && !broadcast_attr)
       _program.disableAttributeArray("color");
@@ -491,6 +492,7 @@ private:
             "      frag_color = (!inBox && selected == 1.0) ? vec4(1, 1, 0, 1) : color_r;\n"
             "  }\n"
             "  float d = abs(dot(position.xyz - eye,view));\n"
+            // "  d = max(d, 0.001);\n" // fix division by zero
             "  if (projection_mode == 1) d = 1.0;\n"
             "  if (size == 0.0) {\n"
             "    inner_radius = point_size / d * height / (2.0 * image_t);\n"

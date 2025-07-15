@@ -27,6 +27,7 @@ View, query and manually annotate pointclouds ontologies.
 - [x] block dock floating
 - [x] fix viewer focus issue
 - [x] fix OpenGL
+- [x] fix some random crashes
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
@@ -39,6 +40,8 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] embed virtuoso in the application
 - [ ] move from QTcpServer to QLocalServer
 - [ ] dynamically compute fast rendering LOD (based on render time)
+- [ ] investigate big point glitch
+- [ ] investigate empty view on heritage loading
  
 ## License
 

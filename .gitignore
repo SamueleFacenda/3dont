@@ -10,6 +10,7 @@ result
 *.so
 /virtuoso/
 /tmp.*.tdb
+.env
 
 .DS_Store
 __MACOSX/

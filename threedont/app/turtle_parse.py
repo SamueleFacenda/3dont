@@ -24,6 +24,11 @@ class QueryResultWithTurtle(QueryResult):
             # it's not possible to distinguish between iri with prefix and simple string with a colon
             return var
 
+    def normalize_number(self, value):
+        if value.endswith('^^xsd:decimal'):
+            return value.split('"')[1]
+        return value
+
     def _convertN3(self):
         encoding = self.response.info().get_content_charset('utf-8')
         self._prefixes = {}
@@ -41,6 +46,7 @@ class QueryResultWithTurtle(QueryResult):
                 var, value = match.groups()
                 var = self.substitute_prefix(var)
                 value = self.substitute_prefix(value)
+                value = self.normalize_number(value)
                 if var not in out:
                     out[var] = []
                 out[var].append(value)
