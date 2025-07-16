@@ -318,7 +318,9 @@ private slots:
                            positions.size() * sizeof(float), clientConnection);
         qDebug() << "Viewer: received positions";
 
+        makeCurrent();
         _points->loadPoints(positions);
+        doneCurrent();
         _camera = QtCamera(_points->getBox());
         _camera.setAspectRatio((float) width() / height());
         _floor_grid->setFloorLevel(_points->getFloor());
@@ -326,7 +328,9 @@ private slots:
         break;
       }
       case 2: { // clear points
+        makeCurrent();
         _points->clearPoints();
+        doneCurrent();
         updateSlow();
         break;
       }
@@ -428,23 +432,30 @@ private slots:
           unsigned int *ptr = (unsigned int *) &payload[0];
           std::vector<unsigned int> selected;
           selected.reserve(num_selected);
-          for (quint64 i = 0; i < num_selected; i++)
+          for (quint64 i = 0; i < num_selected; i++) {
             if (ptr[i] < _points->getNumPoints())
               selected.push_back(ptr[i]); // silently drop out of range indices
+          }
+          makeCurrent();
           _points->setSelected(selected);
+          doneCurrent();
         } else if (!strcmp(propertyName.c_str(), "color_map")) {
           quint64 num_colors = payloadLength / sizeof(float) / 4;
           if (payloadLength != num_colors * sizeof(float) * 4) break;
           float *ptr = (float *) &payload[0];
           std::vector<float> color_map(ptr, ptr + num_colors * 4);
+          makeCurrent();
           _points->setColorMap(color_map);
+          doneCurrent();
         } else if (!strcmp(propertyName.c_str(), "color_map_scale")) {
           if (payloadLength != sizeof(float) * 2) break;
           float *v = (float *) &payload[0];
           _points->setColorMapScale(v[0], v[1]);
         } else if (!strcmp(propertyName.c_str(), "curr_attribute_id")) {
           if (payloadLength != sizeof(unsigned int)) break;
+          makeCurrent();
           _points->setCurrentAttributeIndex(*(unsigned int *) &payload[0]);
+          doneCurrent();
         } else {
           // unrecognized property name, do nothing
           // todo: consider doing something
@@ -605,7 +616,9 @@ private slots:
         comm::receiveBytes(&payload[0], (qint64) payloadLength,
                            clientConnection);
 
+        makeCurrent();
         _points->loadAttributes(payload);
+        doneCurrent();
         updateSlow();
         break;
       }
