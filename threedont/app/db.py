@@ -173,6 +173,7 @@ class SparqlEndpoint:
         columns = list(result.keys())
         if 'x1' in columns and 'y1' in columns and 'z1' in columns:
             # select query
+            print("Detected select query, columns: ", columns)
             colors = np.copy(self.colors)
             coords = np.array((result['x1'], result['y1'], result['z1'])).T.astype(np.float32)
             for coord in coords :
@@ -181,9 +182,10 @@ class SparqlEndpoint:
                 except KeyError:
                     continue  # not all the results of a select are points
                 colors[i] = [1.0, 0.0, 0.0]
-                return colors, "select"
+            return colors, "select"
 
         if 'x1' in columns and 'y1' in columns and 'z1' in columns:
+            print("Detected scalar query, columns: ", columns)
             minimum = float(min(result['x1']))
             maximum = float(max(result['x1']))
             default = minimum - (maximum - minimum) / 10
