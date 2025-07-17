@@ -65,6 +65,8 @@
               nltk
               editdistance
               jarowinkler
+              boto3
+              awsiotpythonsdk
             ];
           };
           owlready2 = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, distutils}:

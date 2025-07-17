@@ -44,6 +44,10 @@ private slots:
   void setLegend(const QStringList &colors, const QStringList &labels);
   void onTreeViewContexMenuRequested(const QPoint &pos);
   void detailsClosed(bool visible);
+  void on_actionConfigure_AWS_Connection_triggered();
+  void on_actionSet_Arguments_PROVISIONAL_triggered();
+  void on_actionAdd_Sensor_triggered();
+  void on_actionUpdate_Sensors_and_Reason_triggered();
   void setProjectList(const QStringList &projects);
 
   [[nodiscard]] QStringList getPropertiesMapping(const QStringList &properties, const QStringList& words, const QStringList &defaults);

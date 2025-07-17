@@ -55,8 +55,18 @@
     <addaction name="actionLegend"/>
     <addaction name="actionRotate_camera_around"/>
    </widget>
+   <widget class="QMenu" name="menuSensors">
+    <property name="title">
+     <string>Sensors</string>
+    </property>
+    <addaction name="actionConfigure_AWS_Connection"/>
+    <addaction name="actionSet_Arguments_PROVISIONAL"/>
+    <addaction name="actionAdd_Sensor"/>
+    <addaction name="actionUpdate_Sensors_and_Reason"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuSensors"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
@@ -148,11 +158,6 @@
     </layout>
    </widget>
   </widget>
-  <action name="actionConnect_to_server">
-   <property name="text">
-    <string>Connect to server</string>
-   </property>
-  </action>
   <action name="actionLegend">
    <property name="checkable">
     <bool>true</bool>
@@ -163,6 +168,26 @@
    <property name="text">
     <string>Legend</string>
    </property>
+  </action>
+  <action name="actionConfigure_AWS_Connection">
+   <property name="text">
+    <string>Configure AWS Connection</string>
+   </property>
+  </action>
+  <action name="actionSet_Arguments_PROVISIONAL">
+   <property name="text">
+    <string>Set Arguments - PROVISIONAL</string>
+   </property>
+  </action>
+  <action name="actionAdd_Sensor">
+   <property name="text">
+    <string>Add Sensor</string>
+   </property>
+  </action>
+  <action name="actionUpdate_Sensors_and_Reason">
+   <property name="text">
+    <string>Update Sensors and Reason</string>
+    </property>
   </action>
   <action name="actionOpen_project">
    <property name="text">
