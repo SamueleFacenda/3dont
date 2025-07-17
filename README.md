@@ -42,6 +42,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] dynamically compute fast rendering LOD (based on render time)
 - [ ] investigate big point glitch
 - [ ] investigate empty view on heritage loading
+- [ ] avoid startup lag for dependency dowload
  
 ## License
 
