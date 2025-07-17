@@ -7,7 +7,7 @@ cose da fare per integrazione con interfaccia centrale:
 """
 
 from . import classes as cl
-from . import RDF_functions as RDF
+from . import rdf_functions as RDF
 
 
 def set_SensorMetadata(
