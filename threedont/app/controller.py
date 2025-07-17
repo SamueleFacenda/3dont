@@ -142,15 +142,14 @@ class Controller:
         print("Loading all the points... ", graph_url)
         self.gui.set_statusbar_content("Connecting to server...", 5)
         # TODO handle graph_url in GUI
-        self.sparql_client = SparqlEndpoint(graph_url, db_url,  namespace)
+        self.sparql_client = SparqlEndpoint(graph_url, db_url, namespace)
         print("Connected to server")
         self.gui.set_statusbar_content("Loading points from server...", 60)
         coords, colors = self.sparql_client.get_all()
         print("Points received from db")
         self.gui.set_statusbar_content("Points loaded", 5)
-        self.viewer_client.load(coords, colors)
-        print("Point size is ", self.config.get_visualizer_pointsSize())
         self.viewer_client.set(point_size=self.config.get_visualizer_pointsSize())
+        self.viewer_client.load(coords, colors)
 
     def view_point_details(self, id):
         iri = self.sparql_client.get_point_iri(id)
@@ -200,6 +199,7 @@ class Controller:
         openai_client = init_client() # TODO understand if can be done only once
         query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(), openai_client, self.gui)
         query  = '\n'.join(query)
+        print("Generated SPARQL query: ", query)
         result, query_type = self.sparql_client.autodetect_query_nl(query)
         if query_type == "tabular":
             header = list(result.keys())
