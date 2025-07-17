@@ -1,9 +1,11 @@
+import itertools
+import re
+
+import networkx as nx
+import openai
 import owlready2 as owl2
 import rdflib
-import networkx as nx
-import re
-import openai
-import itertools
+
 
 def init_client():
     client = openai.OpenAI()
@@ -1257,7 +1259,7 @@ def clean_rdf_path(
                     # modifico triple prima e dopo con variabile
                     var_name = f"?{interval_classes[0]}_{path_ID}"
                     rdf_path[interval_start - 1] = (
-                        f"{rdf_path[interval_start-1].split()[0]} {rdf_path[interval_start-1].split()[1]} {var_name}."
+                        f"{rdf_path[interval_start - 1].split()[0]} {rdf_path[interval_start - 1].split()[1]} {var_name}."
                     )
                     rdf_path[interval_end] = (
                         f"{rdf_path[interval_end].split()[0]} {rdf_path[interval_end].split()[1]} {var_name}."
@@ -2371,7 +2373,7 @@ def nl_2_sparql(
         ont_namespace,
         graph_uri,
         client,
-        gui, # TODO make a class and avoid passing gui around
+        gui,  # TODO make a class and avoid passing gui around
 ):
     try:
         ontology_schema = owl2.get_ontology(ont_path).load()

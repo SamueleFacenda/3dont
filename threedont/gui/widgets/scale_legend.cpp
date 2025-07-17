@@ -30,7 +30,7 @@ void ColorScaleLegend::resizeEvent(QResizeEvent *event) {
   int oldColorStartX = colorStartX;
   int oldColorEndX = colorEndX;
 
-  colorStartX = fm.horizontalAdvance(labels[0]); // optionally divide by 2
+  colorStartX = fm.horizontalAdvance(labels[0]);                   // optionally divide by 2
   colorEndX = this->width() - fm.horizontalAdvance(labels.last()); // optionally divide by 2
   scaleHeight = std::min(this->height() - fm.height(), SCALE_MAX_HEIGHT);
 
@@ -107,7 +107,7 @@ void ColorScaleLegend::mouseMoveEvent(QMouseEvent *aEvent) {
   if (aEvent->buttons() & Qt::LeftButton && currentSlider != -1) {
     barX[currentSlider] = getXInLegendRegion(aEvent->pos().x());
     if (barX[0] >= barX[1])
-      barX[currentSlider] = barX[1-currentSlider] + (currentSlider == 0 ? -1 : 1); // Prevent overlap
+      barX[currentSlider] = barX[1 - currentSlider] + (currentSlider == 0 ? -1 : 1); // Prevent overlap
 
     updateLegendFromSliders();
   } else
@@ -124,7 +124,7 @@ void ColorScaleLegend::mouseReleaseEvent(QMouseEvent *aEvent) {
 
 void ColorScaleLegend::drawSliderHandle(QPainter *painter, int x, int height) {
   int handleHeight = height * HANDLE_HEIGHT_RATIO;
-  QRect handleRect(x - HANDLE_WIDTH/2, height / 2 - handleHeight/2, HANDLE_WIDTH, handleHeight);
+  QRect handleRect(x - HANDLE_WIDTH / 2, height / 2 - handleHeight / 2, HANDLE_WIDTH, handleHeight);
   painter->save();
   painter->setRenderHint(QPainter::Antialiasing);
   painter->setBrush(palette().color(QPalette::Button));

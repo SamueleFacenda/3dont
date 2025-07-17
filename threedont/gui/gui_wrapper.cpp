@@ -13,7 +13,7 @@ typedef struct {
 
 } GuiWrapperObject;
 
-static bool pyListToQStringList(PyObject *pyList, QStringList &qStringList, const std::string& name="List") {
+static bool pyListToQStringList(PyObject *pyList, QStringList &qStringList, const std::string &name = "List") {
   if (!PyList_Check(pyList)) {
     PyErr_SetString(PyExc_TypeError, (name + " must be a list").c_str());
     return false;

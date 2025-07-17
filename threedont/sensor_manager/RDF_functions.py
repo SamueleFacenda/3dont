@@ -1,14 +1,17 @@
-from . import Classes as cl
-from . import aws_iot_interface as aws
-import os
+import ast
+import datetime
 import importlib
 import inspect
-import ast
 import logging
+import os
 import subprocess
+
 import SPARQLWrapper
-import datetime
 import owlready2 as owl2
+
+from . import classes as cl
+from . import aws_iot_interface as aws
+
 
 # QUESTE FUNZIONI LEGGONO DIRETTAMENTE DA AWS IOT CORE, INCLUDENDO LE FUNZIONI DEDICATE.
 

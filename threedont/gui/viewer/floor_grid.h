@@ -93,7 +93,7 @@ private:
 
 class FloorGrid : protected OpenGLFuncs {
 public:
-  FloorGrid(QOpenGLWidget* parent)
+  FloorGrid(QOpenGLWidget *parent)
       : _visible(true),
         _parent(parent),
         _grid_line_color(0.7f, 0.7f, 0.7f, 1.0f),

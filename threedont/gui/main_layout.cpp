@@ -151,7 +151,7 @@ void MainLayout::setLegend(const QStringList &colors, const QStringList &labels)
     colorList.append(QColor(color));
 
   auto *legend = new ColorScaleLegend(colorList, labels, dock);
-  connect(legend, &ColorScaleLegend::rangeUpdated, [this](double min, double max) {controllerWrapper->setColorScale(min, max); });
+  connect(legend, &ColorScaleLegend::rangeUpdated, [this](double min, double max) { controllerWrapper->setColorScale(min, max); });
 
   dock->setWidget(legend);
   addDockWidget(Qt::BottomDockWidgetArea, dock);
@@ -185,7 +185,7 @@ void MainLayout::onTreeViewContexMenuRequested(const QPoint &pos) {
                                               "type here", &ok);
     if (!ok || newObject.isEmpty()) return;
     QString authorName = QInputDialog::getText(this, tr("Annotate"), tr("Annotation Author (Name Surname):"), QLineEdit::Normal,
-                                              "type here", &ok);
+                                               "type here", &ok);
     if (!ok || authorName.isEmpty()) return;
 
     controllerWrapper->annotateNode(subject.toStdString(), predicate.toStdString(), newObject.toStdString(), authorName.toStdString());
@@ -216,19 +216,19 @@ void MainLayout::detailsClosed(bool visible) {
 void MainLayout::on_actionConfigure_AWS_Connection_triggered() {
   bool ok;
   QString accessKey = QInputDialog::getText(this, tr("Configure AWS connection"), tr("Access Key:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                            QLineEdit::Normal, "type here", &ok);
   if (!ok || accessKey.isEmpty()) return;
 
   QString secretAccessKey = QInputDialog::getText(this, tr("Configure AWS connection"), tr("Secret Access Key:"),
-                                                    QLineEdit::Normal, "type here", &ok);
+                                                  QLineEdit::Normal, "type here", &ok);
   if (!ok || secretAccessKey.isEmpty()) return;
 
   QString region = QInputDialog::getText(this, tr("Configure AWS connection"), tr("Region:"),
-                                        QLineEdit::Normal, "eu-west-1", &ok);
+                                         QLineEdit::Normal, "eu-west-1", &ok);
   if (!ok || region.isEmpty()) return;
 
   QString profileName = QInputDialog::getText(this, tr("Configure AWS connection"), tr("Profile Name:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                              QLineEdit::Normal, "type here", &ok);
   if (!ok || profileName.isEmpty()) return;
 
   controllerWrapper->configureAWSConnection(accessKey.toStdString(), secretAccessKey.toStdString(), region.toStdString(), profileName.toStdString());
@@ -237,27 +237,27 @@ void MainLayout::on_actionConfigure_AWS_Connection_triggered() {
 void MainLayout::on_actionSet_Arguments_PROVISIONAL_triggered() {
   bool ok;
   QString graphUri = QInputDialog::getText(this, tr("Set Arguments"), tr("Graph Uri:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                           QLineEdit::Normal, "type here", &ok);
   if (!ok || graphUri.isEmpty()) return;
 
   QString ontPath = QInputDialog::getText(this, tr("Set Arguments"), tr("Domain Ontology Path:"),
-                                                    QLineEdit::Normal, "type here", &ok);
+                                          QLineEdit::Normal, "type here", &ok);
   if (!ok || ontPath.isEmpty()) return;
 
   QString popOntPath = QInputDialog::getText(this, tr("Set Arguments"), tr("RDF 3DGraph Path:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                             QLineEdit::Normal, "type here", &ok);
   if (!ok || popOntPath.isEmpty()) return;
 
   QString ontNamespace = QInputDialog::getText(this, tr("Set Arguments"), tr("Domain Ontology Namespace:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                               QLineEdit::Normal, "type here", &ok);
   if (!ok || ontNamespace.isEmpty()) return;
 
   QString populatedNamespace = QInputDialog::getText(this, tr("Set Arguments"), tr("3DGraph-specific Namespace:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                                     QLineEdit::Normal, "type here", &ok);
   if (!ok || populatedNamespace.isEmpty()) return;
 
   QString virtuosoIsql = QInputDialog::getText(this, tr("Set Arguments"), tr("Virtuoso ISQL Path:"),
-                                                    QLineEdit::Normal, "type here", &ok);
+                                               QLineEdit::Normal, "type here", &ok);
   if (!ok || virtuosoIsql.isEmpty()) return;
 
   controllerWrapper->provisionalSetArgs(graphUri.toStdString(), ontPath.toStdString(), popOntPath.toStdString(), ontNamespace.toStdString(), populatedNamespace.toStdString(), virtuosoIsql.toStdString());
@@ -266,35 +266,35 @@ void MainLayout::on_actionSet_Arguments_PROVISIONAL_triggered() {
 void MainLayout::on_actionAdd_Sensor_triggered() {
   bool ok;
   QString sensorName = QInputDialog::getText(this, tr("Add a Sensor"), tr("Desired Name of the Sensor:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                             QLineEdit::Normal, "type here", &ok);
   if (!ok || sensorName.isEmpty()) return;
 
   QString objectName = QInputDialog::getText(this, tr("Add a Sensor"), tr("Name of the Described Entity:"),
-                                                    QLineEdit::Normal, "type here", &ok);
+                                             QLineEdit::Normal, "type here", &ok);
   if (!ok || objectName.isEmpty()) return;
 
   QString propertyName = QInputDialog::getText(this, tr("Add a Sensor"), tr("Name of the Measured Property:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                               QLineEdit::Normal, "type here", &ok);
   if (!ok || propertyName.isEmpty()) return;
 
   QString certPemPath = QInputDialog::getText(this, tr("Add a Sensor"), tr("Path for the Certificate:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                              QLineEdit::Normal, "type here", &ok);
   if (!ok || certPemPath.isEmpty()) return;
 
   QString privateKeyPath = QInputDialog::getText(this, tr("Add a Sensor"), tr("Path for the Private Key:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                                 QLineEdit::Normal, "type here", &ok);
   if (!ok || privateKeyPath.isEmpty()) return;
 
   QString rootCaPath = QInputDialog::getText(this, tr("Add a Sensor"), tr("Path for the Root CA:"),
-                                                    QLineEdit::Normal, "type here", &ok);
+                                             QLineEdit::Normal, "type here", &ok);
   if (!ok || rootCaPath.isEmpty()) return;
 
   QString mqttTopic = QInputDialog::getText(this, tr("Add a Sensor"), tr("MQTT Topic:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                            QLineEdit::Normal, "type here", &ok);
   if (!ok || mqttTopic.isEmpty()) return;
 
   QString clientId = QInputDialog::getText(this, tr("Add a Sensor"), tr("Client ID:"),
-                                        QLineEdit::Normal, "type here", &ok);
+                                           QLineEdit::Normal, "type here", &ok);
   if (!ok || clientId.isEmpty()) return;
 
 
@@ -316,7 +316,7 @@ void MainLayout::setProjectList(const QStringList &projects) {
     openProjectMenu->clear();
   }
 
-  for (const QString &project : projects) {
+  for (const QString &project: projects) {
     QAction *action = openProjectMenu->addAction(project);
     connect(action, &QAction::triggered, this, [this, project]() {
       controllerWrapper->openProject(project.toStdString());
@@ -327,7 +327,7 @@ void MainLayout::setProjectList(const QStringList &projects) {
 void MainLayout::on_actionCreate_project_triggered() {
   bool ok;
   QString projectName = QInputDialog::getText(this, tr("Connect to server"), tr("Project name:"),
-                                        QLineEdit::Normal, "test", &ok);
+                                              QLineEdit::Normal, "test", &ok);
   if (!ok || projectName.isEmpty()) return;
 
   QString dbUrl = QInputDialog::getText(this, tr("Connect to server"), tr("Server URL:"),
@@ -335,7 +335,7 @@ void MainLayout::on_actionCreate_project_triggered() {
   if (!ok || dbUrl.isEmpty()) return;
 
   QString graphUri = QInputDialog::getText(this, tr("Connect to server"), tr("Graph uri:"),
-                                        QLineEdit::Normal, "http://localhost:8890/Nettuno", &ok);
+                                           QLineEdit::Normal, "http://localhost:8890/Nettuno", &ok);
   if (!ok || graphUri.isEmpty()) return;
 
   QString ontologyNamespace = QInputDialog::getText(this, tr("Connect to server"), tr("Ontology namespace:"),

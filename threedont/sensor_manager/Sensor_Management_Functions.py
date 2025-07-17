@@ -6,12 +6,12 @@ cose da fare per integrazione con interfaccia centrale:
 -
 """
 
-from . import Classes as cl
+from . import classes as cl
 from . import RDF_functions as RDF
 
 
 def set_SensorMetadata(
-    args: cl.Args,
+        args: cl.Args,
 ):  # questo lo dovrei implementare come costruttore interno alla classe ma ormai è così, sticazzi
     CertBundle = cl.SensorCertBundle(
         args.cert_pem_path,

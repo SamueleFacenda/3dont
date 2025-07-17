@@ -1,20 +1,19 @@
 import logging
 import sys
+from math import pi
 from queue import Queue
 from urllib.error import URLError
-from math import pi
-import owlready2 as owl2
 
+import owlready2 as owl2
 from SPARQLWrapper.SPARQLExceptions import QueryBadFormed
 
 from .db import SparqlEndpoint, WrongResultFormatException, EmptyResultSetException
+from .state import Project
 from .viewer import Viewer, get_color_map
 from ..gui import GuiWrapper
-from .state import Project
 from ..nl_2_sparql import nl_2_sparql, init_client
-
+from ..sensor_manager import classes as cl
 from ..sensor_manager import Sensor_Management_Functions as smf
-from ..sensor_manager import Classes as cl
 from ..sensor_manager import aws_iot_interface as aws
 
 __all__ = ["Controller"]
@@ -168,7 +167,7 @@ class Controller:
 
     @report_errors_to_gui
     def annotate_node(
-        self, subject_iri, predicate_name, object_name_or_value, author_name
+            self, subject_iri, predicate_name, object_name_or_value, author_name
     ):
         onto = self.Args.onto
         predicate = getattr(onto, predicate_name)
@@ -203,22 +202,22 @@ class Controller:
 
     @report_errors_to_gui
     def configure_AWS_connection(
-        self, access_key_id, secret_access_key, region, profile_name
+            self, access_key_id, secret_access_key, region, profile_name
     ):
         aws.set_aws_credentials(access_key_id, secret_access_key, region, profile_name)
         self.gui.set_statusbar_content("AWS configured for this device!", 5)
 
     @report_errors_to_gui
     def add_sensor(
-        self,
-        sensor_name,
-        object_name,
-        property_name,
-        cert_pem_path,
-        private_key_path,
-        root_ca_path,
-        mqtt_topic,
-        client_id,
+            self,
+            sensor_name,
+            object_name,
+            property_name,
+            cert_pem_path,
+            private_key_path,
+            root_ca_path,
+            mqtt_topic,
+            client_id,
     ):
         ##### set args
         self.Args.sensor_name = sensor_name
@@ -257,13 +256,13 @@ class Controller:
     ##### ONLY FOR DEBUGGING, UNTIL REAL ARG SETTING IS PREPARED IN "CONNECT TO SERVER" METHOD
     @report_errors_to_gui
     def provisional_set_args(
-        self,
-        graph_uri,
-        ont_path,
-        pop_ont_path,
-        namespace,
-        populated_namespace,
-        virtuoso_isql,
+            self,
+            graph_uri,
+            ont_path,
+            pop_ont_path,
+            namespace,
+            populated_namespace,
+            virtuoso_isql,
     ):
 
         self.Args.graph_uri = graph_uri
@@ -286,9 +285,10 @@ class Controller:
     def natural_language_query(self, nl_query):
         print("Natural language query: ", nl_query)
         onto_path = self.project.get_onto_path()
-        openai_client = init_client() # TODO understand if can be done only once
-        query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(), openai_client, self.gui)
-        query  = "\n".join(query)
+        openai_client = init_client()  # TODO understand if can be done only once
+        query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(),
+                            openai_client, self.gui)
+        query = "\n".join(query)
         print("Generated SPARQL query: ", query)
         result, query_type = self.sparql_client.autodetect_query_nl(query)
         if query_type == "tabular":
@@ -303,7 +303,7 @@ class Controller:
             self.viewer_client.attributes(result)
             self.viewer_client.set(curr_attribute_id=0)
         else:
-            print("Error, unknown query type: ", query_type) # TODO remove, shouldn't happen
+            print("Error, unknown query type: ", query_type)  # TODO remove, shouldn't happen
 
     def update_project_list(self):
         lst = Project.get_project_list()
@@ -330,7 +330,7 @@ class Controller:
         self.project.set_graphNamespace(graph_namespace)
         self.project.save()
         self.gui.set_statusbar_content(f"Created project: {project_name}", 5)
-        self.open_project(project_name) # maybe remove this
+        self.open_project(project_name)  # maybe remove this
 
     def set_color_scale(self, low, high):
         self.viewer_client.color_map("jet", (low, high))

@@ -16,7 +16,7 @@
 
 class PointCloud : protected OpenGLFuncs {
 public:
-  PointCloud(QOpenGLWidget* parent)
+  PointCloud(QOpenGLWidget *parent)
       : _parent(parent),
         _point_size(0.0f),
         _num_points(0),
@@ -139,7 +139,7 @@ public:
     _program.setUniformValue("mvpMatrix", camera.computeMVPMatrix(_full_box));
     _program.setUniformValue(
             "box_min", box ? box->getBox().topLeft()
-                           : QPointF());  // topLeft in Qt is bottom left in NDC
+                           : QPointF());                  // topLeft in Qt is bottom left in NDC
     _program.setUniformValue("box_max", box ? box->getBox().bottomRight()
                                             : QPointF()); // top right in NDC
     _program.setUniformValue("eye", camera.getCameraPosition());
@@ -243,7 +243,7 @@ public:
     glBindTexture(GL_TEXTURE_2D, _texture_color_map);
 
     if (use_color_map) {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)_color_map.size() / 4, 1, 0, GL_RGBA,
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int) _color_map.size() / 4, 1, 0, GL_RGBA,
                    GL_FLOAT, &_color_map[0]);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -328,7 +328,7 @@ public:
     }
     if (box.getType() == SelectionBox::ADD)
       mergeIndices(_selected_ids, new_indices);
-    else // box.getType() == SelectionBox::SUB
+    else                   // box.getType() == SelectionBox::SUB
       removeIndices(_selected_ids, new_indices);
     updateSelectionMask(); // TODO uses opengl check contex availability
   }

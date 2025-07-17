@@ -1,5 +1,4 @@
 from time import time
-from urllib.parse import urlparse
 
 import numpy as np
 from SPARQLWrapper import TURTLE
@@ -176,7 +175,7 @@ class SparqlEndpoint:
             print("Detected select query, columns: ", columns)
             colors = np.copy(self.colors)
             coords = np.array((result['x1'], result['y1'], result['z1'])).T.astype(np.float32)
-            for coord in coords :
+            for coord in coords:
                 try:
                     i = self.coords_to_id[tuple(coord)]
                 except KeyError:

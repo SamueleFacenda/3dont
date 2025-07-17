@@ -1,20 +1,20 @@
 #ifndef __MI_OPENGL_TEXT_H__
 #define __MI_OPENGL_TEXT_H__
 
-#include <QOpenGLWidget>
+#include "opengl_funcs.h"
+#include <QOpenGLBuffer>
 #include <QOpenGLContext>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLWidget>
 #include <QRectF>
 #include <QtCore/QHash>
 #include <QtCore/QSysInfo>
 #include <QtGlobal>
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
-#include <QOpenGLShaderProgram>
 #include <cmath>
 #include <iostream>
-#include "opengl_funcs.h"
 
 /* following text rendering code adapted from libs/opengl/Text.h and
    libs/opengl/Text.cpp of mifit project: https://code.google.com/p/mifit/ */
@@ -36,7 +36,7 @@ class Text : public OpenGLFuncs {
   };
 
 public:
-  Text(QOpenGLWidget* parent, const QFont& f)
+  Text(QOpenGLWidget *parent, const QFont &f)
       : _parent(parent),
         font(f),
         fontMetrics(f),
@@ -73,22 +73,22 @@ public:
     characters.clear();
   }
 
-  const QFont& getFont() const { return font; }
+  const QFont &getFont() const { return font; }
 
-  const QFontMetrics& getFontMetrics() const { return fontMetrics; }
+  const QFontMetrics &getFontMetrics() const { return fontMetrics; }
 
-  QSizeF computeTextSize(const QString& text) {
+  QSizeF computeTextSize(const QString &text) {
     QSizeF sz;
     for (int i = 0; i < text.length(); ++i) {
-      CharData& c = createCharacter(text[i]);
-      sz.setHeight(qMax(sz.height(), (qreal)c.height));
+      CharData &c = createCharacter(text[i]);
+      sz.setHeight(qMax(sz.height(), (qreal) c.height));
       sz.setWidth(sz.width() + c.width);
     }
     return sz;
   }
 
-  QRectF renderText(float x, float y, const QString& text,
-                    const QVector4D& color = QVector4D(1, 1, 1, 1)) {
+  QRectF renderText(float x, float y, const QString &text,
+                    const QVector4D &color = QVector4D(1, 1, 1, 1)) {
     if (!_shaderProgram || !_vao) return QRectF();
 
     // Convert screen coordinates to normalized device coordinates
@@ -125,7 +125,7 @@ public:
     QRectF rect(QPointF(x, y), QPointF(x, y));
 
     for (int i = 0; i < text.length(); ++i) {
-      CharData& c = createCharacter(text[i]);
+      CharData &c = createCharacter(text[i]);
 
       if (currentTextureId != c.textureId) {
         currentTextureId = c.textureId;
@@ -136,16 +136,16 @@ public:
       float w = c.width * 2.0f / _parent->width();
       float h = c.height * 2.0f / _parent->height();
 
-      rect.setHeight(qMax(rect.height(), (qreal)c.height));
+      rect.setHeight(qMax(rect.height(), (qreal) c.height));
       rect.setWidth(rect.width() + c.width);
 
       // Update vertex data for this character
       float vertices[] = {
               // Position (x, y)    // TexCoord (s, t)
-              currentX,     ndcY,     c.s[0], c.t[0],  // Bottom-left
-              currentX + w, ndcY,     c.s[1], c.t[0],  // Bottom-right
-              currentX + w, ndcY + h, c.s[1], c.t[1],  // Top-right
-              currentX,     ndcY + h, c.s[0], c.t[1]   // Top-left
+              currentX, ndcY, c.s[0], c.t[0],         // Bottom-left
+              currentX + w, ndcY, c.s[1], c.t[0],     // Bottom-right
+              currentX + w, ndcY + h, c.s[1], c.t[1], // Top-right
+              currentX, ndcY + h, c.s[0], c.t[1]      // Top-left
       };
 
       _vbo->bind();
@@ -163,10 +163,12 @@ public:
 
     // Restore OpenGL state
     if (!depthTestEnabled) glDisable(GL_DEPTH_TEST);
-    else glEnable(GL_DEPTH_TEST);
+    else
+      glEnable(GL_DEPTH_TEST);
 
     if (!blendEnabled) glDisable(GL_BLEND);
-    else glEnable(GL_BLEND);
+    else
+      glEnable(GL_BLEND);
 
     glUseProgram(currentProgram);
     glBindVertexArray(currentVAO);
@@ -212,10 +214,9 @@ private:
     _shaderProgram->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
     _shaderProgram->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
 
-    if (!_shaderProgram->link()) {
+    if (!_shaderProgram->link())
       std::cerr << "Failed to link shader program: "
                 << _shaderProgram->log().toStdString() << std::endl;
-    }
   }
 
   void initializeBuffers() {
@@ -232,10 +233,10 @@ private:
 
     // Set up vertex attributes
     glEnableVertexAttribArray(0); // position
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) 0);
 
     glEnableVertexAttribArray(1); // texture coordinates
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
 
     // Create and bind element buffer for indices
     _ebo = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
@@ -244,8 +245,8 @@ private:
 
     // Quad indices (two triangles)
     unsigned int indices[] = {
-            0, 1, 2,  // First triangle
-            2, 3, 0   // Second triangle
+            0, 1, 2, // First triangle
+            2, 3, 0  // Second triangle
     };
 
     _ebo->allocate(indices, sizeof(indices));
@@ -283,7 +284,7 @@ private:
     textures += texture;
   }
 
-  CharData& createCharacter(QChar c) {
+  CharData &createCharacter(QChar c) {
     ushort unicodeC = c.unicode();
     if (characters.contains(unicodeC)) return characters[unicodeC];
 
@@ -324,7 +325,7 @@ private:
     glTexSubImage2D(GL_TEXTURE_2D, 0, xOffset, yOffset, width, height, GL_RGBA,
                     GL_UNSIGNED_BYTE, image.bits());
 
-    CharData& character = characters[unicodeC];
+    CharData &character = characters[unicodeC];
     character.textureId = texture;
     character.width = fontMetrics.horizontalAdvance(c);
     character.height = fontMetrics.height();
@@ -337,7 +338,7 @@ private:
     return character;
   }
 
-  QOpenGLWidget* _parent;
+  QOpenGLWidget *_parent;
 
   QFont font;
   QFontMetrics fontMetrics;
@@ -352,10 +353,10 @@ private:
   GLint yOffset;
 
   // Modern OpenGL resources
-  QOpenGLShaderProgram* _shaderProgram;
-  QOpenGLVertexArrayObject* _vao;
-  QOpenGLBuffer* _vbo;
-  QOpenGLBuffer* _ebo;
+  QOpenGLShaderProgram *_shaderProgram;
+  QOpenGLVertexArrayObject *_vao;
+  QOpenGLBuffer *_vbo;
+  QOpenGLBuffer *_ebo;
 };
 
-#endif  // __MI_OPENGL_TEXT_H__
+#endif // __MI_OPENGL_TEXT_H__

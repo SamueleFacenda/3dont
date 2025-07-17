@@ -53,7 +53,7 @@ public:
   void updateSensorsAndReason();
   void provisionalSetArgs(const std::string &graph_uri, const std::string &ont_path, const std::string &pop_ont_path, const std::string &ontologyNamespace, const std::string &populated_namespace, const std::string &virtuoso_isql);
   void openProject(const std::string &projectName);
-  void createProject(const std::string &projectName, const std::string& dbUrl, const std::string& graphUri, const std::string &ontologyNamespace);
+  void createProject(const std::string &projectName, const std::string &dbUrl, const std::string &graphUri, const std::string &ontologyNamespace);
   void askProjectList();
   void setColorScale(double min, double max);
   void rotateAround();

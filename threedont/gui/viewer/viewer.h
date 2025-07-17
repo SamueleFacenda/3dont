@@ -1,7 +1,6 @@
 #ifndef __VIEWER_H__
 #define __VIEWER_H__
 
-#include <QOpenGLWidget>
 #include <QColor>
 #include <QCoreApplication>
 #include <QImage>
@@ -10,6 +9,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLWidget>
 #include <QString>
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -21,6 +21,7 @@
 #include <iostream>
 #include <limits>
 
+#include "alternative_frame_buffer.h"
 #include "background.h"
 #include "camera_dolly.h"
 #include "comm_funcs.h"
@@ -32,14 +33,13 @@
 #include "selection_box.h"
 #include "text.h"
 #include "timer.h"
-#include "alternative_frame_buffer.h"
 
 // #define OPENGL_DEBUG
 
 class Viewer : public QOpenGLWidget, protected OpenGLFuncs {
   Q_OBJECT
 public:
-  Viewer(QWidget *parent = nullptr): QOpenGLWidget(parent) {
+  Viewer(QWidget *parent = nullptr) : QOpenGLWidget(parent) {
     // initalize various states
     _socket_waiting_on_enter_key = nullptr;
     _timer_fine_render_delay = nullptr;
@@ -74,12 +74,12 @@ public:
     delete _server;
   }
 
-   void initializeGL() override {
+  void initializeGL() override {
     initializeOpenGLFunctions();
 #ifdef OPENGL_DEBUG
-    qDebug() << "OpenGL Version:" << (char*)glGetString(GL_VERSION);
-    qDebug() << "OpenGL Vendor:" << (char*)glGetString(GL_VENDOR);
-    qDebug() << "OpenGL Renderer:" << (char*)glGetString(GL_RENDERER);
+    qDebug() << "OpenGL Version:" << (char *) glGetString(GL_VERSION);
+    qDebug() << "OpenGL Vendor:" << (char *) glGetString(GL_VENDOR);
+    qDebug() << "OpenGL Renderer:" << (char *) glGetString(GL_RENDERER);
     auto logger = new QOpenGLDebugLogger(this);
     if (logger->initialize()) {
       connect(logger, &QOpenGLDebugLogger::messageLogged, this, [](const QOpenGLDebugMessage &msg) {
@@ -140,7 +140,6 @@ signals:
   void singlePointSelected(unsigned int);
 
 protected:
-
   void keyPressEvent(QKeyEvent *ev) override {
     qDebug() << "Viewer: key pressed" << ev->key();
     _dolly->stop();
@@ -432,10 +431,9 @@ private slots:
           unsigned int *ptr = (unsigned int *) &payload[0];
           std::vector<unsigned int> selected;
           selected.reserve(num_selected);
-          for (quint64 i = 0; i < num_selected; i++) {
+          for (quint64 i = 0; i < num_selected; i++)
             if (ptr[i] < _points->getNumPoints())
               selected.push_back(ptr[i]); // silently drop out of range indices
-          }
           makeCurrent();
           _points->setSelected(selected);
           doneCurrent();
@@ -664,7 +662,7 @@ private slots:
       case CHUNK: {
         std::size_t chunk_size = _refined_indices.size() - _chunk_offset;
         if (chunk_size > _max_chunk_size) chunk_size = _max_chunk_size;
-        if (chunk_size > 0){
+        if (chunk_size > 0) {
           makeCurrent();
           _fine_render_fbo->bind();
           _points->draw(&_refined_indices[_chunk_offset],
@@ -731,7 +729,7 @@ private:
 
   void updateSlow() {
     _fine_rendering_available = false;
-    update(); // do a fast rendering before fine rendering
+    update();                           // do a fast rendering before fine rendering
     _fine_render_state = TERMINATE;
     _timer_fine_render_delay->start(0); // schedule a fine rendering
   }
@@ -915,7 +913,6 @@ private:
   double _render_time;
   bool _show_text;
   bool _fine_rendering_available;
-
 };
 
 #endif // __VIEWER_H__

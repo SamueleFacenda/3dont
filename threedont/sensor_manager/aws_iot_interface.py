@@ -1,21 +1,21 @@
-import boto3
+import csv
+import datetime
 import json
 import os
-from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
-import os
-from pathlib import Path
-import datetime
 import time
-import csv
+from pathlib import Path
+
+import boto3
+from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
 ################################################ TODO
 # TODO
-#DA SISTEMARE PER GESTIONE DI SENSORI MULTI-PROPRIETA E PER ELASTICITà SULLE KEY CON CUI ACCEDERE AL JSON DI OUTPUT:
-#- [ ] sistemare di modo da gestire più prop in tutte le mie funzioni
-#- [ ] in fase di setup del sensore chiedere all’utente i nomi delle prop da misurare:
+# DA SISTEMARE PER GESTIONE DI SENSORI MULTI-PROPRIETA E PER ELASTICITà SULLE KEY CON CUI ACCEDERE AL JSON DI OUTPUT:
+# - [ ] sistemare di modo da gestire più prop in tutte le mie funzioni
+# - [ ] in fase di setup del sensore chiedere all’utente i nomi delle prop da misurare:
 #    - [ ] nomi nell’ontologia
 #    - [ ] nomi come chiavi nel json
-#- [ ] storare i nomi delle chiavi nel dict di config associati alle varie prop della ont con una struttura a dizionari innestati
+# - [ ] storare i nomi delle chiavi nel dict di config associati alle varie prop della ont con una struttura a dizionari innestati
 ################################################ TODO
 
 # ---------- CONFIGURATION ----------
@@ -28,10 +28,10 @@ MQTT_TOPIC = "sensors/+/data"
 # ---------- AWS LOCAL CREDENTIAL SETTING ---------
 # ONLY ONCE PER MACHINE
 def set_aws_credentials(
-    access_key_id: str,
-    secret_access_key: str,
-    region: str = "eu-west-1",
-    profile: str = "default",
+        access_key_id: str,
+        secret_access_key: str,
+        region: str = "eu-west-1",
+        profile: str = "default",
 ):
     """
     Saves AWS credentials to ~/.aws/credentials and ~/.aws/config
@@ -187,7 +187,6 @@ def update_historic(sensor_name: str, value, time):
 
 
 def get_sensor_data_from_name(sensor_name: str):
-
     config_path = Path(f"sensors/{sensor_name}.json")
     # Load configuration
     with open(config_path, "r") as f:
@@ -241,7 +240,7 @@ def get_sensor_data_from_name(sensor_name: str):
     mqtt_client.disconnect()
 
     message_dict["ImportTime"] = (
-        datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+            datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     )
     update_historic(sensor_name, message_dict["Value"], message_dict["AcquisitionTime"])
 

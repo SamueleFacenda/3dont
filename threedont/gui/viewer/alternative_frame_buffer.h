@@ -2,8 +2,10 @@
 #define THREEDONT_ALTERNATIVE_FRAME_BUFFER_H
 
 #include "opengl_funcs.h"
+#include <QOpenGLBuffer>
+#include <QOpenGLVertexArrayObject>
 
-class AlternativeFrameBuffer: public OpenGLFuncs {
+class AlternativeFrameBuffer : public OpenGLFuncs {
 public:
   AlternativeFrameBuffer() {
     initializeOpenGLFunctions();
@@ -20,8 +22,7 @@ public:
                                                       "void main() {\n"
                                                       "    gl_Position = vec4(a_pos, 0.0, 1.0);\n"
                                                       "    v_texCoord = a_texCoord;\n"
-                                                      "}\n"
-    );
+                                                      "}\n");
     _display_texture_program->addShaderFromSourceCode(QOpenGLShader::Fragment,
                                                       "#version 330 core\n"
                                                       "in vec2 v_texCoord;\n"
@@ -29,18 +30,16 @@ public:
                                                       "out vec4 fragColor;\n"
                                                       "void main() {\n"
                                                       "    fragColor = texture(u_texture, v_texCoord);\n"
-                                                      "}\n"
-    );
+                                                      "}\n");
     _display_texture_program->link();
 
     // Define constant quad data
     float vertices[] = {
             // positions     // texture coords
-            -1.0f, -1.0f,   0.0f, 0.0f,
-            1.0f, -1.0f,   1.0f, 0.0f,
-            1.0f,  1.0f,   1.0f, 1.0f,
-            -1.0f,  1.0f,   0.0f, 1.0f
-    };
+            -1.0f, -1.0f, 0.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 0.0f, 1.0f};
     unsigned int indices[] = {0, 1, 2, 2, 3, 0};
 
     _display_quad_vao = new QOpenGLVertexArrayObject();
@@ -60,10 +59,10 @@ public:
     // Configure vertex attributes. This state is stored in the VAO.
     // Position attribute
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)nullptr);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) nullptr);
     // Texture coordinate attribute
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
 
     _display_quad_vao->release(); // Unbind the VAO
   }
@@ -95,9 +94,8 @@ public:
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _depth_buffer);
 
     // Check framebuffer completeness
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
       qDebug() << "Fine render framebuffer not complete!";
-    }
 
     // Restore default framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -137,14 +135,13 @@ public:
   }
 
 private:
-
   GLuint _fbo;
   GLuint _texture;
   GLuint _depth_buffer;
-  QOpenGLShaderProgram* _display_texture_program;
-  QOpenGLVertexArrayObject* _display_quad_vao;
-  QOpenGLBuffer* _display_quad_vbo;
-  QOpenGLBuffer* _display_quad_ebo;
+  QOpenGLShaderProgram *_display_texture_program;
+  QOpenGLVertexArrayObject *_display_quad_vao;
+  QOpenGLBuffer *_display_quad_vbo;
+  QOpenGLBuffer *_display_quad_ebo;
 };
 
 
