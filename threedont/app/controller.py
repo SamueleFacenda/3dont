@@ -3,6 +3,7 @@ import sys
 from queue import Queue
 from urllib.error import URLError
 from math import pi
+import owlready2 as owl2
 
 from SPARQLWrapper.SPARQLExceptions import QueryBadFormed
 
@@ -12,7 +13,11 @@ from ..gui import GuiWrapper
 from .state import Project
 from ..nl_2_sparql import nl_2_sparql, init_client
 
-__all__ = ['Controller']
+from ..sensor_manager import Sensor_Management_Functions as smf
+from ..sensor_manager import Classes as cl
+from ..sensor_manager import aws_iot_interface as aws
+
+__all__ = ["Controller"]
 
 """
     The commands_pipe will transport function calls from the GUI to the Controller.
@@ -52,7 +57,7 @@ def report_errors_to_gui(func):
             self.gui.set_statusbar_content(f"Connection error: {e}", 5)
             raise e
         except QueryBadFormed as e:
-            response = str(e).split('Response:\n')[1]
+            response = str(e).split("Response:\n")[1]
             self.gui.set_query_error(f"Bad query: {response}")
             raise e
         except WrongResultFormatException as e:
@@ -75,6 +80,7 @@ class Controller:
         viewer_server_port = self.gui.get_viewer_server_port()
         self.viewer_client = Viewer(viewer_server_port)
         self.sparql_client = None
+        self.Args = cl.Args()
         self.project = None
 
     def stop(self):
@@ -161,13 +167,16 @@ class Controller:
         self.gui.view_node_details(details, iri)
 
     @report_errors_to_gui
-    def annotate_node(self, iri, predicate, value):
-        print("Controller: ", iri, predicate, value)
-        if self.sparql_client is None:
-            print("No connection to server")
-            return
-
-        self.sparql_client.annotate_node(iri, predicate, value)
+    def annotate_node(
+        self, subject_iri, predicate_name, object_name_or_value, author_name
+    ):
+        onto = self.Args.onto
+        predicate = getattr(onto, predicate_name)
+        pop_base = self.Args.populated_base
+        subject = owl2.IRIS[subject_iri[1:-1]]
+        if predicate in onto.object_properties():
+            obj = getattr(onto, object_name_or_value)
+        smf.command_manual_annotation(self.Args, subject, predicate, obj, author_name)
 
     def select_all_subjects(self, predicate, object):
         colors = self.sparql_client.select_all_subjects(predicate, object)
@@ -193,12 +202,93 @@ class Controller:
         self.gui.set_legend(colors, labels)
 
     @report_errors_to_gui
+    def configure_AWS_connection(
+        self, access_key_id, secret_access_key, region, profile_name
+    ):
+        aws.set_aws_credentials(access_key_id, secret_access_key, region, profile_name)
+        self.gui.set_statusbar_content("AWS configured for this device!", 5)
+
+    @report_errors_to_gui
+    def add_sensor(
+        self,
+        sensor_name,
+        object_name,
+        property_name,
+        cert_pem_path,
+        private_key_path,
+        root_ca_path,
+        mqtt_topic,
+        client_id,
+    ):
+        ##### set args
+        self.Args.sensor_name = sensor_name
+        self.Args.object_name = object_name
+        self.Args.property_name = property_name
+        self.Args.cert_pem_path = cert_pem_path
+        self.Args.private_key_path = private_key_path
+        self.Args.root_ca_path = root_ca_path
+        self.Args.mqtttopic = mqtt_topic
+        self.Args.client_id = client_id
+        self.gui.set_statusbar_content("Adding Sensor...", 5)
+        #####execute function
+        smf.command_add_sensor(self.Args)
+        self.gui.set_statusbar_content("Sensor Added!", 5)
+        ##### update onto
+        self.Args.onto = owl2.get_ontology(self.Args.ont_path).load()
+        self.gui.set_statusbar_content("Ontology Updated!", 5)
+        self.gui.set_statusbar_content(
+            "You can add other sensors or update their value, but refresh server connection to see it in the viewer",
+            5,
+        )
+
+    @report_errors_to_gui
+    def update_sensors_and_reason(self):
+        self.gui.set_statusbar_content("Updating all Sensors and Reasoning...", 5)
+        smf.command_update_sensors_and_reason(self.Args)
+        self.gui.set_statusbar_content("Sensors Updated, Reasoning executed!", 5)
+        ##### update onto
+        self.Args.onto = owl2.get_ontology(self.Args.ont_path).load()
+        self.gui.set_statusbar_content("Ontology Updated!", 5)
+        self.gui.set_statusbar_content(
+            "You can add other sensors or update their value, but refresh server connection to see it in the viewer",
+            5,
+        )
+
+    ##### ONLY FOR DEBUGGING, UNTIL REAL ARG SETTING IS PREPARED IN "CONNECT TO SERVER" METHOD
+    @report_errors_to_gui
+    def provisional_set_args(
+        self,
+        graph_uri,
+        ont_path,
+        pop_ont_path,
+        namespace,
+        populated_namespace,
+        virtuoso_isql,
+    ):
+
+        self.Args.graph_uri = graph_uri
+        self.Args.ont_path = ont_path
+        self.Args.pop_ont_path = pop_ont_path
+        self.Args.onto = owl2.get_ontology(self.Args.pop_ont_path).load()
+        self.Args.base = owl2.get_namespace(namespace)
+        self.Args.populated_base = owl2.get_namespace(populated_namespace)
+        self.Args.virtuoso_isql = virtuoso_isql
+        import SPARQLWrapper
+
+        wrapper = SPARQLWrapper.Wrapper.SPARQLWrapper(
+            endpoint="http://localhost:8890/sparql"
+        )
+        wrapper.setReturnFormat("csv")
+        wrapper.setCredentials("dba", "dba")
+        self.Args.wrapper = wrapper
+        self.gui.set_statusbar_content("Args configured!", 5)
+
     def natural_language_query(self, nl_query):
         print("Natural language query: ", nl_query)
         onto_path = self.project.get_onto_path()
         openai_client = init_client() # TODO understand if can be done only once
         query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(), openai_client, self.gui)
-        query  = '\n'.join(query)
+        query  = "\n".join(query)
         print("Generated SPARQL query: ", query)
         result, query_type = self.sparql_client.autodetect_query_nl(query)
         if query_type == "tabular":
@@ -216,7 +306,7 @@ class Controller:
             print("Error, unknown query type: ", query_type) # TODO remove, shouldn't happen
 
     def update_project_list(self):
-        lst =  Project.get_project_list()
+        lst = Project.get_project_list()
         self.gui.set_project_list(lst)
 
     def open_project(self, project_name):
@@ -243,7 +333,7 @@ class Controller:
         self.open_project(project_name) # maybe remove this
 
     def set_color_scale(self, low, high):
-        self.viewer_client.color_map('jet', (low, high))
+        self.viewer_client.color_map("jet", (low, high))
 
     def rotate_around(self, n_steps=12):
         theta = self.viewer_client.get('theta')[0]
