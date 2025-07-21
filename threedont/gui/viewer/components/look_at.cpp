@@ -43,7 +43,11 @@ void LookAt::draw(const QtCamera &camera) {
   _program.enableAttributeArray("color");
   _program.setAttributeArray("color", GL_FLOAT, 0, 3);
 
-  glLineWidth(2.0f);
+  GLfloat lineWidthRange[2];
+  glGetFloatv(GL_LINE_WIDTH_RANGE, lineWidthRange);
+  float clampedWidth = std::clamp(2.0f, lineWidthRange[0], lineWidthRange[1]);
+  qDebug() << "Line width range:" << lineWidthRange[0] << "to" << lineWidthRange[1];
+  glLineWidth(clampedWidth); // TODO fix and understand
   glDrawArrays(GL_LINES, 0, 6);
 
   _program.disableAttributeArray("position");

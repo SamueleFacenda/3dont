@@ -1,9 +1,9 @@
 #ifndef __OPENGLFUNCS_H__
 #define __OPENGLFUNCS_H__
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_3_2_Core>
+#include <QOpenGLFunctions_3_3_Core>
 
-class OpenGLFuncs : public QOpenGLFunctions_3_2_Core {
+class OpenGLFuncs : public QOpenGLFunctions_3_3_Core {
   // extends QOpenGLFunctions with some helper and error checking functions
 public:
   OpenGLFuncs();

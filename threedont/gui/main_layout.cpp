@@ -12,15 +12,7 @@ MainLayout::MainLayout(ControllerWrapper *controllerWrapper, QWidget *parent)
   ui->errorLabel->setVisible(false);
   ui->statusbar->showMessage(tr("Loading..."));
 
-  // set opengl profile
-  QSurfaceFormat format;
-  format.setOption(QSurfaceFormat::DebugContext);
-  // format.setVersion(3, 2);
-  // format.setProfile(QSurfaceFormat::CoreProfile);
-  // format.setDepthBufferSize(24);
-
   viewer = new Viewer(this);
-  viewer->setFormat(format);
   viewer->setFocusPolicy(Qt::StrongFocus);
   setCentralWidget(viewer);
   ui->statusbar->showMessage(tr("Ready"), 5000);
