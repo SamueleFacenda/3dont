@@ -4,7 +4,8 @@
 #include "Eigen/Sparse"
 #include <vector>
 
-template <typename T> class Spline {
+template<typename T>
+class Spline {
 public:
   Spline(const std::vector<T> &ts, const std::vector<T> &vs);
   virtual ~Spline();
@@ -22,25 +23,29 @@ protected:
   std::vector<T> _vs;
 };
 
-template <typename T> class ConstantSpline : public Spline<T> {
+template<typename T>
+class ConstantSpline : public Spline<T> {
 public:
   ConstantSpline(const std::vector<T> &ts, const std::vector<T> &vs);
   ~ConstantSpline();
   T eval(T t) const override;
 };
 
-template <typename T> class LinearSpline : public Spline<T> {
+template<typename T>
+class LinearSpline : public Spline<T> {
 public:
   LinearSpline(const std::vector<T> &ts, const std::vector<T> &vs);
   ~LinearSpline();
   T eval(T t) const override;
 };
 
-template <typename T> class CubicSpline : public Spline<T> {
+template<typename T>
+class CubicSpline : public Spline<T> {
 public:
   typedef Eigen::Triplet<float> Triplet;
   typedef Eigen::SparseMatrix<float, Eigen::RowMajor> SpMat;
-  enum BoundaryBehavior { NATURAL, PERIODIC };
+  enum BoundaryBehavior { NATURAL,
+                          PERIODIC };
   CubicSpline(const std::vector<float> &ts, const std::vector<float> &vs,
               BoundaryBehavior boundaryBehavior = NATURAL);
   ~CubicSpline();

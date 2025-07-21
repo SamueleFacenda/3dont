@@ -48,7 +48,8 @@ public:
   void buildTree(std::vector<float> &point_xyz, std::vector<float> &point_size,
                  unsigned int max_leaf_size = 64);
 
-  enum ProjectionMode { PERSPECTIVE, ORTHOGRAPHIC };
+  enum ProjectionMode { PERSPECTIVE,
+                        ORTHOGRAPHIC };
   void getIndices(std::vector<unsigned int> &indices, const Camera &camera,
                   float vfov, float z_near, unsigned int width,
                   unsigned int height, float fudge_factor = 0.25f) const;
@@ -66,11 +67,11 @@ public:
                        const ProjectionMode projection_mode) const;
 
   void getClickIndicesBrute(
-      std::vector<unsigned int> &indices, const float screen_x,
-      const float screen_y, const float screen_radius, const float screen_width,
-      const float screen_height, const float vfov,
-      const float near_clip, // positive, distance along -view
-      const Camera &camera, const ProjectionMode projection_mode) const;
+          std::vector<unsigned int> &indices, const float screen_x,
+          const float screen_y, const float screen_radius, const float screen_width,
+          const float screen_height, const float vfov,
+          const float near_clip, // positive, distance along -view
+          const Camera &camera, const ProjectionMode projection_mode) const;
 
 private:
   static void traversalOrder(unsigned int (&nodeIndices)[8],
@@ -85,15 +86,15 @@ private:
                           const float (&node_corner)[3], const float node_size,
                           const float (&view)[3], const float (&eye)[3]);
   static void getClickIndicesBruteHelper(
-      int &min_idx, float &d_min, const float *points, const int count,
-      const float (&click_pos)[2], const float click_radius,
-      const CameraFrustum &frustum, const ProjectionMode &projection_mode);
+          int &min_idx, float &d_min, const float *points, const int count,
+          const float (&click_pos)[2], const float click_radius,
+          const CameraFrustum &frustum, const ProjectionMode &projection_mode);
   void getClickIndicesHelper(
-      std::vector<unsigned int> &indices, float &d_min, const Node *node,
-      const float (&node_corner)[3], const float node_size,
-      const float (&click_pos)[2], const float click_radius,
-      const CameraFrustum &frustum,
-      const ProjectionMode projection_mode = PERSPECTIVE) const;
+          std::vector<unsigned int> &indices, float &d_min, const Node *node,
+          const float (&node_corner)[3], const float node_size,
+          const float (&click_pos)[2], const float click_radius,
+          const CameraFrustum &frustum,
+          const ProjectionMode projection_mode = PERSPECTIVE) const;
 
   Octree(const Octree &);
   Octree &operator=(Octree);
@@ -121,7 +122,9 @@ private:
   boundOrthoProjectedAABB(float (&bound_center)[2], float (&bound_size)[2],
                           const float (&cube_center)[3],
                           const float cube_size);
-  enum IntersectResult { OUTSIDE = 0, UNCERTAIN = 1, INSIDE = 2 };
+  enum IntersectResult { OUTSIDE = 0,
+                         UNCERTAIN = 1,
+                         INSIDE = 2 };
   static IntersectResult intersectBoxes2D(const float (&box_1_center)[2],
                                           const float (&box_1_size)[2],
                                           const float (&box_2_center)[2],
@@ -129,12 +132,12 @@ private:
   bool cubeInFrustum(const float (&cube_corner)[3], const float cube_size,
                      const CameraFrustum &frustum);
   void getIndicesHelper(
-      std::vector<unsigned int> &indices, const Node *node,
-      const CameraFrustum &frustum, const float (&cube_corner)[3],
-      const float cube_size, const float eps,
-      const ProjectionMode projection_mode = PERSPECTIVE,
-      const float fudge_factor = 0.25f,
-      const IntersectResult parent_intersect_result = UNCERTAIN) const;
+          std::vector<unsigned int> &indices, const Node *node,
+          const CameraFrustum &frustum, const float (&cube_corner)[3],
+          const float cube_size, const float eps,
+          const ProjectionMode projection_mode = PERSPECTIVE,
+          const float fudge_factor = 0.25f,
+          const IntersectResult parent_intersect_result = UNCERTAIN) const;
   unsigned int countNodesHelper(const Node *node, bool count_leaf = true);
 
   unsigned int _max_leaf_size;

@@ -1,10 +1,10 @@
 #ifndef __CAMERADOLLY_H__
 #define __CAMERADOLLY_H__
-#include "../utils/timer.h"
-#include "splines.h"
 #include <QVector3D>
 #include <QtGlobal>
 #include <vector>
+#include "../utils/timer.h"
+#include "splines.h"
 
 class CameraPose {
 public:

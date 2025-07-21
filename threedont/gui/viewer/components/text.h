@@ -68,4 +68,3 @@ private:
 };
 
 #endif // __MI_OPENGL_TEXT_H__
-

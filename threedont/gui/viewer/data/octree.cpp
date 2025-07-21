@@ -1,7 +1,7 @@
 #include "octree.h"
 #include <algorithm>
-#include <limits>
 #include <cmath>
+#include <limits>
 
 Octree::Octree()
     : _max_leaf_size(64), _num_points(0), _root(nullptr),
@@ -35,7 +35,7 @@ void Octree::buildTree(std::vector<float> &point_xyz,
   deleteTree(_root);
 
   _max_leaf_size = max_leaf_size;
-  _num_points = (unsigned int)point_xyz.size() / 3;
+  _num_points = (unsigned int) point_xyz.size() / 3;
   _ptr_point_xyz = &point_xyz;
   _ptr_point_size = &point_size;
 
@@ -51,8 +51,7 @@ void Octree::buildTree(std::vector<float> &point_xyz,
   float cube_center[3] = {0.5f * (box.x(0) + box.x(1)),
                           0.5f * (box.y(0) + box.y(1)),
                           0.5f * (box.z(0) + box.z(1))};
-  float cube_size = (std::max)(
-      box.x(1) - box.x(0), (std::max)(box.y(1) - box.y(0), box.z(1) - box.z(0)));
+  float cube_size = (std::max) (box.x(1) - box.x(0), (std::max) (box.y(1) - box.y(0), box.z(1) - box.z(0)));
   float cube_corner[3] = {cube_center[0] - 0.5f * cube_size,
                           cube_center[1] - 0.5f * cube_size,
                           cube_center[2] - 0.5f * cube_size};
@@ -96,7 +95,7 @@ void Octree::getIndices(std::vector<unsigned int> &indices,
   camera.getRightVector(frustum.right);
   camera.getUpVector(frustum.up);
   camera.getViewVector(frustum.view);
-  frustum.setImagePlane(vfov, (float)width / height);
+  frustum.setImagePlane(vfov, (float) width / height);
   frustum.z_near = z_near;
 
   float eps = frustum.image_t * 2.0f / height;
@@ -148,9 +147,9 @@ void Octree::getClickIndices(std::vector<unsigned int> &indices,
                                     screen_width / screen_height);
 
   float click_pos[2] = {(2.0f * screen_x / screen_width - 1.0f) *
-                            frustum.image_r,
+                                frustum.image_r,
                         (2.0f * screen_y / screen_height - 1.0f) *
-                            frustum.image_t};
+                                frustum.image_t};
   float click_radius = screen_radius / screen_width * 2.0f * frustum.image_r;
 
   getClickIndicesHelper(indices, d_min, _root, _lower_left_corner, _cube_size,
@@ -161,10 +160,10 @@ void Octree::getClickIndices(std::vector<unsigned int> &indices,
 }
 
 void Octree::getClickIndicesBrute(
-    std::vector<unsigned int> &indices, const float screen_x,
-    const float screen_y, const float screen_radius, const float screen_width,
-    const float screen_height, const float vfov, const float near_clip,
-    const Camera &camera, const ProjectionMode projection_mode) const {
+        std::vector<unsigned int> &indices, const float screen_x,
+        const float screen_y, const float screen_radius, const float screen_width,
+        const float screen_height, const float vfov, const float near_clip,
+        const Camera &camera, const ProjectionMode projection_mode) const {
   float d_min = std::numeric_limits<float>::max();
   CameraFrustum frustum;
   if (projection_mode == PERSPECTIVE)
@@ -175,9 +174,9 @@ void Octree::getClickIndicesBrute(
                                     screen_width / screen_height);
 
   float click_pos[2] = {(2.0f * screen_x / screen_width - 1.0f) *
-                            frustum.image_r,
+                                frustum.image_r,
                         (2.0f * screen_y / screen_height - 1.0f) *
-                            frustum.image_t};
+                                frustum.image_t};
   float click_radius = screen_radius / screen_width * 2.0f * frustum.image_r;
 
   int min_idx;
@@ -234,7 +233,7 @@ float Octree::boxToPointDistance(const float (&box_center)[2],
   for (int i = 0; i < 2; i++) {
     float a = box_center[i] - 0.5f * box_size[i];
     float b = box_center[i] + 0.5f * box_size[i];
-    float x = (std::max)(0.0f, (std::max)(point[i] - b, a - point[i]));
+    float x = (std::max) (0.0f, (std::max) (point[i] - b, a - point[i]));
     d += x * x;
   }
   return sqrtf(d);
@@ -258,9 +257,9 @@ void Octree::projectNode(float &v_min, float &v_max,
 }
 
 void Octree::getClickIndicesBruteHelper(
-    int &min_idx, float &d_min, const float *points, const int count,
-    const float (&click_pos)[2], const float click_radius,
-    const CameraFrustum &frustum, const ProjectionMode &projection_mode) {
+        int &min_idx, float &d_min, const float *points, const int count,
+        const float (&click_pos)[2], const float click_radius,
+        const CameraFrustum &frustum, const ProjectionMode &projection_mode) {
   min_idx = -1;
   float click_radius_squared = click_radius * click_radius;
   for (int i = 0; i < count; i++) {
@@ -292,10 +291,10 @@ void Octree::getClickIndicesBruteHelper(
 }
 
 void Octree::getClickIndicesHelper(
-    std::vector<unsigned int> &indices, float &d_min, const Node *node,
-    const float (&node_corner)[3], const float node_size,
-    const float (&click_pos)[2], const float click_radius,
-    const CameraFrustum &frustum, const ProjectionMode projection_mode) const {
+        std::vector<unsigned int> &indices, float &d_min, const Node *node,
+        const float (&node_corner)[3], const float node_size,
+        const float (&click_pos)[2], const float click_radius,
+        const CameraFrustum &frustum, const ProjectionMode projection_mode) const {
   if (!node)
     return;
 
@@ -351,9 +350,9 @@ void Octree::getClickIndicesHelper(
       unsigned int child_index = trav_order[i];
       Node *child_node = node->children[child_index];
       float child_node_corner[3] = {
-          (child_index & 4) ? node_center[0] : node_corner[0],
-          (child_index & 2) ? node_center[1] : node_corner[1],
-          (child_index & 1) ? node_center[2] : node_corner[2]};
+              (child_index & 4) ? node_center[0] : node_corner[0],
+              (child_index & 2) ? node_center[1] : node_corner[1],
+              (child_index & 1) ? node_center[2] : node_corner[2]};
       getClickIndicesHelper(indices, d_min, child_node, child_node_corner,
                             0.5f * node_size, click_pos, click_radius, frustum,
                             projection_mode);
@@ -398,7 +397,7 @@ unsigned int Octree::partition(unsigned int *indices, unsigned char *labels,
   int right = count - 1;
   unsigned char mask = 1 << bit;
   for (;;) {
-    while (left < (int)count && (labels[left] & mask) == 0)
+    while (left < (int) count && (labels[left] & mask) == 0)
       left++;
     while (right >= 0 && (labels[right] & mask))
       right--;
@@ -414,7 +413,7 @@ unsigned int Octree::partition(unsigned int *indices, unsigned char *labels,
 
 unsigned int Octree::addCentroid(const float (&xyz)[3]) {
   std::vector<float> &point_xyz = *_ptr_point_xyz;
-  unsigned int index = (unsigned int)point_xyz.size() / 3;
+  unsigned int index = (unsigned int) point_xyz.size() / 3;
   for (unsigned int dim = 0; dim < 3; dim++)
     point_xyz.push_back(xyz[dim]);
   return index;
@@ -489,8 +488,8 @@ Octree::Node *Octree::buildTreeHelper(unsigned int *indices,
       labels[i] = 0;
       for (unsigned int dim = 0; dim < 3; dim++)
         labels[i] |=
-            (point_xyz[3 * indices[i] + dim] > cube_center[dim] ? 1 : 0)
-            << (2 - dim);
+                (point_xyz[3 * indices[i] + dim] > cube_center[dim] ? 1 : 0)
+                << (2 - dim);
     }
 
     unsigned int child_counts[8];
@@ -500,9 +499,9 @@ Octree::Node *Octree::buildTreeHelper(unsigned int *indices,
     unsigned char *ptr_labels = labels;
     for (unsigned int i = 0; i < 8; i++) {
       float child_corner[3] = {
-          (i & 4) == 0 ? cube_corner[0] : cube_center[0],
-          (i & 2) == 0 ? cube_corner[1] : cube_center[1],
-          (i & 1) == 0 ? cube_corner[2] : cube_center[2]};
+              (i & 4) == 0 ? cube_corner[0] : cube_center[0],
+              (i & 2) == 0 ? cube_corner[1] : cube_center[1],
+              (i & 1) == 0 ? cube_corner[2] : cube_center[2]};
       node->children[i] = buildTreeHelper(ptr_indices, ptr_labels,
                                           child_counts[i], child_corner,
                                           0.5f * cube_size);
@@ -529,16 +528,16 @@ void Octree::deleteTree(Node *root) {
 }
 
 void Octree::boundProjectedAABB(
-    float (&bound_center)[2], float (&bound_size)[2],
-    const float (&cube_center)[3], const float cube_size, float z_near) {
+        float (&bound_center)[2], float (&bound_size)[2],
+        const float (&cube_center)[3], const float cube_size, float z_near) {
   float delta = 0.5f * sqrtf(3.0f) * cube_size;
-  float z_back = (std::min)(z_near, cube_center[2] - delta);
-  float z_front = (std::min)(z_near, cube_center[2] + delta);
+  float z_back = (std::min) (z_near, cube_center[2] - delta);
+  float z_front = (std::min) (z_near, cube_center[2] + delta);
   for (int i = 0; i < 2; i++) {
-    float right = (std::max)((cube_center[i] + delta) / -z_back,
-                             (cube_center[i] + delta) / -z_front);
-    float left = (std::min)((cube_center[i] - delta) / -z_back,
-                            (cube_center[i] - delta) / -z_front);
+    float right = (std::max) ((cube_center[i] + delta) / -z_back,
+                              (cube_center[i] + delta) / -z_front);
+    float left = (std::min) ((cube_center[i] - delta) / -z_back,
+                             (cube_center[i] - delta) / -z_front);
     bound_center[i] = 0.5f * (right + left);
     bound_size[i] = (right - left);
   }
@@ -561,22 +560,22 @@ Octree::intersectBoxes2D(const float (&box_1_center)[2],
                          const float (&box_2_center)[2],
                          const float (&box_2_size)[2]) {
   if (box_1_center[0] + 0.5f * box_1_size[0] <
-          box_2_center[0] - 0.5f * box_2_size[0] ||
+              box_2_center[0] - 0.5f * box_2_size[0] ||
       box_1_center[0] - 0.5f * box_1_size[0] >
-          box_2_center[0] + 0.5f * box_2_size[0] ||
+              box_2_center[0] + 0.5f * box_2_size[0] ||
       box_1_center[1] + 0.5f * box_1_size[1] <
-          box_2_center[1] - 0.5f * box_2_size[1] ||
+              box_2_center[1] - 0.5f * box_2_size[1] ||
       box_1_center[1] - 0.5f * box_1_size[1] >
-          box_2_center[1] + 0.5f * box_2_size[1])
+              box_2_center[1] + 0.5f * box_2_size[1])
     return OUTSIDE;
   else if (box_1_center[0] + 0.5f * box_1_size[0] <
-               box_2_center[0] + 0.5f * box_2_size[0] &&
+                   box_2_center[0] + 0.5f * box_2_size[0] &&
            box_1_center[0] - 0.5f * box_1_size[0] >
-               box_2_center[0] - 0.5f * box_2_size[0] &&
+                   box_2_center[0] - 0.5f * box_2_size[0] &&
            box_1_center[1] + 0.5f * box_1_size[1] <
-               box_2_center[1] + 0.5f * box_2_size[1] &&
+                   box_2_center[1] + 0.5f * box_2_size[1] &&
            box_1_center[1] - 0.5f * box_1_size[1] >
-               box_2_center[1] - 0.5f * box_2_size[1])
+                   box_2_center[1] - 0.5f * box_2_size[1])
     return INSIDE;
   else
     return UNCERTAIN;
@@ -607,10 +606,10 @@ bool Octree::cubeInFrustum(const float (&cube_corner)[3],
 }
 
 void Octree::getIndicesHelper(
-    std::vector<unsigned int> &indices, const Node *node,
-    const CameraFrustum &frustum, const float (&cube_corner)[3],
-    const float cube_size, const float eps, const ProjectionMode projection_mode,
-    const float fudge_factor, const IntersectResult parent_intersect_result) const {
+        std::vector<unsigned int> &indices, const Node *node,
+        const CameraFrustum &frustum, const float (&cube_corner)[3],
+        const float cube_size, const float eps, const ProjectionMode projection_mode,
+        const float fudge_factor, const IntersectResult parent_intersect_result) const {
   float cube_center[3];
   for (int i = 0; i < 3; i++)
     cube_center[i] = cube_corner[i] + 0.5f * cube_size;
@@ -636,7 +635,7 @@ void Octree::getIndicesHelper(
     float image_center[2] = {0.0f, 0.0f};
     float image_size[2] = {2.0f * frustum.image_r, 2.0f * frustum.image_t};
     intersect_result =
-        intersectBoxes2D(bound_center, bound_size, image_center, image_size);
+            intersectBoxes2D(bound_center, bound_size, image_center, image_size);
   }
 
   if (intersect_result == OUTSIDE)
@@ -679,9 +678,9 @@ void Octree::getIndicesHelper(
         for (int i = 0; i < 2; i++) {
           unsigned int node_index = (b[0][i] << 2) + (b[1][j] << 1) + b[2][k];
           float child_corner[3] = {
-              b[0][i] == 0 ? cube_corner[0] : cube_center[0],
-              b[1][j] == 0 ? cube_corner[1] : cube_center[1],
-              b[2][k] == 0 ? cube_corner[2] : cube_center[2]};
+                  b[0][i] == 0 ? cube_corner[0] : cube_center[0],
+                  b[1][j] == 0 ? cube_corner[1] : cube_center[1],
+                  b[2][k] == 0 ? cube_corner[2] : cube_center[2]};
           if (!node->children[node_index])
             continue;
           getIndicesHelper(indices, node->children[node_index], frustum,
@@ -750,4 +749,3 @@ void Octree::CameraFrustum::setupOrthoCamera(CameraFrustum &frustum,
   frustum.image_t *= camera.getCameraDistance();
   frustum.z_near = std::numeric_limits<float>::max();
 }
-

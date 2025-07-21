@@ -22,7 +22,6 @@ namespace vltools {
     return (double) pcount.QuadPart / (double) pcfreq.QuadPart;
   }
 #else /* Not Win32/Cygwin */
-#include <cstddef>
 #include <sys/time.h>
 
   __inline double getTime() {

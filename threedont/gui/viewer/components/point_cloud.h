@@ -91,4 +91,3 @@ private:
 };
 
 #endif // __POINTCLOUD_H__
-

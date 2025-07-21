@@ -38,8 +38,8 @@ CameraDolly::CameraDolly() : _interp_type(LINEAR), _repeat(false), _active(false
 }
 
 CameraDolly::CameraDolly(const std::vector<float> &ts,
-            const std::vector<CameraPose> &poses,
-            InterpolationType interp, bool repeat)
+                         const std::vector<CameraPose> &poses,
+                         InterpolationType interp, bool repeat)
     : _ts(ts),
       _poses(poses),
       _interp_type(interp),
@@ -155,15 +155,14 @@ void CameraDolly::step() {
 }
 
 void CameraDolly::compute_splines() {
-  if (_interp_type == LINEAR) {
+  if (_interp_type == LINEAR)
     interpolate_linear();
-  } else if (_interp_type == CUBIC_NATURAL) {
+  else if (_interp_type == CUBIC_NATURAL)
     interpolate_cubic(CubicSpline<float>::NATURAL);
-  } else if (_interp_type == CUBIC_PERIODIC) {
+  else if (_interp_type == CUBIC_PERIODIC)
     interpolate_cubic(CubicSpline<float>::PERIODIC);
-  } else {
+  else
     interpolate_const();
-  }
 }
 
 void CameraDolly::interpolate_const() {

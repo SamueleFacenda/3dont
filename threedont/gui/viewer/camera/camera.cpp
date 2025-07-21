@@ -124,8 +124,8 @@ void Camera::computeViewVector(float (&v)[3], const float theta, const float phi
 }
 
 void Camera::computeCameraPosition(float (&p)[3], const float (&lookAt)[3],
-                            const float theta, const float phi,
-                            const float d) {
+                                   const float theta, const float phi,
+                                   const float d) {
   float v[3];
   computeViewVector(v, theta, phi);
   for (int i = 0; i < 3; i++)
@@ -133,14 +133,14 @@ void Camera::computeCameraPosition(float (&p)[3], const float (&lookAt)[3],
 }
 
 void Camera::computeCameraFrame(float (&x)[3], float (&y)[3], float (&z)[3],
-                         const float theta, const float phi) {
+                                const float theta, const float phi) {
   computeRightVector(x, theta, phi);
   computeUpVector(y, theta, phi);
   computeViewVector(z, theta, phi);
 }
 
 void Camera::computeCameraMatrix(float (&m)[16], float (&lookAt)[3],
-                          float theta, float phi, float d) {
+                                 float theta, float phi, float d) {
   float x[3];
   float y[3];
   float z[3];
