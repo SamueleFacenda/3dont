@@ -88,11 +88,10 @@ static int GuiWrapper_init(GuiWrapperObject *self, PyObject *args, PyObject *kwd
 
   QSurfaceFormat format;
   format.setRenderableType(QSurfaceFormat::OpenGL);
-  format.setProfile(QSurfaceFormat::CompatibilityProfile);
+  format.setProfile(QSurfaceFormat::CoreProfile);
   format.setVersion(3, 3);
   format.setDepthBufferSize(24);
   format.setStencilBufferSize(8);
-  // format.setSamples(4); // Enable multisampling if needed
   QSurfaceFormat::setDefaultFormat(format); 
 
   // This memory is intentionally leaked (it's fine if only done once)
