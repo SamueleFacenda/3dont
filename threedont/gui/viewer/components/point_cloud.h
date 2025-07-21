@@ -23,10 +23,11 @@ public:
   void loadPoints(std::vector<float> &positions);
   void clearPoints();
   void loadAttributes(const std::vector<char> &data);
+  void loadAttributes(const std::vector<float> &attr, quint64 attr_size, quint64 attr_dim);
   void clearAttributes();
 
   void draw(const QtCamera &camera, const SelectionBox *selection_box = nullptr);
-  void draw(const unsigned int *indices, unsigned int num_indices, const QtCamera &camera, const SelectionBox *selection_box = nullptr);
+  void draw(const unsigned int *indices, unsigned int num_points, const QtCamera &camera, const SelectionBox *selection_box = nullptr);
 
   void queryLOD(std::vector<unsigned int> &indices, const QtCamera &camera, float lod_multiplier = 1.0f) const;
   void queryNearPoint(std::vector<unsigned int> &indices, const QPointF &screen_pos, const QtCamera &camera) const;
@@ -34,10 +35,11 @@ public:
   void setSelected(const std::vector<unsigned int> &selected_ids);
   void getSelected(std::vector<unsigned int> &selected_ids) const;
   void selectNearPoint(const QPointF &screen_pos, const QtCamera &camera, bool deselect = false);
+  void deselectNearPoint(const QPointF &screen_pos, const QtCamera &camera);
   void selectInBox(const SelectionBox &selection_box, const QtCamera &camera);
   void clearSelected();
 
-  QVector3D computeSelectionCentroid() const;
+  QVector3D computeSelectionCentroid();
 
   // Getters
   const std::vector<float> &getPositions() const;
@@ -59,9 +61,12 @@ public:
 private:
   void compileProgram();
   void initColors();
-  void updateColors();
   void updateSelectionMask();
-  QVector3D screenToWorld(const QPointF &screen_pos, const QtCamera &camera) const;
+  void initializeVAO();
+  
+  static void mergeIndices(std::vector<unsigned int> &x, const std::vector<unsigned int> &y, bool xor_merge = false);
+  static void removeIndices(std::vector<unsigned int> &x, const std::vector<unsigned int> &y);
+  static std::size_t countSelected(const std::vector<unsigned int> &x, unsigned int y);
 
   QOpenGLWidget *_parent;
   QOpenGLShaderProgram _program;
@@ -77,12 +82,14 @@ private:
   PointAttributes _attributes;
   vltools::Box3<float> _full_box;
 
+  GLuint _vao;
   GLuint _buffer_positions;
   GLuint _buffer_colors;
   GLuint _buffer_scalars;
   GLuint _buffer_sizes;
   GLuint _buffer_selection_mask;
   GLuint _buffer_octree_ids;
+  GLuint _texture_color_map;
 
   std::vector<float> _color_map;
   float _color_map_min;
