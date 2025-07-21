@@ -29,11 +29,6 @@ void LookAt::draw(const QtCamera &camera) {
 
   glBindVertexArray(_vao);
 
-  GLfloat lineWidthRange[2];
-  glGetFloatv(GL_LINE_WIDTH_RANGE, lineWidthRange);
-  float clampedWidth = std::clamp(2.0f, lineWidthRange[0], lineWidthRange[1]);
-  qDebug() << "Line width range:" << lineWidthRange[0] << "to" << lineWidthRange[1];
-  glLineWidth(clampedWidth);
   glDrawArrays(GL_LINES, 0, 6);
 
   glBindVertexArray(0);
