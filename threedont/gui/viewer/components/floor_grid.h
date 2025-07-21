@@ -111,6 +111,7 @@ private:
   QOpenGLShaderProgram _persp_program;
   QOpenGLShaderProgram _ortho_program;
 
+  GLuint _vao;
   GLuint _buffer_square;
   GLuint _buffer_square_indices;
 };
