@@ -4,6 +4,13 @@ LookAt::LookAt()
     : _visible(true) {
   initializeOpenGLFunctions();
   compileProgram();
+  initializeBuffers();
+}
+
+LookAt::~LookAt() {
+  glDeleteVertexArrays(1, &_vao);
+  glDeleteBuffers(1, &_vbo_positions);
+  glDeleteBuffers(1, &_vbo_colors);
 }
 
 void LookAt::draw(const QtCamera &camera) {
@@ -20,40 +27,16 @@ void LookAt::draw(const QtCamera &camera) {
   _program.setUniformValue("d", d);
   _program.setUniformValue("lookat", lookat);
 
-  float positions[18] = {
-          0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-          0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-          0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
-  float colors[18] = {
-          1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-          0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-          0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
-
-  GLuint buffer_positions;
-  glGenBuffers(1, &buffer_positions);
-  glBindBuffer(GL_ARRAY_BUFFER, buffer_positions);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 18, positions, GL_STATIC_DRAW);
-  _program.enableAttributeArray("position");
-  _program.setAttributeArray("position", GL_FLOAT, 0, 3);
-
-  GLuint buffer_colors;
-  glGenBuffers(1, &buffer_colors);
-  glBindBuffer(GL_ARRAY_BUFFER, buffer_colors);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 18, colors, GL_STATIC_DRAW);
-  _program.enableAttributeArray("color");
-  _program.setAttributeArray("color", GL_FLOAT, 0, 3);
+  glBindVertexArray(_vao);
 
   GLfloat lineWidthRange[2];
   glGetFloatv(GL_LINE_WIDTH_RANGE, lineWidthRange);
   float clampedWidth = std::clamp(2.0f, lineWidthRange[0], lineWidthRange[1]);
   qDebug() << "Line width range:" << lineWidthRange[0] << "to" << lineWidthRange[1];
-  glLineWidth(clampedWidth); // TODO fix and understand
+  glLineWidth(clampedWidth);
   glDrawArrays(GL_LINES, 0, 6);
 
-  _program.disableAttributeArray("position");
-  _program.disableAttributeArray("color");
-  glDeleteBuffers(1, &buffer_positions);
-  glDeleteBuffers(1, &buffer_colors);
+  glBindVertexArray(0);
 }
 
 void LookAt::setVisible(bool visible) { _visible = visible; }
@@ -82,4 +65,35 @@ void LookAt::compileProgram() {
   _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
   _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
   _program.link();
+}
+
+void LookAt::initializeBuffers() {
+  float positions[18] = {
+          0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+          0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+          0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+  float colors[18] = {
+          1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+          0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+          0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
+
+  // Generate and bind VAO
+  glGenVertexArrays(1, &_vao);
+  glBindVertexArray(_vao);
+
+  // Create and setup position buffer
+  glGenBuffers(1, &_vbo_positions);
+  glBindBuffer(GL_ARRAY_BUFFER, _vbo_positions);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+
+  // Create and setup color buffer
+  glGenBuffers(1, &_vbo_colors);
+  glBindBuffer(GL_ARRAY_BUFFER, _vbo_colors);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
+
+  glBindVertexArray(0);
 }
