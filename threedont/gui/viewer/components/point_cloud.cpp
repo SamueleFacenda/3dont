@@ -541,7 +541,7 @@ void PointCloud::updateSelectionMask() {
   for (std::size_t i = 0; i < _selected_ids.size(); i++)
     selection_mask[_selected_ids[i]] = 1.0f;
   glBindBuffer(GL_ARRAY_BUFFER, _buffer_selection_mask);
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * _num_points, (GLvoid *) &selection_mask[0]);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * _positions.size() / 3, (GLvoid *) &selection_mask[0]);
 }
 
 void PointCloud::initializeVAO() {
