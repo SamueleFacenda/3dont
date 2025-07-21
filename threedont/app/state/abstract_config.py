@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from functools import partial
 from pathlib import Path
-from copy import deepcopy
 
 
 class AbstractConfig(ABC):
@@ -17,7 +17,8 @@ class AbstractConfig(ABC):
     """
     When adding a new config value to the application we want to update the existing config files (easy migration)
     """
-    def update_config_with_default(self, default_config: dict, config = None):
+
+    def update_config_with_default(self, default_config: dict, config=None):
         if config is None:
             config = self.config
         for key, value in default_config.items():
@@ -43,7 +44,6 @@ class AbstractConfig(ABC):
             # keep default config and write it
             self.save()
 
-
     def save(self):
         with open(self.file_path, 'w') as file:
             self.write_config_to_file(file)
@@ -55,7 +55,7 @@ class AbstractConfig(ABC):
             if part not in current:
                 raise KeyError(f"Invalid configuration path: {'/'.join(path)}")
             current = current[part]
-        return current # type of the last part in the path
+        return current  # type of the last part in the path
 
     def _set_config_value(self, attr, value, expected_type):
         path = attr.split('_')
@@ -94,6 +94,7 @@ class AbstractConfig(ABC):
     """
     Dynamically create getter and setter methods for configuration attributes.
     """
+
     def __getattr__(self, item):
         if item.startswith('get_'):
             attr = item[4:]

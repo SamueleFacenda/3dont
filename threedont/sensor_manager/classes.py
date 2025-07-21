@@ -1,8 +1,8 @@
-from pathlib import Path
 from dataclasses import dataclass
-from abc import ABC, abstractmethod
-from owlready2.namespace import Ontology, Namespace
+from pathlib import Path
+
 import SPARQLWrapper
+from owlready2.namespace import Ontology, Namespace
 
 
 class SensorMetadata:
@@ -17,7 +17,7 @@ class SensorMetadata:
 
 class SensorCertBundle:
     def __init__(
-        self, cert_pem_path, private_key_path, root_ca_path, client_id, mqtttopic
+            self, cert_pem_path, private_key_path, root_ca_path, client_id, mqtttopic
     ):
         self.cert_pem = Path(cert_pem_path).read_text()
         self.private_key = Path(private_key_path).read_text()

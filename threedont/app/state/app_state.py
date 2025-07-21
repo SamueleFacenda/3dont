@@ -1,6 +1,7 @@
-from platformdirs import user_data_dir
-from pathlib import Path
 import json
+from pathlib import Path
+
+from platformdirs import user_data_dir
 
 from .abstract_config import AbstractConfig
 
@@ -23,6 +24,7 @@ STATE_SCHEMA = {
     "showLegend": bool,
     "projectName": str,
 }
+
 
 class AppState(AbstractConfig):
     def __init__(self, app_name: str = "threedont"):

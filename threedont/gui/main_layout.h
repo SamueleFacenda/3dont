@@ -50,7 +50,7 @@ private slots:
   void on_actionUpdate_Sensors_and_Reason_triggered();
   void setProjectList(const QStringList &projects);
 
-  [[nodiscard]] QStringList getPropertiesMapping(const QStringList &properties, const QStringList& words, const QStringList &defaults);
+  [[nodiscard]] QStringList getPropertiesMapping(const QStringList &properties, const QStringList &words, const QStringList &defaults);
 
 private:
   Ui::MainLayout *ui;

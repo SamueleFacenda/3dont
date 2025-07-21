@@ -1,21 +1,18 @@
 import logging
 import sys
+from math import pi
 from queue import Queue
 from urllib.error import URLError
-from math import pi
-import owlready2 as owl2
 
+import owlready2 as owl2
 from SPARQLWrapper.SPARQLExceptions import QueryBadFormed
 
 from .db import SparqlEndpoint, WrongResultFormatException, EmptyResultSetException
+from .state import Project
 from .viewer import Viewer, get_color_map
 from ..gui import GuiWrapper
-from .state import Project
 from ..nl_2_sparql import nl_2_sparql, init_client
-
-from ..sensor_manager import Sensor_Management_Functions as smf
-from ..sensor_manager import Classes as cl
-from ..sensor_manager import aws_iot_interface as aws
+from ..sensor_manager import SensorArgs, sensor_management_functions as smf, aws_iot_interface as aws
 
 __all__ = ["Controller"]
 
@@ -80,7 +77,7 @@ class Controller:
         viewer_server_port = self.gui.get_viewer_server_port()
         self.viewer_client = Viewer(viewer_server_port)
         self.sparql_client = None
-        self.Args = cl.Args()
+        self.sensorArgs = SensorArgs()
         self.project = None
 
     def stop(self):
@@ -168,15 +165,15 @@ class Controller:
 
     @report_errors_to_gui
     def annotate_node(
-        self, subject_iri, predicate_name, object_name_or_value, author_name
+            self, subject_iri, predicate_name, object_name_or_value, author_name
     ):
-        onto = self.Args.onto
+        onto = self.sensorArgs.onto
         predicate = getattr(onto, predicate_name)
-        pop_base = self.Args.populated_base
+        pop_base = self.sensorArgs.populated_base
         subject = owl2.IRIS[subject_iri[1:-1]]
         if predicate in onto.object_properties():
             obj = getattr(onto, object_name_or_value)
-        smf.command_manual_annotation(self.Args, subject, predicate, obj, author_name)
+        smf.command_manual_annotation(self.sensorArgs, subject, predicate, obj, author_name)
 
     def select_all_subjects(self, predicate, object):
         colors = self.sparql_client.select_all_subjects(predicate, object)
@@ -203,38 +200,38 @@ class Controller:
 
     @report_errors_to_gui
     def configure_AWS_connection(
-        self, access_key_id, secret_access_key, region, profile_name
+            self, access_key_id, secret_access_key, region, profile_name
     ):
         aws.set_aws_credentials(access_key_id, secret_access_key, region, profile_name)
         self.gui.set_statusbar_content("AWS configured for this device!", 5)
 
     @report_errors_to_gui
     def add_sensor(
-        self,
-        sensor_name,
-        object_name,
-        property_name,
-        cert_pem_path,
-        private_key_path,
-        root_ca_path,
-        mqtt_topic,
-        client_id,
+            self,
+            sensor_name,
+            object_name,
+            property_name,
+            cert_pem_path,
+            private_key_path,
+            root_ca_path,
+            mqtt_topic,
+            client_id,
     ):
         ##### set args
-        self.Args.sensor_name = sensor_name
-        self.Args.object_name = object_name
-        self.Args.property_name = property_name
-        self.Args.cert_pem_path = cert_pem_path
-        self.Args.private_key_path = private_key_path
-        self.Args.root_ca_path = root_ca_path
-        self.Args.mqtttopic = mqtt_topic
-        self.Args.client_id = client_id
+        self.sensorArgs.sensor_name = sensor_name
+        self.sensorArgs.object_name = object_name
+        self.sensorArgs.property_name = property_name
+        self.sensorArgs.cert_pem_path = cert_pem_path
+        self.sensorArgs.private_key_path = private_key_path
+        self.sensorArgs.root_ca_path = root_ca_path
+        self.sensorArgs.mqtttopic = mqtt_topic
+        self.sensorArgs.client_id = client_id
         self.gui.set_statusbar_content("Adding Sensor...", 5)
         #####execute function
-        smf.command_add_sensor(self.Args)
+        smf.command_add_sensor(self.sensorArgs)
         self.gui.set_statusbar_content("Sensor Added!", 5)
         ##### update onto
-        self.Args.onto = owl2.get_ontology(self.Args.ont_path).load()
+        self.sensorArgs.onto = owl2.get_ontology(self.sensorArgs.ont_path).load()
         self.gui.set_statusbar_content("Ontology Updated!", 5)
         self.gui.set_statusbar_content(
             "You can add other sensors or update their value, but refresh server connection to see it in the viewer",
@@ -244,10 +241,10 @@ class Controller:
     @report_errors_to_gui
     def update_sensors_and_reason(self):
         self.gui.set_statusbar_content("Updating all Sensors and Reasoning...", 5)
-        smf.command_update_sensors_and_reason(self.Args)
+        smf.command_update_sensors_and_reason(self.sensorArgs)
         self.gui.set_statusbar_content("Sensors Updated, Reasoning executed!", 5)
         ##### update onto
-        self.Args.onto = owl2.get_ontology(self.Args.ont_path).load()
+        self.sensorArgs.onto = owl2.get_ontology(self.sensorArgs.ont_path).load()
         self.gui.set_statusbar_content("Ontology Updated!", 5)
         self.gui.set_statusbar_content(
             "You can add other sensors or update their value, but refresh server connection to see it in the viewer",
@@ -257,22 +254,22 @@ class Controller:
     ##### ONLY FOR DEBUGGING, UNTIL REAL ARG SETTING IS PREPARED IN "CONNECT TO SERVER" METHOD
     @report_errors_to_gui
     def provisional_set_args(
-        self,
-        graph_uri,
-        ont_path,
-        pop_ont_path,
-        namespace,
-        populated_namespace,
-        virtuoso_isql,
+            self,
+            graph_uri,
+            ont_path,
+            pop_ont_path,
+            namespace,
+            populated_namespace,
+            virtuoso_isql,
     ):
 
-        self.Args.graph_uri = graph_uri
-        self.Args.ont_path = ont_path
-        self.Args.pop_ont_path = pop_ont_path
-        self.Args.onto = owl2.get_ontology(self.Args.pop_ont_path).load()
-        self.Args.base = owl2.get_namespace(namespace)
-        self.Args.populated_base = owl2.get_namespace(populated_namespace)
-        self.Args.virtuoso_isql = virtuoso_isql
+        self.sensorArgs.graph_uri = graph_uri
+        self.sensorArgs.ont_path = ont_path
+        self.sensorArgs.pop_ont_path = pop_ont_path
+        self.sensorArgs.onto = owl2.get_ontology(self.sensorArgs.pop_ont_path).load()
+        self.sensorArgs.base = owl2.get_namespace(namespace)
+        self.sensorArgs.populated_base = owl2.get_namespace(populated_namespace)
+        self.sensorArgs.virtuoso_isql = virtuoso_isql
         import SPARQLWrapper
 
         wrapper = SPARQLWrapper.Wrapper.SPARQLWrapper(
@@ -280,15 +277,16 @@ class Controller:
         )
         wrapper.setReturnFormat("csv")
         wrapper.setCredentials("dba", "dba")
-        self.Args.wrapper = wrapper
-        self.gui.set_statusbar_content("Args configured!", 5)
+        self.sensorArgs.wrapper = wrapper
+        self.gui.set_statusbar_content("SensorArgs configured!", 5)
 
     def natural_language_query(self, nl_query):
         print("Natural language query: ", nl_query)
         onto_path = self.project.get_onto_path()
-        openai_client = init_client() # TODO understand if can be done only once
-        query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(), openai_client, self.gui)
-        query  = "\n".join(query)
+        openai_client = init_client()  # TODO understand if can be done only once
+        query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(),
+                            openai_client, self.gui)
+        query = "\n".join(query)
         print("Generated SPARQL query: ", query)
         result, query_type = self.sparql_client.autodetect_query_nl(query)
         if query_type == "tabular":
@@ -303,7 +301,7 @@ class Controller:
             self.viewer_client.attributes(result)
             self.viewer_client.set(curr_attribute_id=0)
         else:
-            print("Error, unknown query type: ", query_type) # TODO remove, shouldn't happen
+            print("Error, unknown query type: ", query_type)  # TODO remove, shouldn't happen
 
     def update_project_list(self):
         lst = Project.get_project_list()
@@ -330,7 +328,7 @@ class Controller:
         self.project.set_graphNamespace(graph_namespace)
         self.project.save()
         self.gui.set_statusbar_content(f"Created project: {project_name}", 5)
-        self.open_project(project_name) # maybe remove this
+        self.open_project(project_name)  # maybe remove this
 
     def set_color_scale(self, low, high):
         self.viewer_client.color_map("jet", (low, high))

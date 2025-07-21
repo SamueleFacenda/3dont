@@ -15,9 +15,9 @@ public:
 
 protected:
   void paintEvent(QPaintEvent *event) override;
-  void mousePressEvent(QMouseEvent* aEvent) override;
-  void mouseMoveEvent(QMouseEvent* aEvent) override;
-  void mouseReleaseEvent(QMouseEvent* aEvent) override;
+  void mousePressEvent(QMouseEvent *aEvent) override;
+  void mouseMoveEvent(QMouseEvent *aEvent) override;
+  void mouseReleaseEvent(QMouseEvent *aEvent) override;
   void resizeEvent(QResizeEvent *event) override;
 
 signals:

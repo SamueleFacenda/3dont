@@ -1,10 +1,11 @@
-from platformdirs import user_data_dir
-from pathlib import Path
 import json
 import re
 import unicodedata
 from copy import deepcopy
 from importlib import resources
+from pathlib import Path
+
+from platformdirs import user_data_dir
 
 from .abstract_config import AbstractConfig
 
@@ -54,7 +55,8 @@ class Project(AbstractConfig):
         if not projects_dir.exists():
             return []
         # get all directories in the projects directory
-        return [Project(p.name).get_name() for p in projects_dir.iterdir() if p.is_dir() and (p / PROJECT_FILE).exists()]
+        return [Project(p.name).get_name() for p in projects_dir.iterdir() if
+                p.is_dir() and (p / PROJECT_FILE).exists()]
 
     @staticmethod
     def exists(project_name):
@@ -70,7 +72,7 @@ class Project(AbstractConfig):
         elif "urban" in namespace:
             path = assets_folder / "Urban_Ontology.rdf"
         else:
-            raise Exception("Namespace not recognized: " + namespace) # TODO make better
+            raise Exception("Namespace not recognized: " + namespace)  # TODO make better
         if not path.exists():
-            raise Exception("Path should exists but doesn't: " + str(path)) # TODO make better also here
+            raise Exception("Path should exists but doesn't: " + str(path))  # TODO make better also here
         return str(path)
