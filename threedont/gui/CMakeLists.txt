@@ -8,14 +8,32 @@ add_library(gui MODULE
         points_tree_view/graph_tree_model.cpp
         points_tree_view/graph_tree_item.cpp
         widgets/scale_legend.cpp
+        viewer/utils/alternative_frame_buffer.cpp
+        viewer/data/point_attributes.cpp
+        viewer/data/octree.cpp
+        viewer/camera/splines.cpp
+        viewer/utils/opengl_funcs.cpp
+        viewer/camera/qt_camera.cpp
+        viewer/components/text.cpp
+        viewer/viewer.cpp
+        viewer/components/floor_grid.cpp
+        viewer/components/background.cpp
+        viewer/camera/camera.cpp
+        viewer/camera/camera_dolly.cpp
+        viewer/components/look_at.cpp
+        viewer/components/point_cloud.cpp
+        viewer/utils/comm_funcs.cpp
+        viewer/components/selection_box.cpp
 )
 
 target_sources(gui PRIVATE
         viewer/viewer.h
         main_layout.ui
         main_layout.h
+        controller_wrapper.h
         widgets/scale_legend.h
         points_tree_view/graph_tree_model.h
+        points_tree_view/graph_tree_item.h
         dialogs/properties_mapping_selection.h
 )
 

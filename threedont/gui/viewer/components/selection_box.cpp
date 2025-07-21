@@ -1,25 +1,12 @@
-#ifndef __SELECTIONBOX_H__
-#define __SELECTIONBOX_H__
-#include "opengl_funcs.h"
-#include <QOpenGLContext>
-#include <QOpenGLShaderProgram>
-#include <QPointF>
-#include <QRectF>
-#include <QWindow>
+#include "selection_box.h"
 
-class SelectionBox : protected OpenGLFuncs {
-public:
-  enum SelectMode { ADD = 0,
-                    SUB = 1,
-                    NONE = 2 };
-
-  SelectionBox()
-      : _select_mode(NONE) {
+SelectionBox::SelectionBox()
+    : _select_mode(NONE) {
     initializeOpenGLFunctions();
     compileProgram();
-  }
+}
 
-  void draw() {
+void SelectionBox::draw() {
     if (_select_mode == NONE) return;
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
@@ -51,59 +38,57 @@ public:
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
-  }
+}
 
-  void click(QPointF p, SelectMode select_mode) {
+void SelectionBox::click(QPointF p, SelectMode select_mode) {
     _select_mode = select_mode;
     _anchor = p;
     _box = QRectF(p, p);
-  }
+}
 
-  void drag(QPointF p) {
+void SelectionBox::drag(QPointF p) {
     _box = QRectF(p, _anchor);
     _box = _box.normalized();
-  }
+}
 
-  void release() {
+void SelectionBox::release() {
     _select_mode = NONE;
     _box.setWidth(0.0f);
     _box.setHeight(0.0f);
-  }
+}
 
-  bool active() const { return _select_mode != NONE; }
+bool SelectionBox::active() const {
+    return _select_mode != NONE;
+}
 
-  bool empty() const { return _box.isEmpty(); }
+bool SelectionBox::empty() const {
+    return _box.isEmpty();
+}
 
-  const QRectF &getBox() const { return _box; }
+const QRectF &SelectionBox::getBox() const {
+    return _box;
+}
 
-  SelectMode getType() const { return _select_mode; }
+SelectionBox::SelectMode SelectionBox::getType() const {
+    return _select_mode;
+}
 
-private:
-  void compileProgram() {
+void SelectionBox::compileProgram() {
     std::string vsCode =
-            "#version 330 core\n"
-            "uniform vec2 box_min;\n"
-            "uniform vec2 box_max;\n"
-            "layout(location = 0) in vec3 position;\n"
-            "void main() {\n"
-            "  gl_Position = vec4(position.xy * (box_max - box_min) + box_min, 0.0, 1.0);\n"
-            "}\n";
+        "#version 330 core\n"
+        "uniform vec2 box_min;\n"
+        "uniform vec2 box_max;\n"
+        "layout(location = 0) in vec3 position;\n"
+        "void main() {\n"
+        "  gl_Position = vec4(position.xy * (box_max - box_min) + box_min, 0.0, 1.0);\n"
+        "}\n";
     std::string fsCode =
-            "#version 330 core\n"
-            "out vec4 fragColor;\n"
-            "void main() {\n"
-            "  fragColor = vec4(1.0, 1.0, 0.0, 1.0);\n"
-            "}\n";
+        "#version 330 core\n"
+        "out vec4 fragColor;\n"
+        "void main() {\n"
+        "  fragColor = vec4(1.0, 1.0, 0.0, 1.0);\n"
+        "}\n";
     _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
     _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
     _program.link();
-  }
-
-  QOpenGLShaderProgram _program;
-
-  SelectMode _select_mode;
-  QPointF _anchor;
-  QRectF _box;
-};
-
-#endif // __SELECTIONBOX_H__
+}

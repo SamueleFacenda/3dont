@@ -1,52 +1,20 @@
-#ifndef __MI_OPENGL_TEXT_H__
-#define __MI_OPENGL_TEXT_H__
+#include "text.h"
+#include <QFont>
+#include <QFontMetrics>
+#include <QString>
+#include <QChar>
 
-#include "opengl_funcs.h"
-#include <QOpenGLBuffer>
-#include <QOpenGLContext>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLVertexArrayObject>
-#include <QOpenGLWidget>
-#include <QRectF>
-#include <QtCore/QHash>
-#include <QtCore/QSysInfo>
-#include <QtGlobal>
-#include <QtGui/QPainter>
-#include <QtGui/QPixmap>
-#include <cmath>
-#include <iostream>
-
-/* following text rendering code adapted from libs/opengl/Text.h and
-   libs/opengl/Text.cpp of mifit project: https://code.google.com/p/mifit/ */
-
-class QChar;
-class QFont;
-class QFontMetrics;
-class QString;
-
-const int TEXTURE_SIZE = 256;
-
-class Text : public OpenGLFuncs {
-  struct CharData {
-    GLuint textureId;
-    uint width;
-    uint height;
-    GLfloat s[2];
-    GLfloat t[2];
-  };
-
-public:
-  Text(QOpenGLWidget *parent, const QFont &f)
-      : _parent(parent),
-        font(f),
-        fontMetrics(f),
-        pixelFont(f),
-        pixelFontMetrics(f),
-        xOffset(1),
-        yOffset(1),
-        _shaderProgram(nullptr),
-        _vao(nullptr),
-        _vbo(nullptr) {
+Text::Text(QOpenGLWidget *parent, const QFont &f)
+    : _parent(parent),
+      font(f),
+      fontMetrics(f),
+      pixelFont(f),
+      pixelFontMetrics(f),
+      xOffset(1),
+      yOffset(1),
+      _shaderProgram(nullptr),
+      _vao(nullptr),
+      _vbo(nullptr) {
     initializeOpenGLFunctions();
 
     // Initialize modern OpenGL resources
@@ -56,39 +24,42 @@ public:
     // font sizes in units of pixels
     // (I don't really know how this works... this is a hack)
     if (_parent->devicePixelRatio() != 1.0)
-      pixelFont.setPixelSize(
-              qRound(_parent->devicePixelRatio() * font.pointSize()));
+        pixelFont.setPixelSize(
+            qRound(_parent->devicePixelRatio() * font.pointSize()));
     pixelFontMetrics = QFontMetrics(pixelFont);
-  }
+}
 
-  virtual ~Text() {
+Text::~Text() {
     clearCache();
     cleanup();
-  }
+}
 
-  void clearCache() {
+void Text::clearCache() {
     foreach (GLuint texture, textures)
-      glDeleteTextures(1, &texture);
+        glDeleteTextures(1, &texture);
     textures.clear();
     characters.clear();
-  }
+}
 
-  const QFont &getFont() const { return font; }
+const QFont &Text::getFont() const {
+    return font;
+}
 
-  const QFontMetrics &getFontMetrics() const { return fontMetrics; }
+const QFontMetrics &Text::getFontMetrics() const {
+    return fontMetrics;
+}
 
-  QSizeF computeTextSize(const QString &text) {
+QSizeF Text::computeTextSize(const QString &text) {
     QSizeF sz;
     for (int i = 0; i < text.length(); ++i) {
-      CharData &c = createCharacter(text[i]);
-      sz.setHeight(qMax(sz.height(), (qreal) c.height));
-      sz.setWidth(sz.width() + c.width);
+        CharData &c = createCharacter(text[i]);
+        sz.setHeight(qMax(sz.height(), (qreal) c.height));
+        sz.setWidth(sz.width() + c.width);
     }
     return sz;
-  }
+}
 
-  QRectF renderText(float x, float y, const QString &text,
-                    const QVector4D &color = QVector4D(1, 1, 1, 1)) {
+QRectF Text::renderText(float x, float y, const QString &text, const QVector4D &color) {
     if (!_shaderProgram || !_vao) return QRectF();
 
     // Convert screen coordinates to normalized device coordinates
@@ -125,37 +96,37 @@ public:
     QRectF rect(QPointF(x, y), QPointF(x, y));
 
     for (int i = 0; i < text.length(); ++i) {
-      CharData &c = createCharacter(text[i]);
+        CharData &c = createCharacter(text[i]);
 
-      if (currentTextureId != c.textureId) {
-        currentTextureId = c.textureId;
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, currentTextureId);
-      }
+        if (currentTextureId != c.textureId) {
+            currentTextureId = c.textureId;
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, currentTextureId);
+        }
 
-      float w = c.width * 2.0f / _parent->width();
-      float h = c.height * 2.0f / _parent->height();
+        float w = c.width * 2.0f / _parent->width();
+        float h = c.height * 2.0f / _parent->height();
 
-      rect.setHeight(qMax(rect.height(), (qreal) c.height));
-      rect.setWidth(rect.width() + c.width);
+        rect.setHeight(qMax(rect.height(), (qreal) c.height));
+        rect.setWidth(rect.width() + c.width);
 
-      // Update vertex data for this character
-      float vertices[] = {
-              // Position (x, y)    // TexCoord (s, t)
-              currentX, ndcY, c.s[0], c.t[0],         // Bottom-left
-              currentX + w, ndcY, c.s[1], c.t[0],     // Bottom-right
-              currentX + w, ndcY + h, c.s[1], c.t[1], // Top-right
-              currentX, ndcY + h, c.s[0], c.t[1]      // Top-left
-      };
+        // Update vertex data for this character
+        float vertices[] = {
+            // Position (x, y)    // TexCoord (s, t)
+            currentX, ndcY, c.s[0], c.t[0],         // Bottom-left
+            currentX + w, ndcY, c.s[1], c.t[0],     // Bottom-right
+            currentX + w, ndcY + h, c.s[1], c.t[1], // Top-right
+            currentX, ndcY + h, c.s[0], c.t[1]      // Top-left
+        };
 
-      _vbo->bind();
-      _vbo->write(0, vertices, sizeof(vertices));
-      _vbo->release();
+        _vbo->bind();
+        _vbo->write(0, vertices, sizeof(vertices));
+        _vbo->release();
 
-      // Draw the character quad
-      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // Draw the character quad
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-      currentX += w;
+        currentX += w;
     }
 
     _vao->release();
@@ -164,21 +135,20 @@ public:
     // Restore OpenGL state
     if (!depthTestEnabled) glDisable(GL_DEPTH_TEST);
     else
-      glEnable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);
 
     if (!blendEnabled) glDisable(GL_BLEND);
     else
-      glEnable(GL_BLEND);
+        glEnable(GL_BLEND);
 
     glUseProgram(currentProgram);
     glBindVertexArray(currentVAO);
     glBindTexture(GL_TEXTURE_2D, currentTexture);
 
     return rect;
-  }
+}
 
-private:
-  void initializeShaders() {
+void Text::initializeShaders() {
     _shaderProgram = new QOpenGLShaderProgram();
 
     // Vertex shader
@@ -215,11 +185,11 @@ private:
     _shaderProgram->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
 
     if (!_shaderProgram->link())
-      std::cerr << "Failed to link shader program: "
-                << _shaderProgram->log().toStdString() << std::endl;
-  }
+        std::cerr << "Failed to link shader program: "
+                  << _shaderProgram->log().toStdString() << std::endl;
+}
 
-  void initializeBuffers() {
+void Text::initializeBuffers() {
     _vao = new QOpenGLVertexArrayObject();
     _vao->create();
     _vao->bind();
@@ -245,16 +215,16 @@ private:
 
     // Quad indices (two triangles)
     unsigned int indices[] = {
-            0, 1, 2, // First triangle
-            2, 3, 0  // Second triangle
+        0, 1, 2, // First triangle
+        2, 3, 0  // Second triangle
     };
 
     _ebo->allocate(indices, sizeof(indices));
 
     _vao->release();
-  }
+}
 
-  void cleanup() {
+void Text::cleanup() {
     delete _shaderProgram;
     _shaderProgram = nullptr;
 
@@ -266,9 +236,9 @@ private:
 
     delete _ebo;
     _ebo = nullptr;
-  }
+}
 
-  void allocateTexture() {
+void Text::allocateTexture() {
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -282,9 +252,9 @@ private:
                  GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
     textures += texture;
-  }
+}
 
-  CharData &createCharacter(QChar c) {
+Text::CharData &Text::createCharacter(QChar c) {
     ushort unicodeC = c.unicode();
     if (characters.contains(unicodeC)) return characters[unicodeC];
 
@@ -300,8 +270,7 @@ private:
 
     QPainter painter;
     painter.begin(&pixmap);
-    painter.setRenderHints(QPainter::Antialiasing |
-                           QPainter::TextAntialiasing);
+    painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
     painter.setFont(pixelFont);
     painter.setPen(Qt::white);
 
@@ -310,13 +279,13 @@ private:
     QImage image = pixmap.toImage().flipped();
 
     if (xOffset + width >= TEXTURE_SIZE) {
-      xOffset = 1;
-      yOffset += height;
+        xOffset = 1;
+        yOffset += height;
     }
     if (yOffset + height >= TEXTURE_SIZE) {
-      allocateTexture();
-      texture = textures.last();
-      yOffset = 1;
+        allocateTexture();
+        texture = textures.last();
+        yOffset = 1;
     }
 
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -336,27 +305,4 @@ private:
 
     xOffset += width;
     return character;
-  }
-
-  QOpenGLWidget *_parent;
-
-  QFont font;
-  QFontMetrics fontMetrics;
-
-  QFont pixelFont;
-  QFontMetrics pixelFontMetrics;
-
-  QHash<ushort, CharData> characters;
-  QList<GLuint> textures;
-
-  GLint xOffset;
-  GLint yOffset;
-
-  // Modern OpenGL resources
-  QOpenGLShaderProgram *_shaderProgram;
-  QOpenGLVertexArrayObject *_vao;
-  QOpenGLBuffer *_vbo;
-  QOpenGLBuffer *_ebo;
-};
-
-#endif // __MI_OPENGL_TEXT_H__
+}

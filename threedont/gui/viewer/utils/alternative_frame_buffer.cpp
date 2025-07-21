@@ -1,13 +1,7 @@
-#ifndef THREEDONT_ALTERNATIVE_FRAME_BUFFER_H
-#define THREEDONT_ALTERNATIVE_FRAME_BUFFER_H
+#include "alternative_frame_buffer.h"
+#include <QDebug>
 
-#include "opengl_funcs.h"
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
-
-class AlternativeFrameBuffer : public OpenGLFuncs {
-public:
-  AlternativeFrameBuffer() {
+AlternativeFrameBuffer::AlternativeFrameBuffer() {
     initializeOpenGLFunctions();
     glGenFramebuffers(1, &_fbo);
     glGenTextures(1, &_texture);
@@ -65,17 +59,17 @@ public:
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
 
     _display_quad_vao->release(); // Unbind the VAO
-  }
+}
 
-  void bind() {
+void AlternativeFrameBuffer::bind() {
     glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-  }
+}
 
-  void unbind() {
+void AlternativeFrameBuffer::unbind() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  }
+}
 
-  void setupBuffers(int w, int h) {
+void AlternativeFrameBuffer::setupBuffers(int w, int h) {
     // Set up color texture
     glBindTexture(GL_TEXTURE_2D, _texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
@@ -95,15 +89,15 @@ public:
 
     // Check framebuffer completeness
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-      qDebug() << "Fine render framebuffer not complete!";
+        qDebug() << "Fine render framebuffer not complete!";
 
     // Restore default framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
-  }
+}
 
-  void displayTexture() {
+void AlternativeFrameBuffer::displayTexture() {
     // --- Save and Set OpenGL State ---
     GLboolean depth_test_enabled = glIsEnabled(GL_DEPTH_TEST);
     GLboolean blend_enabled = glIsEnabled(GL_BLEND);
@@ -132,17 +126,4 @@ public:
     if (depth_test_enabled) glEnable(GL_DEPTH_TEST);
     if (blend_enabled) glEnable(GL_BLEND);
     glUseProgram(current_program);
-  }
-
-private:
-  GLuint _fbo;
-  GLuint _texture;
-  GLuint _depth_buffer;
-  QOpenGLShaderProgram *_display_texture_program;
-  QOpenGLVertexArrayObject *_display_quad_vao;
-  QOpenGLBuffer *_display_quad_vbo;
-  QOpenGLBuffer *_display_quad_ebo;
-};
-
-
-#endif // THREEDONT_ALTERNATIVE_FRAME_BUFFER_H
+}
