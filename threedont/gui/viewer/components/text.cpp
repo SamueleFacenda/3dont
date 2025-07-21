@@ -197,6 +197,7 @@ void Text::initializeBuffers() {
   _vbo = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
   _vbo->create();
   _vbo->bind();
+  _vbo->setUsagePattern(QOpenGLBuffer::DynamicDraw);
 
   // Allocate space for 4 vertices * 4 floats per vertex
   _vbo->allocate(4 * 4 * sizeof(float));
