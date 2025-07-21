@@ -5,39 +5,26 @@ Background::Background()
       _bg_color_bottom(0.23f, 0.23f, 0.44f, 1.0f) {
   initializeOpenGLFunctions();
   compileProgram();
+  initializeBuffers();
+}
+
+Background::~Background() {
+  glDeleteVertexArrays(1, &_vao);
+  glDeleteBuffers(1, &_vbo_vertices);
+  glDeleteBuffers(1, &_vbo_indices);
 }
 
 void Background::draw() {
   glDepthMask(GL_FALSE);
   glDisable(GL_DEPTH_TEST);
 
-  float points[12] = {
-          0.0f, 0.0f, 0.0f,
-          1.0f, 0.0f, 0.0f,
-          1.0f, 1.0f, 0.0f,
-          0.0f, 1.0f, 0.0f};
-  GLuint square;
-  glGenBuffers(1, &square);
-  glBindBuffer(GL_ARRAY_BUFFER, square);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points, GL_STATIC_DRAW);
-
-  unsigned int indices[6] = {
-          0, 1, 2,
-          0, 2, 3};
-  GLuint square_indices;
-  glGenBuffers(1, &square_indices);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, square_indices);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, (GLvoid *) indices, GL_STATIC_DRAW);
-
   _program.bind();
   _program.setUniformValue("colorBottom", _bg_color_bottom);
   _program.setUniformValue("colorTop", _bg_color_top);
-  _program.enableAttributeArray("position");
-  _program.setAttributeArray("position", GL_FLOAT, 0, 3);
+  
+  glBindVertexArray(_vao);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-  _program.disableAttributeArray("position");
-  glDeleteBuffers(1, &square);
-  glDeleteBuffers(1, &square_indices);
+  glBindVertexArray(0);
 
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
@@ -72,4 +59,34 @@ void Background::compileProgram() {
   _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vsCode.c_str());
   _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fsCode.c_str());
   _program.link();
+}
+
+void Background::initializeBuffers() {
+  float points[12] = {
+          0.0f, 0.0f, 0.0f,
+          1.0f, 0.0f, 0.0f,
+          1.0f, 1.0f, 0.0f,
+          0.0f, 1.0f, 0.0f};
+  
+  unsigned int indices[6] = {
+          0, 1, 2,
+          0, 2, 3};
+
+  // Generate and bind VAO
+  glGenVertexArrays(1, &_vao);
+  glBindVertexArray(_vao);
+
+  // Create and setup vertex buffer
+  glGenBuffers(1, &_vbo_vertices);
+  glBindBuffer(GL_ARRAY_BUFFER, _vbo_vertices);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+
+  // Create and setup index buffer
+  glGenBuffers(1, &_vbo_indices);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _vbo_indices);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+  glBindVertexArray(0);
 }
