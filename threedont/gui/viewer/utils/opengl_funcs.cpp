@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <iostream>
 
-OpenGLFuncs::OpenGLFuncs() : QOpenGLFunctions_3_2_Core() {}
+OpenGLFuncs::OpenGLFuncs() : QOpenGLFunctions_3_3_Core() {}
 
 GLint OpenGLFuncs::getBufferSize(GLuint bufferId) {
   GLint bufferSize = 0;

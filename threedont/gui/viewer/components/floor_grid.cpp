@@ -304,21 +304,32 @@ void FloorGrid::loadSquare() {
           1.0f, 0.0f, 0.0f,
           1.0f, 1.0f, 0.0f,
           0.0f, 1.0f, 0.0f};
-  glGenBuffers(1, &_buffer_square);
-  glBindBuffer(GL_ARRAY_BUFFER, _buffer_square);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+  
   unsigned int indices[6] = {
           0, 1, 2,
           0, 2, 3};
+
+  // Generate and bind VAO
+  glGenVertexArrays(1, &_vao);
+  glBindVertexArray(_vao);
+
+  // Create and setup vertex buffer
+  glGenBuffers(1, &_buffer_square);
+  glBindBuffer(GL_ARRAY_BUFFER, _buffer_square);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, (GLvoid *) points, GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+
+  // Create and setup index buffer
   glGenBuffers(1, &_buffer_square_indices);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer_square_indices);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, (GLvoid *) indices, GL_STATIC_DRAW);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+  glBindVertexArray(0);
 }
 
 void FloorGrid::unloadSquare() {
+  glDeleteVertexArrays(1, &_vao);
   glDeleteBuffers(1, &_buffer_square);
   glDeleteBuffers(1, &_buffer_square_indices);
 }
@@ -461,14 +472,9 @@ void FloorGrid::drawOrtho(const QtCamera &camera, float z_floor) {
   _ortho_program.setUniformValue("line_color", line_color);
   _ortho_program.setUniformValue("floor_color", _grid_floor_color);
 
-  glBindBuffer(GL_ARRAY_BUFFER, _buffer_square);
-  _ortho_program.enableAttributeArray("position");
-  _ortho_program.setAttributeArray("position", GL_FLOAT, 0, 3);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer_square_indices);
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (GLvoid *) 0);
-
-  _ortho_program.disableAttributeArray("position");
+  glBindVertexArray(_vao);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
 
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
@@ -509,12 +515,9 @@ void FloorGrid::drawPersp(const QtCamera &camera, float z_floor) {
   _persp_program.setUniformValue("r", r);
   _persp_program.setUniformValue("line_width", line_width);
 
-  _persp_program.enableAttributeArray("position");
-  glBindBuffer(GL_ARRAY_BUFFER, _buffer_square);
-  _persp_program.setAttributeArray("position", GL_FLOAT, 0, 3);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer_square_indices);
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (GLvoid *) 0);
-  _persp_program.disableAttributeArray("position");
+  glBindVertexArray(_vao);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_BLEND);

@@ -86,6 +86,14 @@ static int GuiWrapper_init(GuiWrapperObject *self, PyObject *args, PyObject *kwd
     std::strcpy(argvRaw[i + 1], arg);
   }
 
+  QSurfaceFormat format;
+  format.setRenderableType(QSurfaceFormat::OpenGL);
+  format.setProfile(QSurfaceFormat::CoreProfile);
+  format.setVersion(3, 3);
+  format.setDepthBufferSize(24);
+  format.setStencilBufferSize(8);
+  QSurfaceFormat::setDefaultFormat(format); 
+
   // This memory is intentionally leaked (it's fine if only done once)
   self->app = new QApplication(*argc, argvRaw);
   self->mainLayout = new MainLayout(self->controllerWrapper);

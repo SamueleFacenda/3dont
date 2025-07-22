@@ -9,15 +9,20 @@
 class LookAt : protected OpenGLFuncs {
 public:
   LookAt();
+  ~LookAt();
   void draw(const QtCamera &camera);
   void setVisible(bool visible);
   bool getVisible() const;
 
 private:
   void compileProgram();
+  void initializeBuffers();
 
   QOpenGLShaderProgram _program;
   bool _visible;
+  GLuint _vao;
+  GLuint _vbo_positions;
+  GLuint _vbo_colors;
 };
 
 #endif // __LOOKAT_H__

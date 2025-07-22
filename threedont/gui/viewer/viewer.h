@@ -34,7 +34,7 @@
 #include "utils/opengl_funcs.h"
 #include "utils/timer.h"
 
-// #define OPENGL_DEBUG
+#define OPENGL_DEBUG
 
 class Viewer : public QOpenGLWidget, protected OpenGLFuncs {
   Q_OBJECT

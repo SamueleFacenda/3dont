@@ -51,8 +51,6 @@ void Viewer::initializeGL() {
       if (msg.severity() != QOpenGLDebugMessage::HighSeverity &&
           msg.severity() != QOpenGLDebugMessage::MediumSeverity)
         return;
-      if (msg.message().contains("using glBufferSubData"))
-        return;
       qDebug() << "OpenGL Debug Message:" << msg;
     });
     logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);

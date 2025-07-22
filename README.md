@@ -44,6 +44,8 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] investigate empty view on heritage loading
 - [ ] avoid startup lag for dependency dowload
 - [ ] more configuration options (e.g. select color) and settings dialog
+- [ ] fix lookat lines width
+- [ ] use QOpenglBuffer for buffer management
  
 ## License
 

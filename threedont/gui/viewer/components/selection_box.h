@@ -14,6 +14,7 @@ public:
                     NONE = 2 };
 
   SelectionBox();
+  ~SelectionBox();
 
   void draw();
   void click(QPointF p, SelectMode select_mode);
@@ -27,11 +28,15 @@ public:
 
 private:
   void compileProgram();
+  void initializeBuffers();
 
   QOpenGLShaderProgram _program;
   SelectMode _select_mode;
   QPointF _anchor;
   QRectF _box;
+  GLuint _vao;
+  GLuint _vbo_vertices;
+  GLuint _vbo_indices;
 };
 
 #endif // __SELECTIONBOX_H__
