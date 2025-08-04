@@ -2,7 +2,7 @@ from time import time
 
 import numpy as np
 from rdflib import Graph
-from rdflib.plugins.stores.sparqlstore import SPARQLStore
+from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from .queries import *
 from .exceptions import WrongResultFormatException
@@ -21,7 +21,7 @@ class SparqlEndpoint:
             self.namespace = namespace + "#"
         # TODO generalize outside of virtuoso
         self.endpoint = db_url + "/sparql"
-        store = SPARQLStore(self.endpoint, returnFormat='csv')
+        store = SPARQLUpdateStore(self.endpoint, self.endpoint, returnFormat='csv')
         self.graph = Graph(store=store)
         self.iri_to_id = {}
         self.coords_to_id = {}
@@ -101,8 +101,7 @@ class SparqlEndpoint:
         query = ANNOTATE_NODE.format(graph=self.graph_uri, subject=subject, predicate=predicate, object=object,
                                      namespace=self.namespace)
         # TODO use update endpoint instead of query
-        self.graph.setQuery(query)
-        self.graph.query()
+        self.graph.update(query)
 
     def select_all_subjects(self, predicate, object):
         query = SELECT_ALL_WITH_PREDICATE.format(graph=self.graph_uri, predicate=predicate, object=object,
