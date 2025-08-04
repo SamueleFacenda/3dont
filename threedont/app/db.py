@@ -10,19 +10,35 @@ from .query_result import Query
 
 HIGHLIGHT_COLOR = [1.0, 0.0, 0.0]  # TODO make this a parameter
 
-__all__ = ['SparqlEndpoint']
+__all__ = ['SparqlBackend']
 
-class SparqlEndpoint:
-    def __init__(self, graph_uri, db_url, namespace):
-        self.graph_uri = graph_uri
+class SparqlBackend:
+    def __init__(self, project):
+        self.graph_uri = project.get_graphUri()
+        namespace = project.get_graphNamespace()
         if namespace.endswith('#'):
             self.namespace = namespace
         else:
             self.namespace = namespace + "#"
-        # TODO generalize outside of virtuoso
-        self.endpoint = db_url + "/sparql"
-        store = SPARQLUpdateStore(self.endpoint, self.endpoint, returnFormat='csv')
-        self.graph = Graph(store=store)
+        if project.get_isLocal():
+            path = project.get_storage_path()
+            self.graph = Graph(store="Oxigraph", identifier=self.graph_uri)
+            self.graph.open(path, create=True)
+            if not self.graph:
+                source_name = project.get_onto_path() # TODO adjust
+                if source_name.endswith('.ttl'):
+                    format = 'ox-ttl'
+                elif source_name.endswith('.rdf'):
+                    format = 'ox-xml'
+                else:
+                    raise ValueError("Unsupported file format for ontology: " + source_name)
+
+                self.graph.parse(source_name, format=format)
+        else:
+            # TODO generalize outside of virtuoso
+            self.endpoint = project.get_dbUrl() + "/sparql"
+            store = SPARQLUpdateStore(self.endpoint, self.endpoint, returnFormat='csv')
+            self.graph = Graph(store=store)
         self.iri_to_id = {}
         self.coords_to_id = {}
         self.id_to_iri = []

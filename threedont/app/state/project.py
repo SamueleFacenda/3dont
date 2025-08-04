@@ -16,6 +16,7 @@ DEFAULT_PROJECT_CONFIG = {
     "graphUri": "",
     "graphNamespace": "",
     "dbUrl": "",
+    "isLocal": False,  # whether the project is local or a sparql endpoint
 }
 
 PROJECT_SCHEMA = {
@@ -23,6 +24,7 @@ PROJECT_SCHEMA = {
     "graphUri": str,
     "graphNamespace": str,
     "dbUrl": str,
+    "isLocal": bool,
 }
 
 
@@ -76,3 +78,9 @@ class Project(AbstractConfig):
         if not path.exists():
             raise Exception("Path should exists but doesn't: " + str(path))  # TODO make better also here
         return str(path)
+
+    def get_storage_path(self):
+        if not self.get_isLocal():
+            raise Exception("Storage path is only available for local projects.")
+
+        return self.project_path / "storage"

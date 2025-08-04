@@ -2,10 +2,10 @@ import logging
 import sys
 from math import pi
 from queue import Queue
-from urllib.error import URLError, HTTPError
+from urllib.error import URLError
 
 import owlready2 as owl2
-from .db import SparqlEndpoint
+from .db import SparqlBackend
 from .exceptions import WrongResultFormatException, EmptyResultSetException
 from .state import Project
 from .viewer import Viewer, get_color_map
@@ -140,11 +140,11 @@ class Controller:
         self._send_legend(scalars)
 
     @report_errors_to_gui
-    def connect_to_server(self, graph_url, db_url, namespace):
-        print("Loading all the points... ", graph_url)
+    def connect_to_server(self, project):
+        print("Loading all the points... ", project.get_graphUri())
         self.gui.set_statusbar_content("Connecting to server...", 5)
         # TODO handle graph_url in GUI
-        self.sparql_client = SparqlEndpoint(graph_url, db_url, namespace)
+        self.sparql_client = SparqlBackend(project)
         print("Connected to server")
         self.gui.set_statusbar_content("Loading points from server...", 60)
         coords, colors = self.sparql_client.get_all()
@@ -310,7 +310,7 @@ class Controller:
         self.project = Project(project_name)
         self.app_state.set_projectName(self.project.get_name())
         self.gui.set_statusbar_content(f"Opened project: {project_name}", 5)
-        self.connect_to_server(self.project.get_graphUri(), self.project.get_dbUrl(), self.project.get_graphNamespace())
+        self.connect_to_server(self.project)
 
     def create_project(self, project_name, db_url, graph_uri, graph_namespace):
         print("Creating project: ", project_name)
