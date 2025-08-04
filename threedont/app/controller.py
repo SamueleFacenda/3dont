@@ -2,12 +2,11 @@ import logging
 import sys
 from math import pi
 from queue import Queue
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 
 import owlready2 as owl2
-from SPARQLWrapper.SPARQLExceptions import QueryBadFormed
-
-from .db import SparqlEndpoint, WrongResultFormatException, EmptyResultSetException
+from .db import SparqlEndpoint
+from .exceptions import WrongResultFormatException, EmptyResultSetException
 from .state import Project
 from .viewer import Viewer, get_color_map
 from ..gui import GuiWrapper
@@ -53,7 +52,7 @@ def report_errors_to_gui(func):
         except URLError as e:
             self.gui.set_statusbar_content(f"Connection error: {e}", 5)
             raise e
-        except QueryBadFormed as e:
+        except ValueError as e:
             response = str(e).split("Response:\n")[1]
             self.gui.set_query_error(f"Bad query: {response}")
             raise e
@@ -182,9 +181,8 @@ class Controller:
 
     @report_errors_to_gui
     def tabular_query(self, query):
-        result = self.sparql_client.raw_query(query)
-        header = list(result.keys())
-        rows = list(zip(*(result[key] for key in result)))
+        header, content = self.sparql_client.raw_query(query)
+        rows = list(content)
         self.gui.plot_tabular(header, rows)
 
     def _send_legend(self, scalars):
