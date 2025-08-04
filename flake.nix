@@ -67,6 +67,7 @@
               jarowinkler
               boto3
               awsiotpythonsdk
+              oxrdflib
             ];
           };
           owlready2 = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, distutils}:
@@ -77,8 +78,24 @@
                 inherit pname version;
                 hash = "sha256-r34dIgXAtYhtLjQ5erjBDKKf9ow9w3AtQzk5Zqx/brA=";
               };
-              propagatedBuildInputs = [
+              dependencies = [
                 distutils
+              ];
+            }
+          ) {};
+          oxrdflib = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, pyoxigraph, rdflib, setuptools, setuptools-scm}:
+            buildPythonPackage rec {
+              pname = "oxrdflib";
+              version = "0.4.0";
+              src = fetchPypi {
+                inherit pname version;
+                hash = "sha256-N9TAJdTjnF5UclJ8OTmYv9EOWsGFow4IC1tRD23X2oY=";
+              };
+              pyproject = true;
+              build-system = [ setuptools setuptools-scm ];
+              dependencies = [
+                pyoxigraph
+                rdflib
               ];
             }
           ) {};
