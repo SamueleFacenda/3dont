@@ -280,7 +280,7 @@ class Controller:
 
     def natural_language_query(self, nl_query):
         print("Natural language query: ", nl_query)
-        onto_path = self.project.get_onto_path()
+        onto_path = self.project.get_ontoPath()
         openai_client = init_client()  # TODO understand if can be done only once
         query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(),
                             openai_client, self.gui)
@@ -312,7 +312,7 @@ class Controller:
         self.gui.set_statusbar_content(f"Opened project: {project_name}", 5)
         self.connect_to_server(self.project)
 
-    def create_project(self, project_name, db_url, graph_uri, graph_namespace):
+    def create_project(self, project_name, db_url, graph_uri, graph_namespace, is_local, original_path, onto_path):
         print("Creating project: ", project_name)
         if Project.exists(project_name):
             # TODO use proper error handling in GUI
@@ -324,7 +324,11 @@ class Controller:
         self.project.set_dbUrl(db_url)
         self.project.set_graphUri(graph_uri)
         self.project.set_graphNamespace(graph_namespace)
+        self.project.set_isLocal(is_local)
+        self.project.set_originalPath(original_path)
+        self.project.set_ontoPath(onto_path)
         self.project.save()
+        self.update_project_list()
         self.gui.set_statusbar_content(f"Created project: {project_name}", 5)
         self.open_project(project_name)  # maybe remove this
 

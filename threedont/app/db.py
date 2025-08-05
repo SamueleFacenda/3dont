@@ -23,9 +23,10 @@ class SparqlBackend:
         if project.get_isLocal():
             path = project.get_storage_path()
             self.graph = Graph(store="Oxigraph", identifier=self.graph_uri)
-            self.graph.open(path, create=True)
+            self.graph.open(path)
             if not self.graph:
-                source_name = project.get_onto_path() # TODO adjust
+                print("The original ontology file will be imported, this may take a while...")
+                source_name = project.get_originalPath()
                 if source_name.endswith('.ttl'):
                     format = 'ox-ttl'
                 elif source_name.endswith('.rdf'):
@@ -33,7 +34,7 @@ class SparqlBackend:
                 else:
                     raise ValueError("Unsupported file format for ontology: " + source_name)
 
-                self.graph.parse(source_name, format=format)
+                self.graph.parse(source_name, format=format, transactional=False)
         else:
             # TODO generalize outside of virtuoso
             self.endpoint = project.get_dbUrl() + "/sparql"
@@ -48,7 +49,7 @@ class SparqlBackend:
     def get_all(self):
         query = SELECT_ALL_QUERY.format(graph=self.graph_uri, namespace=self.namespace)
         start = time()
-        results = Query(self.graph, query)
+        results = Query(self.graph, query, chunked=False)
         print("Time to query: ", time() - start)
         start = time()
 

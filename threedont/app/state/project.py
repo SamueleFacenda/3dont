@@ -17,6 +17,8 @@ DEFAULT_PROJECT_CONFIG = {
     "graphNamespace": "",
     "dbUrl": "",
     "isLocal": False,  # whether the project is local or a sparql endpoint
+    "originalPath": "",  # path to the original ontology file, if any
+    "ontoPath": "",  # path to the unpopulated ontology file used in the project, if any
 }
 
 PROJECT_SCHEMA = {
@@ -25,6 +27,8 @@ PROJECT_SCHEMA = {
     "graphNamespace": str,
     "dbUrl": str,
     "isLocal": bool,
+    "originalPath": str,
+    "ontoPath": str,
 }
 
 
@@ -65,7 +69,7 @@ class Project(AbstractConfig):
         project_path = Path(user_data_dir("threedont")) / "projects" / f"{safe_filename(project_name)}"
         return (project_path / PROJECT_FILE).exists()
 
-    def get_onto_path(self):
+    def get_ontoPath(self):
         # ugly way for now
         assets_folder = resources.files("threedont.assets")
         namespace = self.get_graphNamespace().lower()
@@ -83,4 +87,6 @@ class Project(AbstractConfig):
         if not self.get_isLocal():
             raise Exception("Storage path is only available for local projects.")
 
-        return self.project_path / "storage"
+        out = self.project_path / "storage"
+        out.mkdir(parents=True, exist_ok=True)
+        return str(out)
