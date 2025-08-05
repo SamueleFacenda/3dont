@@ -24,6 +24,7 @@ add_library(gui MODULE
         viewer/components/point_cloud.cpp
         viewer/utils/comm_funcs.cpp
         viewer/components/selection_box.cpp
+        dialogs/create_project_dialog.cpp
 )
 
 target_sources(gui PRIVATE
@@ -35,6 +36,7 @@ target_sources(gui PRIVATE
         points_tree_view/graph_tree_model.h
         points_tree_view/graph_tree_item.h
         dialogs/properties_mapping_selection.h
+        dialogs/create_project_dialog.h
 )
 
 if (WIN32)

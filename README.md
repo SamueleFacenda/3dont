@@ -46,6 +46,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] more configuration options (e.g. select color) and settings dialog
 - [ ] fix lookat lines width
 - [ ] use QOpenglBuffer for buffer management
+- [ ] investigate projects now showing sometimes
  
 ## License
 
