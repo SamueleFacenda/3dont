@@ -2,7 +2,7 @@ from rdflib import Graph
 
 from .abstract_storage import AbstractStorage
 from .storage_factory import StorageFactory
-from .query_result import Query
+from .query_handlers import RdfQuery
 
 @StorageFactory.register(is_local=True, priority=10)
 class OxigraphRDFLibStorage(AbstractStorage):
@@ -11,7 +11,7 @@ class OxigraphRDFLibStorage(AbstractStorage):
         self.graph = Graph(store="Oxigraph", identifier=identifier)
 
     def query(self, query: str, chunked: bool = True):
-        return Query(self.graph, query, chunked=False)
+        return RdfQuery(self.graph, query, chunked=False)
 
     def is_empty(self) -> bool:
         return len(self.graph) == 0

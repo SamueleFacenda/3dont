@@ -1,41 +1,30 @@
 from rdflib import URIRef
 
-from threedont.app.exceptions import EmptyResultSetException
+from .query_result import Query
 
-TEST_FAST = False  # remove true before commit
-CHUNK_SIZE = 1000000 if not TEST_FAST else 1000
 
-class Query:
+class RdfQuery(Query):
     """
     A class to handle SPARQL query results in chunks.
     """
     def __init__(self, graph, query, chunked=True, cast_to_strings=True):
-        offset = 0
+        self.graph = graph
         self.chunks = []
-        # TODO multithreaded query execution
-        if chunked:
-            while True:
-                chunked_query = query + " OFFSET " + str(offset) + " LIMIT " + str(CHUNK_SIZE)
-                results = graph.query(chunked_query)
-                self.chunks += [results]
-
-                if len(results) < CHUNK_SIZE:
-                    break
-                if TEST_FAST:
-                    break
-                offset += CHUNK_SIZE
-        else:
-            results = graph.query(query)
-            self.chunks = [results]
-
-        if not self.chunks or len(self.chunks[0]) == 0:
-            raise EmptyResultSetException(query)
+        super().__init__(query, chunked)
 
         if cast_to_strings:
             # self.cast = str
             self.cast = lambda x: str(x) if not isinstance(x, URIRef) else f'<{x}>'
         else:
             self.cast = lambda x: x
+
+    def _append_chunk(self, chunk):
+        self.chunks.append(chunk)
+
+    def _perform_query(self, query):
+        results = self.graph.query(query)
+        result_len = len(results)
+        return results, result_len
 
     def __len__(self):
         return sum(len(chunk) for chunk in self.chunks)

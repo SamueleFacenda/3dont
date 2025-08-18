@@ -3,7 +3,7 @@ from rdflib import Graph
 
 from .abstract_storage import AbstractStorage
 from .storage_factory import StorageFactory
-from .query_result import Query
+from .query_handlers import RdfQuery
 
 @StorageFactory.register(is_local=False, priority=40)
 class SparqlRDFLibStorage(AbstractStorage):
@@ -11,7 +11,7 @@ class SparqlRDFLibStorage(AbstractStorage):
         self.graph = Graph(store=SPARQLUpdateStore(endpoint, endpoint, returnFormat='csv'), identifier=identifier)
 
     def query(self, query: str, chunked: bool = True):
-        return Query(self.graph, query, chunked=chunked)
+        return RdfQuery(self.graph, query, chunked=chunked)
 
     def update(self, query: str):
         self.graph.update(query)
