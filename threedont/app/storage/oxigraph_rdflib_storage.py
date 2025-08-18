@@ -4,7 +4,7 @@ from .abstract_storage import AbstractStorage
 from .storage_factory import StorageFactory
 from .query_handlers import RdfQuery
 
-@StorageFactory.register(is_local=True, priority=10)
+@StorageFactory.register(is_local=True, priority=40)
 class OxigraphRDFLibStorage(AbstractStorage):
 
     def setup_storage(self, identifier: str = None, endpoint: str = None):

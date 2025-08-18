@@ -68,6 +68,7 @@
               boto3
               awsiotpythonsdk
               oxrdflib
+              pyoxigraph
             ];
           };
           owlready2 = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, distutils}:
