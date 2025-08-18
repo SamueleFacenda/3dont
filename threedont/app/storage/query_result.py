@@ -1,6 +1,6 @@
 from rdflib import URIRef
 
-from .exceptions import EmptyResultSetException
+from threedont.app.exceptions import EmptyResultSetException
 
 TEST_FAST = False  # remove true before commit
 CHUNK_SIZE = 1000000 if not TEST_FAST else 1000

@@ -1,12 +1,10 @@
 from time import time
 
 import numpy as np
-from rdflib import Graph
-from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from .queries import *
 from .exceptions import WrongResultFormatException
-from .query_result import Query
+from .storage import StorageFactory
 
 HIGHLIGHT_COLOR = [1.0, 0.0, 0.0]  # TODO make this a parameter
 
@@ -20,26 +18,8 @@ class SparqlBackend:
             self.namespace = namespace
         else:
             self.namespace = namespace + "#"
-        if project.get_isLocal():
-            path = project.get_storage_path()
-            self.graph = Graph(store="Oxigraph", identifier=self.graph_uri)
-            self.graph.open(path)
-            if not self.graph:
-                print("The original ontology file will be imported, this may take a while...")
-                source_name = project.get_originalPath()
-                if source_name.endswith('.ttl'):
-                    format = 'ox-ttl'
-                elif source_name.endswith('.rdf'):
-                    format = 'ox-xml'
-                else:
-                    raise ValueError("Unsupported file format for ontology: " + source_name)
 
-                self.graph.parse(source_name, format=format, transactional=False)
-        else:
-            # TODO generalize outside of virtuoso
-            self.endpoint = project.get_dbUrl() + "/sparql"
-            store = SPARQLUpdateStore(self.endpoint, self.endpoint, returnFormat='csv')
-            self.graph = Graph(store=store)
+        self.storage = StorageFactory.create(project)
         self.iri_to_id = {}
         self.coords_to_id = {}
         self.id_to_iri = []
@@ -49,7 +29,7 @@ class SparqlBackend:
     def get_all(self):
         query = SELECT_ALL_QUERY.format(graph=self.graph_uri, namespace=self.namespace)
         start = time()
-        results = Query(self.graph, query, chunked=False)
+        results = self.storage.query(query)
         print("Time to query: ", time() - start)
         start = time()
 
@@ -69,7 +49,7 @@ class SparqlBackend:
 
     # returns the colors with highlighted points
     def execute_select_query(self, query):
-        results = Query(self.graph, query)
+        results = self.storage.query(query)
 
         colors = np.copy(self.colors)
         if not results.has_var('p'):
@@ -85,7 +65,7 @@ class SparqlBackend:
         return colors
 
     def execute_scalar_query(self, query):
-        results = Query(self.graph, query)
+        results = self.storage.query(query)
         if not results.has_var('x') or not results.has_var('s'):
             raise WrongResultFormatException(['s', 'x'], results.vars())
 
@@ -106,7 +86,7 @@ class SparqlBackend:
 
     def get_node_details(self, iri):
         query = GET_NODE_DETAILS.format(graph=self.graph_uri, point=iri, namespace=self.namespace)
-        results = Query(self.graph, query, chunked=False)
+        results = self.storage.query(query, chunked=False)
         out = list(results.tuple_iterator(['p', 'o']))
         return out
 
@@ -118,12 +98,12 @@ class SparqlBackend:
         query = ANNOTATE_NODE.format(graph=self.graph_uri, subject=subject, predicate=predicate, object=object,
                                      namespace=self.namespace)
         # TODO use update endpoint instead of query
-        self.graph.update(query)
+        self.storage.update(query)
 
     def select_all_subjects(self, predicate, object):
         query = SELECT_ALL_WITH_PREDICATE.format(graph=self.graph_uri, predicate=predicate, object=object,
                                                  namespace=self.namespace)
-        iris = Query(self.graph, query)['p']
+        iris = self.storage.query(query)['p']
         colors = np.copy(self.colors)
         for p in iris:
             try:
@@ -134,14 +114,14 @@ class SparqlBackend:
         return colors
 
     def raw_query(self, query):
-        results = Query(self.graph, query)
+        results = self.storage.query(query)
         header = results.vars()
         content = results.tuple_iterator(header)
         return header, content
 
     def autodetect_query_nl(self, query):
         # TODO refactor
-        result = Query(self.graph, query)
+        result = self.storage.query(query)
         columns = list(result.keys())
         if 'x1' in columns and 'y1' in columns and 'z1' in columns:
             # select query
