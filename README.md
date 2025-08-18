@@ -29,6 +29,7 @@ View, query and manually annotate pointclouds ontologies.
 - [x] fix OpenGL
 - [x] fix some random crashes
 - [ ] scalar templates
+- [ ] optimize query speed
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
 - [ ] add default to scalar queries equal to color
@@ -46,7 +47,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] more configuration options (e.g. select color) and settings dialog
 - [ ] fix lookat lines width
 - [ ] use QOpenglBuffer for buffer management
-- [ ] investigate projects now showing sometimes
+- [ ] investigate projects not showing sometimes
  
 ## License
 

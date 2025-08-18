@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from .query_handlers import Query
+
 class AbstractStorage(ABC):
     """
     Abstract base class for sparql storage implementations.
@@ -26,7 +28,7 @@ class AbstractStorage(ABC):
         pass
 
     @abstractmethod
-    def query(self, query: str, chunked: bool = True):
+    def query(self, query: str, chunked: bool = True) -> 'Query':
         """
         Execute a SPARQL query against the storage.
 
