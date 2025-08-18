@@ -76,3 +76,11 @@ int GraphTreeItem::childIndex() const {
 bool GraphTreeItem::isLeaf() const {
   return !object.startsWith("<http"); // heuristic
 }
+
+bool GraphTreeItem::getIsFetching() const {
+  return isFetching;
+}
+
+void GraphTreeItem::setIsFetching(bool fetching) {
+  isFetching = fetching;
+}
