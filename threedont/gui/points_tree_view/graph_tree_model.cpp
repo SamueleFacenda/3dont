@@ -80,13 +80,15 @@ bool GraphTreeModel::hasChildren(const QModelIndex &index) const {
 }
 
 QModelIndex GraphTreeModel::indexForItem(GraphTreeItem *item) const {
-  return item == rootItem ? QModelIndex() : createIndex(item->childIndex(), 0, item->parent());
+  return item == rootItem ? QModelIndex() : createIndex(item->childIndex(), 0, item);
 }
 
 void GraphTreeModel::fetchMore(const QModelIndex &index) {
   if (!index.isValid()) return;
   auto *item = itemFromIndex(index);
   if (item->areChildrenLoaded()) return;
+  if (item->getIsFetching()) return;
+  item->setIsFetching(true);
   controllerWrapper->viewNodeDetails(item->nodeId().toStdString());
 }
 
@@ -130,6 +132,7 @@ void GraphTreeModel::onChildrenLoaded(const QString &parentId, QStringList child
     }
 
     item->setChildrenLoaded(true);
+    item->setIsFetching(false);
     endInsertRows();
   }
 }
