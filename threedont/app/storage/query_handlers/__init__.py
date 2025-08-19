@@ -4,8 +4,8 @@ from .sparqlwrapper_query import SparqlQuery
 from .oxigraph_query import OxigraphQuery
 
 __all__ = [
-    "Query",
-    "RdfQuery",
-    "SparqlQuery"
-    "OxigraphQuery"
+    'Query',
+    'RdfQuery',
+    'SparqlQuery',
+    'OxigraphQuery'
 ]

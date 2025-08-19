@@ -154,3 +154,5 @@ QString CreateProjectDialog::getOntologyNamespace() const {
 QString CreateProjectDialog::getOntologyPath() const {
   return m_ontologyPathEdit->text();
 }
+
+#include "moc_create_project_dialog.cpp"
