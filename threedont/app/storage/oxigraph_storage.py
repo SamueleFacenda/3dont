@@ -1,4 +1,4 @@
-from pyoxigraph import Store, DefaultGraph
+from pyoxigraph import Store, NamedNode
 
 from .storage_factory import StorageFactory
 from .abstract_storage import AbstractStorage
@@ -14,6 +14,7 @@ class OxigraphStorage(AbstractStorage):
     def setup_storage(self, identifier: str = None, endpoint: str = None):
         self.graph = None
         self.identifier = identifier
+
     def query(self, query: str, chunked: bool = True):
         return OxigraphQuery(self.graph, query)
 
@@ -24,9 +25,10 @@ class OxigraphStorage(AbstractStorage):
         self.graph = Store(path)
 
     def load_file(self, path: str):
-        self.graph.add_graph(DefaultGraph(self.identifier))
-        self.graph.bulk_load(path=path)
+        self.graph.add_graph(NamedNode(self.identifier))
+        self.graph.bulk_load(path=path, to_graph=NamedNode(self.identifier))
+        self.graph.flush()
 
     def update(self, query: str):
         self.graph.update(query)
-
+        self.graph.flush()
