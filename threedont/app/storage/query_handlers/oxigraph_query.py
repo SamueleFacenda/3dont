@@ -1,3 +1,7 @@
+from lib2to3.pytree import convert
+
+from pyoxigraph import NamedNode
+
 from .query_result import Query
 
 class OxigraphQuery(Query):
@@ -7,18 +11,22 @@ class OxigraphQuery(Query):
     def __init__(self, store, query):
         self.result = {}
         self.store = store
-        self.len = 0
+        self.variables = None
         super().__init__(query, False)
 
     def _append_chunk(self, chunk):
-        """
-        Important: the variable names have a '?' prefix, which is stripped in the result.
-        """
-        for var in chunk.variables:
-            self.result[str(var)] = [None] * self.len
-        for i, row in enumerate(chunk):
-            for var in chunk.variables:
-                self.result[str(var)][i] = str(row[var])
+        #TODO optimize (it takes too much time to append a chunk)
+        from time import time
+        start = time()
+        for var in self.variables:
+            self.result[str(var)] = [None] * len(chunk)
+        for var in self.variables:
+            if type(chunk[0][var]) is NamedNode:
+                cast = str
+            else:
+                cast = lambda x: x.value
+            for i, row in enumerate(chunk):
+                self.result[str(var)][i] = cast(row[var])
 
         # strip the '?' prefix from variable names
         new_out = {}
@@ -26,17 +34,23 @@ class OxigraphQuery(Query):
             new_out[key[1:]] = value
 
         self.result = new_out
+        print("Time to append chunk: ", time() - start)
 
     def _perform_query(self, query):
         out = self.store.query(query)
-        self.len = sum(1 for _ in out)
-        return out, self.len
+        self.store.flush()
+        self.variables = out.variables
+        out = list(out)
+        return out, len(out)
 
     def __len__(self):
-        return self.len
+        if not self.result:
+            return 0
+        any_key = next(iter(self.result))
+        return len(self.result[any_key])
 
     def __iter__(self):
-        for i in range(self.len):
+        for i in range(len(self)):
             yield tuple(self.result[var][i] for var in self.result)
 
     def __getitem__(self, index):
