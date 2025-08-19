@@ -1,19 +1,8 @@
-#include "controller_wrapper.h"
-#include "main_layout.h"
-#include <Python.h>
-#include <QApplication>
+#include "gui_wrapper.h"
 #include <csignal>
-#include <thread>
 
-typedef struct {
-  PyObject_HEAD ControllerWrapper *controllerWrapper;
-  MainLayout *mainLayout;
-  QApplication *app;
-  std::thread guiThread;
 
-} GuiWrapperObject;
-
-static bool pyListToQStringList(PyObject *pyList, QStringList &qStringList, const std::string &name = "List") {
+static bool pyListToQStringList(PyObject *pyList, QStringList &qStringList, const std::string &name) {
   if (!PyList_Check(pyList)) {
     PyErr_SetString(PyExc_TypeError, (name + " must be a list").c_str());
     return false;
@@ -353,7 +342,7 @@ static PyMethodDef GuiWrapper_methods[] = {
         {"get_properties_mapping", (PyCFunction) GuiWrapper_get_properties_mapping, METH_VARARGS, "Gets the properties mapping from the user"},
         {nullptr}};
 
-static PyTypeObject GuiWrapperType = {
+PyTypeObject GuiWrapperType = {
         .ob_base = PyVarObject_HEAD_INIT(nullptr, 0)
                            .tp_name = "gui.GuiWrapper",
         .tp_basicsize = sizeof(GuiWrapperObject),

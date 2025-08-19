@@ -132,3 +132,5 @@ void ColorScaleLegend::drawSliderHandle(QPainter *painter, int x, int height) {
   painter->drawRoundedRect(handleRect, 2, 2);
   painter->restore();
 }
+
+#include "moc_scale_legend.cpp"

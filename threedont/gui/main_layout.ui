@@ -189,11 +189,6 @@
     <string>Update Sensors and Reason</string>
     </property>
   </action>
-  <action name="actionOpen_project">
-   <property name="text">
-    <string>Open project</string>
-   </property>
-  </action>
   <action name="actionCreate_project">
    <property name="text">
     <string>Create project</string>
