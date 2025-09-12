@@ -9,18 +9,35 @@
   outputs = { self, nixpkgs, flake-utils }:
     let
       version = "0.0.1";
-      overlay = final: prev: { };
+      overlay = final: prev: {
+        oxigraph = prev.oxigraph.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [ ./rocksdb_wrapper_optimization.patch ];
+        });
+        python3 = prev.python3.override {
+          packageOverrides = finalPy: prevPy: {
+            pyoxigraph = prevPy.pyoxigraph.overrideAttrs (old: {
+              patches = (old.patches or [ ]) ++ [ ./rocksdb_wrapper_optimization.patch ];
+            });
+          };
+        };
+        python3Packages = final.python3.pkgs;
+      };
     in
 
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = (nixpkgs.legacyPackages.${system}.extend overlay); in
+      let 
+        pkgs = (nixpkgs.legacyPackages.${system}.extend overlay); 
+        optimized_pyoxigraph = (pkgs.python3Packages.pyoxigraph.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [ ./rocksdb_wrapper_optimization.patch ];
+        }));
+      in
       {
 
         packages = rec {
           default = threedont;
           threedont = pkgs.python3.pkgs.buildPythonApplication {
             pname = "threedont";
-            src = ./.;
+            src = pkgs.lib.cleanSource ./.;
             inherit version;
             pyproject = true;
 

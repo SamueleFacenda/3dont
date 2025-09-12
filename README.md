@@ -48,6 +48,14 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] fix lookat lines width
 - [ ] use QOpenglBuffer for buffer management
 - [ ] investigate projects not showing sometimes
+
+note
+file las pointcloud in project
+epsg code in project
+owlready2 sqlite database
+metodo get_onto o get_graph che ritorna owlready (in project)
+output dir in project (con sottocartelle fisse)
+
  
 ## License
 

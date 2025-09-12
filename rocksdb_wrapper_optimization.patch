@@ -1,0 +1,156 @@
+--- a/lib/oxigraph/src/storage/rocksdb_wrapper.rs
++++ b/lib/oxigraph/src/storage/rocksdb_wrapper.rs
+@@ -73,6 +73,7 @@
+     ingest_external_file_options: *mut rocksdb_ingestexternalfileoptions_t,
+     compaction_options: *mut rocksdb_compactoptions_t,
+     block_based_table_options: *mut rocksdb_block_based_table_options_t,
++    block_cache: *mut rocksdb_cache_t,
+     column_family_names: Vec<&'static str>,
+     cf_handles: Vec<*mut rocksdb_column_family_handle_t>,
+     cf_options: Vec<*mut rocksdb_options_t>,
+@@ -103,6 +104,7 @@
+             rocksdb_transactiondb_options_destroy(self.transactiondb_options);
+             rocksdb_options_destroy(self.options);
+             rocksdb_block_based_options_destroy(self.block_based_table_options);
++            if !self.block_cache.is_null() { rocksdb_cache_destroy(self.block_cache); }
+         }
+     }
+ }
+@@ -111,6 +113,8 @@
+     db: *mut rocksdb_t,
+     options: *mut rocksdb_options_t,
+     read_options: *mut rocksdb_readoptions_t,
++    block_based_table_options: *mut rocksdb_block_based_table_options_t,
++    block_cache: *mut rocksdb_cache_t, 
+     column_family_names: Vec<&'static str>,
+     cf_handles: Vec<*mut rocksdb_column_family_handle_t>,
+     cf_options: Vec<*mut rocksdb_options_t>,
+@@ -130,6 +134,8 @@
+             for cf_option in &self.cf_options {
+                 rocksdb_options_destroy(*cf_option);
+             }
++            if !self.block_based_table_options.is_null() { rocksdb_block_based_options_destroy(self.block_based_table_options); }
++            if !self.block_cache.is_null() { rocksdb_cache_destroy(self.block_cache); }
+             rocksdb_readoptions_destroy(self.read_options);
+             rocksdb_options_destroy(self.options);
+         }
+@@ -144,20 +150,36 @@
+         let c_path = path_to_cstring(path)?;
+         unsafe {
+             let options = Self::db_options(true)?;
+-            rocksdb_options_set_create_if_missing(options, 1);
+-            rocksdb_options_set_create_missing_column_families(options, 1);
+-            rocksdb_options_set_compression(options, rocksdb_lz4_compression.try_into().unwrap());
++            // Configure block-based table options for read-only
+             let block_based_table_options = rocksdb_block_based_options_create();
+             assert!(
+                 !block_based_table_options.is_null(),
+                 "rocksdb_block_based_options_create returned null"
+             );
++            let block_cache = rocksdb_cache_create_lru(4 * 1024 * 1024 * 1024);
++            rocksdb_block_based_options_set_block_cache(block_based_table_options, block_cache);
++            rocksdb_block_based_options_set_block_size(block_based_table_options, 64 * 1024);
++            rocksdb_block_based_options_set_cache_index_and_filter_blocks(block_based_table_options, 1);
++            rocksdb_block_based_options_set_pin_l0_filter_and_index_blocks_in_cache(block_based_table_options, 1);
+             rocksdb_block_based_options_set_format_version(block_based_table_options, 5);
+-            rocksdb_block_based_options_set_index_block_restart_interval(
+-                block_based_table_options,
+-                16,
+-            );
++            rocksdb_block_based_options_set_index_block_restart_interval(block_based_table_options, 16);
+             rocksdb_options_set_block_based_table_factory(options, block_based_table_options);
++            rocksdb_options_set_create_if_missing(options, 1);
++            rocksdb_options_set_create_missing_column_families(options, 1);
++            // rocksdb_options_set_compression(options, rocksdb_lz4_compression.try_into().unwrap());
++            // --- Performance tuning for large scans ---
++            // 4 GB LRU block cache (adjust to your RAM)
++            let block_cache = rocksdb_cache_create_lru(4 * 1024 * 1024 * 1024);
++            rocksdb_block_based_options_set_block_cache(block_based_table_options, block_cache);
++            // Larger data block size for sequential scans (default 4KB)
++            rocksdb_block_based_options_set_block_size(block_based_table_options, 64 * 1024);
++            // Keep index/filter blocks in cache and pin L0
++            rocksdb_block_based_options_set_cache_index_and_filter_blocks(block_based_table_options, 1);
++            rocksdb_block_based_options_set_pin_l0_filter_and_index_blocks_in_cache(block_based_table_options, 1);
++            // Use universal compaction for read-mostly workloads
++            rocksdb_options_set_compaction_style(options, rocksdb_universal_compaction.try_into().unwrap());
++            // Prefer no compression for fastest scans (increase disk size)
++            rocksdb_options_set_compression(options, rocksdb_no_compression.try_into().unwrap());
+             #[cfg(feature = "rocksdb-debug")]
+             {
+                 rocksdb_options_set_info_log_level(options, 0);
+@@ -177,6 +199,7 @@
+                 "rocksdb_transactiondb_options_create returned null"
+             );
+ 
++
+             let db = ffi_result!(rocksdb_transactiondb_open_column_families_with_status(
+                 options,
+                 transactiondb_options,
+@@ -213,6 +236,10 @@
+                 "rocksdb_readoptions_create returned null"
+             );
+ 
++            rocksdb_readoptions_set_readahead_size(read_options, 16 * 1024 * 1024);
++            // Readahead improves large sequential scans
++            rocksdb_readoptions_set_readahead_size(read_options, 16 * 1024 * 1024);
++
+             let write_options = rocksdb_writeoptions_create();
+             assert!(
+                 !write_options.is_null(),
+@@ -263,6 +290,7 @@
+                     ingest_external_file_options,
+                     compaction_options,
+                     block_based_table_options,
++                    block_cache,
+                     column_family_names,
+                     cf_handles,
+                     cf_options,
+@@ -279,6 +307,22 @@
+         unsafe {
+             let c_path = path_to_cstring(path)?;
+             let options = Self::db_options(true)?;
++            // Configure block-based table options for read-only
++            let block_based_table_options = rocksdb_block_based_options_create();
++            assert!(
++                !block_based_table_options.is_null(),
++                "rocksdb_block_based_options_create returned null"
++            );
++            let block_cache = rocksdb_cache_create_lru(4 * 1024 * 1024 * 1024);
++            rocksdb_block_based_options_set_block_cache(block_based_table_options, block_cache);
++            rocksdb_block_based_options_set_block_size(block_based_table_options, 64 * 1024);
++            rocksdb_block_based_options_set_cache_index_and_filter_blocks(block_based_table_options, 1);
++            rocksdb_block_based_options_set_pin_l0_filter_and_index_blocks_in_cache(block_based_table_options, 1);
++            rocksdb_block_based_options_set_format_version(block_based_table_options, 5);
++            rocksdb_block_based_options_set_index_block_restart_interval(block_based_table_options, 16);
++            rocksdb_options_set_block_based_table_factory(options, block_based_table_options);
++            rocksdb_options_set_compaction_style(options, rocksdb_universal_compaction.try_into().unwrap());
++            rocksdb_options_set_compression(options, rocksdb_no_compression.try_into().unwrap());
+             let (column_family_names, c_column_family_names, cf_options) =
+                 Self::column_families_names_and_options(column_families, options);
+             let mut cf_handles: Vec<*mut rocksdb_column_family_handle_t> =
+@@ -320,11 +364,16 @@
+                 "rocksdb_readoptions_create returned null"
+             );
+ 
++            // Readahead improves large sequential scans
++            rocksdb_readoptions_set_readahead_size(read_options, 16 * 1024 * 1024);
++
+             Ok(Self {
+                 inner: DbKind::ReadOnly(Arc::new(RoDbHandler {
+                     db,
+                     options,
+                     read_options,
++                    block_based_table_options,
++                    block_cache,
+                     column_family_names,
+                     cf_handles,
+                     cf_options,
+@@ -339,6 +388,8 @@
+             let options = rocksdb_options_create();
+             assert!(!options.is_null(), "rocksdb_options_create returned null");
+             rocksdb_options_optimize_level_style_compaction(options, 512 * 1024 * 1024);
++            // Prefer universal compaction for scan-heavy workloads
++            rocksdb_options_set_compaction_style(options, rocksdb_universal_compaction.try_into().unwrap());
+             rocksdb_options_increase_parallelism(
+                 options,
+                 available_parallelism()?.get().try_into().unwrap(),
