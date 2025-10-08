@@ -124,11 +124,11 @@ void Viewer::keyPressEvent(QKeyEvent *ev) {
   } else if (ev->key() == Qt::Key_Up) {
     _camera.setViewAxis(QtCamera::ARBITRARY_AXIS);
     _camera.setTheta(_camera.getTheta() + 30.0f * _camera.getRotateRate());
-  } else if (ev->key() == Qt::Key_BracketLeft) {
+  } else if (ev->key() == Qt::Key_BracketLeft || ev->key() == Qt::Key_8) {
     int next_idx = (int) _points->getCurrentAttributeIndex();
     next_idx = next_idx == 0 ? (int) _points->getNumAttributes() - 1 : next_idx - 1;
     _points->setCurrentAttributeIndex((std::size_t) next_idx);
-  } else if (ev->key() == Qt::Key_BracketRight) {
+  } else if (ev->key() == Qt::Key_BracketRight|| ev->key() == Qt::Key_9) {
     int next_idx = (int) _points->getCurrentAttributeIndex();
     next_idx = (next_idx + 1) % (int) _points->getNumAttributes();
     _points->setCurrentAttributeIndex((std::size_t) next_idx);
