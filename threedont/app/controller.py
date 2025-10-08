@@ -298,8 +298,8 @@ class Controller:
             self.viewer_client.set(curr_attribute_id=1)
             self._send_legend(result)
         elif query_type == "select":
-            self.viewer_client.attributes(result)
-            self.viewer_client.set(curr_attribute_id=0)
+            self.viewer_client.attributes(self.sparql_client.colors, result)
+            self.viewer_client.set(curr_attribute_id=1)
         else:
             print("Error, unknown query type: ", query_type)  # TODO remove, shouldn't happen
 
