@@ -48,6 +48,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] fix lookat lines width
 - [ ] use QOpenglBuffer for buffer management
 - [ ] investigate projects not showing sometimes
+- [ ] test queries with type:point
 
 note
 file las pointcloud in project
