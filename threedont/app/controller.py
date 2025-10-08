@@ -113,9 +113,9 @@ class Controller:
             print("No connection to server")
             return
 
-        colors = self.sparql_client.execute_select_query(query)
-        self.viewer_client.attributes(colors)
-        self.viewer_client.set(curr_attribute_id=0)
+        selected_colors = self.sparql_client.execute_select_query(query)
+        self.viewer_client.attributes(self.sparql_client.colors, selected_colors)
+        self.viewer_client.set(curr_attribute_id=1)
 
     @report_errors_to_gui
     def scalar_query(self, query):
@@ -176,9 +176,9 @@ class Controller:
         smf.command_manual_annotation(self.sensorArgs, subject, predicate, obj, author_name)
 
     def select_all_subjects(self, predicate, object):
-        colors = self.sparql_client.select_all_subjects(predicate, object)
-        self.viewer_client.attributes(colors)
-        self.viewer_client.set(curr_attribute_id=0)
+        selected_colors = self.sparql_client.select_all_subjects(predicate, object)
+        self.viewer_client.attributes(self.sparql_client.colors, selected_colors)
+        self.viewer_client.set(curr_attribute_id=1)
 
     @report_errors_to_gui
     def tabular_query(self, query):
