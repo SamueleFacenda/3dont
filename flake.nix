@@ -134,8 +134,11 @@
             ];
             # https://discourse.nixos.org/t/python-qt-woes/11808/10
             shellHook = ''
-              setQtEnvironment=$(mktemp --suffix .setQtEnvironment.sh)
-              # echo "shellHook: setQtEnvironment = $setQtEnvironment"
+              unset QML2_IMPORT_PATH
+              unset QT_PLUGIN_PATH
+              unset QTWEBKIT_PLUGIN_PATH
+              setQtEnvironment=$(mktemp --tmpdir=/tmp --suffix .setQtEnvironment.sh)
+              echo "shellHook: setQtEnvironment = $setQtEnvironment"
               makeWrapper "/bin/sh" "$setQtEnvironment" "''${qtWrapperArgs[@]}"
               sed "/^exec/d" -i "$setQtEnvironment"
               source "$setQtEnvironment"
