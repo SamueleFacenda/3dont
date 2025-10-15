@@ -1,5 +1,3 @@
-from lib2to3.pytree import convert
-
 from pyoxigraph import NamedNode
 
 from .query_result import Query

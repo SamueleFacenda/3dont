@@ -2,7 +2,8 @@
 {
   description = "3dont, ontology pointcloud visualizer";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-25.05";
+  # inputs.nixpkgs.url = "nixpkgs/nixos-25.05";
+  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
@@ -10,15 +11,8 @@
     let
       version = "0.0.1";
       overlay = final: prev: {
-        oxigraph = prev.oxigraph.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [ ./rocksdb_wrapper_optimization.patch ];
-        });
         python3 = prev.python3.override {
-          packageOverrides = finalPy: prevPy: {
-            pyoxigraph = prevPy.pyoxigraph.overrideAttrs (old: {
-              patches = (old.patches or [ ]) ++ [ ./rocksdb_wrapper_optimization.patch ];
-            });
-          };
+          packageOverrides = finalPy: prevPy: {};
         };
         python3Packages = final.python3.pkgs;
       };
@@ -26,10 +20,7 @@
 
     flake-utils.lib.eachDefaultSystem (system:
       let 
-        pkgs = (nixpkgs.legacyPackages.${system}.extend overlay); 
-        optimized_pyoxigraph = (pkgs.python3Packages.pyoxigraph.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [ ./rocksdb_wrapper_optimization.patch ];
-        }));
+        pkgs = (nixpkgs.legacyPackages.${system}.extend overlay);
       in
       {
 
@@ -69,7 +60,10 @@
             buildInputs = with pkgs; [
               eigen
               qt6.qtbase
-            ] ++ lib.optionals stdenv.hostPlatform.isLinux [ qt6.qtwayland.dev libGL ];
+            ] ++ lib.optionals stdenv.hostPlatform.isLinux [
+              libGL 
+              qt6Packages.qtstyleplugin-kvantum
+            ];
             
             dependencies = with pkgs.python3Packages; [
               numpy
@@ -88,29 +82,32 @@
               pyoxigraph
             ];
           };
-          owlready2 = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, distutils}:
+          owlready2 = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, distutils, setuptools, cython }:
             buildPythonPackage rec {
               pname = "owlready2";
               version = "0.47";
+              pyproject = true;
+              build-system = [ setuptools ];
               src = fetchPypi {
                 inherit pname version;
                 hash = "sha256-r34dIgXAtYhtLjQ5erjBDKKf9ow9w3AtQzk5Zqx/brA=";
               };
               dependencies = [
                 distutils
+                cython
               ];
             }
           ) {};
-          oxrdflib = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, pyoxigraph, rdflib, setuptools, setuptools-scm}:
+          oxrdflib = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, pyoxigraph, rdflib, setuptools, setuptools-scm, uv-build}:
             buildPythonPackage rec {
               pname = "oxrdflib";
-              version = "0.4.0";
+              version = "0.5.0";
               src = fetchPypi {
                 inherit pname version;
-                hash = "sha256-N9TAJdTjnF5UclJ8OTmYv9EOWsGFow4IC1tRD23X2oY=";
+                hash = "sha256-+DFI4sbUQ/dxjG6JNsa4njbrtPEALaaejwZW6PtaDfI=";
               };
               pyproject = true;
-              build-system = [ setuptools setuptools-scm ];
+              build-system = [ setuptools setuptools-scm uv-build ];
               dependencies = [
                 pyoxigraph
                 rdflib
@@ -134,14 +131,12 @@
             ];
             # https://discourse.nixos.org/t/python-qt-woes/11808/10
             shellHook = ''
-              unset QML2_IMPORT_PATH
-              unset QT_PLUGIN_PATH
-              unset QTWEBKIT_PLUGIN_PATH
-              setQtEnvironment=$(mktemp --tmpdir=/tmp --suffix .setQtEnvironment.sh)
-              echo "shellHook: setQtEnvironment = $setQtEnvironment"
+              setQtEnvironment=$(mktemp --suffix .setQtEnvironment.sh)
+              # echo "shellHook: setQtEnvironment = $setQtEnvironment"
               makeWrapper "/bin/sh" "$setQtEnvironment" "''${qtWrapperArgs[@]}"
               sed "/^exec/d" -i "$setQtEnvironment"
               source "$setQtEnvironment"
+              # cat "$setQtEnvironment"
             '';
           };
         };
