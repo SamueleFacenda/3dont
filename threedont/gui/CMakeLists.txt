@@ -51,6 +51,10 @@ target_link_libraries(gui Qt6::Widgets Qt6::Network Qt6::Gui Qt6::OpenGLWidgets 
 # install in source directory for development
 if (THREEDONT_DEVELOP_BUILD)
     # send message
+    set_target_properties(gui PROPERTIES
+            INSTALL_RPATH_USE_LINK_PATH TRUE
+            BUILD_WITH_INSTALL_RPATH FALSE
+    )
     message(STATUS "Installing gui in source directory for development")
     install(TARGETS gui DESTINATION ${CMAKE_SOURCE_DIR}/threedont/gui)
 else ()
