@@ -13,7 +13,7 @@ class OxigraphQuery(Query):
         super().__init__(query, False)
 
     def _append_chunk(self, chunk):
-        #TODO optimize (it takes too much time to append a chunk)
+        # TODO optimize (it takes too much time to append a chunk)
         from time import time
         start = time()
         for var in self.variables:

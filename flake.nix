@@ -60,6 +60,9 @@
             buildInputs = with pkgs; [
               eigen
               qt6.qtbase
+              apache-jena
+              hdt
+              hdt-java
             ] ++ lib.optionals stdenv.hostPlatform.isLinux [
               libGL 
               qt6Packages.qtstyleplugin-kvantum
@@ -80,6 +83,7 @@
               awsiotpythonsdk
               oxrdflib
               pyoxigraph
+              jpype1
             ];
           };
           owlready2 = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, distutils, setuptools, cython }:
@@ -114,6 +118,31 @@
               ];
             }
           ) {};
+          hdt-java = pkgs.stdenv.mkDerivation rec {
+              pname = "hdt-java";
+              version = "3.0.10";
+    
+              src = pkgs.fetchurl {
+                url = "https://github.com/rdfhdt/hdt-java/releases/download/v${version}/rdfhdt.tar.gz";
+                hash = "sha256-m5fyjr6R+9Zkkts202Uxr0BTala9eGyLuYz3CuepeMU=";
+              };
+    
+              buildInputs = [ pkgs.jre ];
+    
+              nativeBuildInputs = [ pkgs.makeWrapper ];
+    
+              installPhase = ''
+                cp -r . "$out"
+    
+                rm "$out"/bin/*.bat
+                rm "$out"/bin/*.ps1
+                sed -i 's/javaenv\.sh/hdt-java-javaenv.sh/g' $(ls "$out"/bin/*.sh | grep -v javaenv);
+                mv "$out"/bin/javaenv.sh "$out"/bin/hdt-java-javaenv.sh
+                for i in $(ls "$out"/bin/*.sh | grep -v javaenv); do
+                  wrapProgram "$i" --prefix "PATH" : "${pkgs.jre}/bin/"
+                done
+              '';
+            };
         };
 
         devShells = {
