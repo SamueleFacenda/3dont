@@ -49,6 +49,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] use QOpenglBuffer for buffer management
 - [ ] investigate projects not showing sometimes
 - [ ] test queries with type:point
+- [ ] plot 3d graph with relations
 
 note
 file las pointcloud in project

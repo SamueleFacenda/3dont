@@ -20,7 +20,7 @@
 
     flake-utils.lib.eachDefaultSystem (system:
       let 
-        pkgs = (nixpkgs.legacyPackages.${system}.extend overlay);
+        pkgs = ((import nixpkgs { inherit system; config.allowUnfree = true; }).extend overlay);
       in
       {
 
@@ -60,9 +60,14 @@
             buildInputs = with pkgs; [
               eigen
               qt6.qtbase
-              apache-jena
               hdt
-              hdt-java
+              qendpoint
+              (graalvm-oracle.overrideAttrs {
+                src = fetchurl {
+                  hash = "sha256-1KsCuhAp5jnwM3T9+RwkLh0NSQeYgOGvGTLqe3xDGDc=";
+                  url = "https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-x64_bin.tar.gz";
+                };
+              }) # jre
             ] ++ lib.optionals stdenv.hostPlatform.isLinux [
               libGL 
               qt6Packages.qtstyleplugin-kvantum
@@ -118,31 +123,44 @@
               ];
             }
           ) {};
-          hdt-java = pkgs.stdenv.mkDerivation rec {
-              pname = "hdt-java";
-              version = "3.0.10";
-    
-              src = pkgs.fetchurl {
-                url = "https://github.com/rdfhdt/hdt-java/releases/download/v${version}/rdfhdt.tar.gz";
-                hash = "sha256-m5fyjr6R+9Zkkts202Uxr0BTala9eGyLuYz3CuepeMU=";
-              };
-    
-              buildInputs = [ pkgs.jre ];
-    
-              nativeBuildInputs = [ pkgs.makeWrapper ];
-    
-              installPhase = ''
-                cp -r . "$out"
-    
-                rm "$out"/bin/*.bat
-                rm "$out"/bin/*.ps1
-                sed -i 's/javaenv\.sh/hdt-java-javaenv.sh/g' $(ls "$out"/bin/*.sh | grep -v javaenv);
-                mv "$out"/bin/javaenv.sh "$out"/bin/hdt-java-javaenv.sh
-                for i in $(ls "$out"/bin/*.sh | grep -v javaenv); do
-                  wrapProgram "$i" --prefix "PATH" : "${pkgs.jre}/bin/"
-                done
-              '';
+          qendpoint = pkgs.stdenv.mkDerivation rec {
+            pname = "qendpoint-cli";
+            version = "2.5.2";
+
+            src = pkgs.fetchurl {
+              url = "https://github.com/the-qa-company/qEndpoint/releases/download/v${version}/qendpoint-cli.zip";
+              hash = "sha256-9PIDVBOUBe6AMVvKUMWL9otrJLKTWcuDBkpHvs5cHPw=";
             };
+
+            buildInputs = [ pkgs.jre ];
+
+            nativeBuildInputs = with pkgs; [ makeWrapper unzip ];
+
+            installPhase = ''
+              cp -r . "$out"
+
+              rm "$out"/bin/*.bat
+              rm "$out"/bin/*.ps1
+              sed -i 's/javaenv\.sh/qendpoint-javaenv.sh/g' $(ls "$out"/bin/*.sh | grep -v javaenv);
+              mv "$out"/bin/javaenv.sh "$out"/bin/qendpoint-javaenv.sh
+
+              for i in $(
+                  find "$out"/bin \
+                    -type f -name "*.sh" \
+                    \! -regex '.*\/\(qendpoint\|qep\|[^/]*javaenv\)[^/]*\.sh$' \
+                    -printf '%f\n' \
+                ); do
+                i_quotemeta="$(printf '%s\n' "$i" | sed -e 's/[.[\*^$/]/\\&/g')"
+                sed -i 's,bin/'"$i_quotemeta"',bin/qendpoint-'"$i"',g' $(ls "$out"/bin/*.sh);
+                mv "$out"/bin/$i "$out"/bin/qendpoint-$i
+              done
+
+              for i in $(ls "$out"/bin/*.sh | grep -v javaenv); do
+                wrapProgram "$i" --prefix "PATH" : "${pkgs.jre}/bin/" \
+                  --set-default JAVA_OPTIONS "-Dspring.autoconfigure.exclude=org.springframework.boot.autoconfigure.http.client.HttpClientAutoConfiguration -Dspring.devtools.restart.enabled=false"
+              done
+            '';
+          };
         };
 
         devShells = {
@@ -158,6 +176,8 @@
               qt6.wrapQtAppsHook
               makeWrapper
             ];
+            # Qendpoint config
+            JAVA_OPTIONS="-Xmx32G -Dspring.autoconfigure.exclude=org.springframework.boot.autoconfigure.http.client.HttpClientAutoConfiguration -Dspring.devtools.restart.enabled=false";
             # https://discourse.nixos.org/t/python-qt-woes/11808/10
             shellHook = ''
               setQtEnvironment=$(mktemp --suffix .setQtEnvironment.sh)
