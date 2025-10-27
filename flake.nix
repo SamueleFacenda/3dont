@@ -89,6 +89,7 @@
               oxrdflib
               pyoxigraph
               jpype1
+              psutil
             ];
           };
           owlready2 = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, distutils, setuptools, cython }:

@@ -50,6 +50,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] investigate projects not showing sometimes
 - [ ] test queries with type:point
 - [ ] plot 3d graph with relations
+- [ ] make quendpoint/sparql storage superclass
 
 note
 file las pointcloud in project
