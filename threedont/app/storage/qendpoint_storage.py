@@ -6,16 +6,17 @@ import jpype
 import jpype.imports
 # from jpype.types import *
 
-from com.the_qa_company.qendpoint.compiler import CompiledSail
-from com.the_qa_company.qendpoint.store import EndpointFiles
-from com.the_qa_company.qendpoint.core.options import HDTOptions, HDTOptionsKeys
-from com.the_qa_company.qendpoint.core.tools import RDF2HDT, HDTConvertTool
-from com.the_qa_company.qendpoint.core.util.listener import ColorTool
-
 import os
 import shutil
 from pathlib import Path
 import psutil
+
+def _to_jList(*args):
+    from java.util import ArrayList
+    jlist = ArrayList()
+    for arg in args:
+        jlist.add(arg)
+    return jlist
 
 @StorageFactory.register(is_local=True, priority=10)
 class QendpointStorage(AbstractStorage):
@@ -35,6 +36,7 @@ class QendpointStorage(AbstractStorage):
 
         half_gb = psutil.virtual_memory().total // (1024 ** 3) // 2
         jpype.startJVM(f"-Xmx{half_gb}G", classpath=jars)
+        self.base_iri = identifier
 
     def __del__(self):
         self.graph.shutDown()
@@ -46,6 +48,10 @@ class QendpointStorage(AbstractStorage):
         return not self.graph.executeBooleanQuery("ASK { { SELECT * WHERE { ?s ?p ?o } LIMIT 1 }}", 10000)
 
     def bind_to_path(self, path: str):
+        from com.the_qa_company.qendpoint.compiler import CompiledSail
+        from com.the_qa_company.qendpoint.store import EndpointFiles
+        from com.the_qa_company.qendpoint.core.options import HDTOptions, HDTOptionsKeys
+
         spec = HDTOptions.of(HDTOptionsKeys.LOAD_HDT_TYPE_KEY, HDTOptionsKeys.LOAD_HDT_TYPE_VALUE_MAP,
                              HDTOptionsKeys.BITMAPTRIPLES_INDEX_OTHERS, "spo,ops,pos,osp",
                              HDTOptionsKeys.TEMP_DICTIONARY_IMPL_KEY, HDTOptionsKeys.TEMP_DICTIONARY_IMPL_VALUE_HASH_PSFC,
@@ -67,31 +73,41 @@ class QendpointStorage(AbstractStorage):
 
     # Convert a dictionaryMultiObj to dictionaryMultiObjLangPrefixes
     def _convert_dictionary_type(self):
+        from com.the_qa_company.qendpoint.core.tools import HDTConvertTool
+        from com.the_qa_company.qendpoint.core.util.listener import ColorTool
+
         main_file = self.path / "hdt-store" / "index_dev.hdt"
         secondary_file = self.path / "hdt-store" / "index_dev_converted.hdt"
 
         hdtconvert = HDTConvertTool()
-        hdtconvert.colorTool = ColorTool(hdtconvert.color, hdtconvert.quiet)
-        hdtconvert.parameters = [str(main_file), str(secondary_file), "dictionaryMultiObjLang"]
+        colorTool = hdtconvert.getClass().getDeclaredField("colorTool")
+        colorTool.setAccessible(True)
+        colorTool.set(hdtconvert, ColorTool(hdtconvert.color, hdtconvert.quiet))
+        hdtconvert.parameters = _to_jList(str(main_file), str(secondary_file), "dictionaryMultiObjLang")
         hdtconvert.execute()
 
         os.remove(main_file)
 
-        hdtconvert.parameters = [str(secondary_file), str(main_file), "dictionaryMultiObjLangPrefixes"]
+        hdtconvert.parameters = _to_jList(str(secondary_file), str(main_file), "dictionaryMultiObjLangPrefixes")
         hdtconvert.execute()
 
         os.remove(secondary_file)
 
     def load_file(self, path: str):
+        from com.the_qa_company.qendpoint.core.tools import RDF2HDT
+        from com.the_qa_company.qendpoint.core.util.listener import ColorTool
+
         cores = os.cpu_count() or 4
         rdf2hdt = RDF2HDT()
+        colorTool = rdf2hdt.getClass().getDeclaredField("colorTool")
+        colorTool.setAccessible(True)
 
         rdf2hdt.color = True
-        # TODO rdf2hdt.base = "http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontolog/YTU3D"
+        rdf2hdt.baseURI = self.base_iri
         rdf2hdt.rdfInput = path
-        rdf2hdt.hdtOutput = self.path / "hdt-store" / "index_dev.hdt"
+        rdf2hdt.hdtOutput = str(self.path / "hdt-store" / "index_dev.hdt")
         rdf2hdt.multiThreadLog = True
-        rdf2hdt.index = True
+        rdf2hdt.generateIndex = True
         rdf2hdt.options = ";".join([
             "autoIndexer.indexName=index_dev",
             "dictionary.type=dictionaryMultiObj",
@@ -107,9 +123,10 @@ class QendpointStorage(AbstractStorage):
             f"loader.cattree.kcat={cores}",
             "profiler=false",
         ])
-        rdf2hdt.colorTool = ColorTool(rdf2hdt.color, rdf2hdt.quiet)
+        colorTool.set(rdf2hdt, ColorTool(rdf2hdt.color, rdf2hdt.quiet))
 
         self._cleanup() # Clean up existing data before loading new data
+        (self.path / "hdt-store").mkdir()
 
         rdf2hdt.execute()
         self._convert_dictionary_type()

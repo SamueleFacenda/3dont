@@ -11,6 +11,7 @@ result
 /virtuoso/
 /tmp.*.tdb
 .env
+/qendpoint/
 
 .DS_Store
 __MACOSX/
