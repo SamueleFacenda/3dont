@@ -53,7 +53,7 @@ class QendpointStorage(AbstractStorage):
         from com.the_qa_company.qendpoint.core.options import HDTOptions, HDTOptionsKeys
 
         spec = HDTOptions.of(HDTOptionsKeys.LOAD_HDT_TYPE_KEY, HDTOptionsKeys.LOAD_HDT_TYPE_VALUE_MAP,
-                             HDTOptionsKeys.BITMAPTRIPLES_INDEX_OTHERS, "spo,ops,pos,osp",
+                             HDTOptionsKeys.BITMAPTRIPLES_INDEX_OTHERS, "spo,ops,pos,osp,sop,pso",
                              HDTOptionsKeys.TEMP_DICTIONARY_IMPL_KEY, HDTOptionsKeys.TEMP_DICTIONARY_IMPL_VALUE_HASH_PSFC,
                              HDTOptionsKeys.HDT_SUPPLIER_KEY, HDTOptionsKeys.LOADER_CATTREE_HDT_SUPPLIER_VALUE_MEMORY,
                              HDTOptionsKeys.ASYNC_DIR_PARSER_KEY, 0,
@@ -112,7 +112,7 @@ class QendpointStorage(AbstractStorage):
             "autoIndexer.indexName=index_dev",
             "dictionary.type=dictionaryMultiObj",
             "bitmaptriples.indexmethod=recommended",
-            "bitmaptriples.index.others=spo,ops,pos,osp",
+            "bitmaptriples.index.others=spo,ops,pos,osp,sop,pso",
             "loader.type=disk",
             "loader.disk.chunkSize=10000000",
             "loader.disk.compressMode=compressionComplete",

@@ -31,7 +31,7 @@ class QendpointQuery(Query):
 
             for row in result:
                 for var in vars:
-                    self.results[var].append(row.getValue(var).stringValue())
+                    self.results[var].append(str(row.getValue(var).stringValue()))
         return self.results, self._result_len(self.results)
 
     def __len__(self):
