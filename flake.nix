@@ -162,6 +162,39 @@
               done
             '';
           };
+          qlever = pkgs.stdenv.mkDerivation {
+            pname = "qlever";
+            version = "unstable";
+            src = pkgs.fetchFromGitHub {
+              repo = "qlever";
+              owner = "ad-freiburg";
+              rev = "6430af6d4c1298f13ea8f0d47e3d37986fd18263";
+              sha256 = "sha256-7vLAD1r7YhEuqMAgLofKBdw29c8RZvb6rwLBeZGSxnY=";
+            };
+            nativeBuildInputs = with pkgs; [
+              cmake
+              ninja
+            ];
+            buildInputs = with pkgs; [
+              boost
+              icu
+              jemalloc
+              openssl.dev
+              gtest
+              nlohmann_json
+              antlr
+              # range-v3
+              zstd
+              ctre
+              abseil-cpp
+              s2geometry
+              re2
+            ];
+            cmakeFlags = [
+              "-DUSE_PARALLEL=true"
+              # "-D_NO_TIMING_TESTS=ON"
+            ];
+          };
         };
 
         devShells = {

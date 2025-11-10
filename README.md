@@ -55,6 +55,19 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] check [rdf-fusion](https://github.com/tobixdev/rdf-fusion)
 - [ ] check [qlever](https://github.com/ad-freiburg/qlever)
 
+### Tested backends:
+- virtuoso
+- virtuoso hybrid (points as relational table linked view)
+- oxigraph
+- owlready2
+- rdflib
+- oxigraph-rdflib
+- qendpoint (with jpype)
+
+### Backends to test
+- qlever
+- rdf-fusion
+
 note
 file las pointcloud in project
 epsg code in project
