@@ -17,6 +17,7 @@ class Query(ABC):
             while True:
                 chunked_query = query + " OFFSET " + str(offset) + " LIMIT " + str(CHUNK_SIZE)
                 results, result_len = self._perform_query(chunked_query)
+                print("Fetched chunk with " + str(result_len) + " results (offset " + str(offset) + ")")
                 self._append_chunk(results)
 
                 if result_len < CHUNK_SIZE:

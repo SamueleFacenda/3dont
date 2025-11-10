@@ -1,0 +1,55 @@
+Video dataset ferrara con scalar temperatura (acquisizione con Acquisition_tag = “day”)
+PREFIX base:<http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontology#>
+SELECT DISTINCT ?s ?x 
+FROM <http://localhost:8890/Ferrara>
+WHERE {
+    ?acq base:Contains_data_relative_to ?s.
+    ?acq base:Temperature ?x.
+    ?acq base:Acquisition_tag ?tag.
+    FILTER(?tag = "day")
+}
+
+
+Video dataset ferrara con scalar permeability to water (è attribuita ai materiali, i quali a loro volta sono connessi ad acquisizioni e poi a punti. Mi sembra di averti mandato gli esempi per query del genere a suo tempo)
+PREFIX base:<http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontology#>
+SELECT DISTINCT ?s ?x 
+FROM <http://localhost:8890/Ferrara>
+WHERE {
+    ?acq base:Is_a_point_made_of ?mat.
+    ?mat base:Permeability_To_Water ?x.
+    ?acq base:Contains_data_relative_to ?s.
+}
+
+
+Video dataset ferrara con flooding risk index
+PREFIX base:<http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontology#>
+SELECT DISTINCT ?s ?x 
+FROM <http://localhost:8890/Ferrara>
+WHERE {
+    ?s base:Flooding_Risk_Index ?x.
+}
+
+
+Video dataset santa chiara con scalarfield Dew_Formation_Risk_Index
+PREFIX base:<http://3DOntCore#>
+PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?s ?x 
+FROM <http://localhost:8890/SantaChiara>
+WHERE {
+    ?s base:Dew_Formation_Risk_Index ?x.
+}
+
+
+Video di esplorazione (usando nettuno) sfruttando la tree view
+....
+http://localhost:8890/Nettuno
+http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology#
+
+Query nl su nettuno (guarda sul paper su sharepoint (3DOM papers/general/ontolo/DH25 - o qualcosa del genere come nome file - e scegline tipo 4)
+
+Which is the average height of the columns?
+For each column, which is the average height of the objects which are part of the capital? (such capital should be contained in the column)
+Present me visually with all the objects with a height lower than 3m.
+I want to see all the capitals, but only if one between the echinus or the abacus they contain has a surface value between 1m and 2m.
+Would you show me all the entities which are part of the building and for which the product between the height and the surface value is lower than 180m3?”
