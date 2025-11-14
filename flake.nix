@@ -162,6 +162,36 @@
               done
             '';
           };
+          qlever-control = pkgs.python3Packages.buildPythonApplication {
+            pname = "qlever-control";
+            version = "unstable";
+            src = pkgs.fetchFromGitHub {
+              repo = "qlever-control";
+              owner = "qlever-dev";
+              rev = "8af04bb0f74b7327b38a138a13d3aaa6f96e7f3c";
+              sha256 = "sha256-Swnwng6zFbqXPSfuaRHso8FeCh2vuWUG61j0VPpN9LQ=";
+            };
+            pyproject = true;
+            build-system = with pkgs.python3Packages; [ setuptools ];
+            dependencies = with pkgs.python3Packages; [
+              psutil
+              termcolor
+              argcomplete
+              pyyaml
+              rdflib
+              (buildPythonPackage rec {
+                pname = "requests_sse";
+                version = "0.5.2";
+                pyproject = true;
+                build-system = [ poetry-core ];
+                dependencies = [ requests ];
+                src = fetchPypi {
+                  inherit version pname;
+                  sha256 = "sha256-K8t8+QUHSxj/n3MicWI0wRiN/egFu6ODALN8a1rjogo=";
+                };
+              })
+            ];
+          };
           qlever = pkgs.stdenv.mkDerivation {
             pname = "qlever";
             version = "unstable";
@@ -205,6 +235,7 @@
               qt6.qttools
               gdb
               lldb
+              self.packages.${system}.qlever-control
             ] ++ lib.optionals stdenv.hostPlatform.isLinux [ gammaray ];
             nativeBuildInputs = with pkgs; [
               qt6.wrapQtAppsHook
