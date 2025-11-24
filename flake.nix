@@ -99,10 +99,10 @@
               jarowinkler
               boto3
               awsiotpythonsdk
-              # oxrdflib
-              # pyoxigraph
               jpype1
               psutil
+              # oxrdflib
+              # pyoxigraph
             ];
           };
         } // pkgs._custom_deps; # expose custom deps as packages
