@@ -3,7 +3,8 @@
   description = "3dont, ontology pointcloud visualizer";
 
   # inputs.nixpkgs.url = "nixpkgs/nixos-25.05";
-  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+  # inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "nixpkgs/dbeacf1";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
@@ -62,6 +63,7 @@
               qt6.qtbase
               hdt
               qendpoint
+              qlever
               (graalvm-oracle.overrideAttrs {
                 src = fetchurl {
                   hash = "sha256-1KsCuhAp5jnwM3T9+RwkLh0NSQeYgOGvGTLqe3xDGDc=";
@@ -69,7 +71,7 @@
                 };
               }) # jre
             ] ++ lib.optionals stdenv.hostPlatform.isLinux [
-              libGL 
+              libGL
               qt6Packages.qtstyleplugin-kvantum
             ];
             
@@ -111,10 +113,12 @@
           oxrdflib = pkgs.python3Packages.callPackage ({buildPythonPackage, fetchPypi, pyoxigraph, rdflib, setuptools, setuptools-scm, uv-build}:
             buildPythonPackage rec {
               pname = "oxrdflib";
-              version = "0.5.0";
+              # version = "0.5.0";
+              version = "0.4.0";
               src = fetchPypi {
                 inherit pname version;
-                hash = "sha256-+DFI4sbUQ/dxjG6JNsa4njbrtPEALaaejwZW6PtaDfI=";
+                hash = "sha256-N9TAJdTjnF5UclJ8OTmYv9EOWsGFow4IC1tRD23X2oY=";
+                # hash = "sha256-+DFI4sbUQ/dxjG6JNsa4njbrtPEALaaejwZW6PtaDfI=";
               };
               pyproject = true;
               build-system = [ setuptools setuptools-scm uv-build ];
@@ -198,31 +202,110 @@
             src = pkgs.fetchFromGitHub {
               repo = "qlever";
               owner = "ad-freiburg";
-              rev = "6430af6d4c1298f13ea8f0d47e3d37986fd18263";
-              sha256 = "sha256-7vLAD1r7YhEuqMAgLofKBdw29c8RZvb6rwLBeZGSxnY=";
+              rev = "ae21741ece88a14bd8392e3167bd84f89c25969d";
+              hash = "sha256-56/33GR+t6TFO/cWJNk7ZbL8v/BXH+q7Qkhy11QppNE=";
             };
+            patches = [ ./qlever.patch ];
+            cmakeBuildType = "Release";
+            cmakeFlags = [
+              "-DUSE_PARALLEL=true"
+              "-DUSE_CPP_17_BACKPORTS=On"
+              "-DSINGLE_TEST_BINARY=On"
+            ];
+            buildFlags = [ "qlever" ];
+            installPhase = "cmake --install . -j \${NIX_BUILD_CORES}"; # the default (make install) tries to build all the tests and fails.
             nativeBuildInputs = with pkgs; [
               cmake
-              ninja
+              pkg-config
             ];
             buildInputs = with pkgs; [
               boost
               icu
               jemalloc
               openssl.dev
-              gtest
               nlohmann_json
-              antlr
-              # range-v3
+              (range-v3.overrideAttrs { src = pkgs.fetchFromGitHub {
+                owner = "joka921";
+                repo = "range-v3";
+                rev = "5ae161451ec1baaac352d7567298d3ac143bccae";
+                hash = "sha256-r7wxSE8dX3hCxtHn8bwAOc3hM8Eodi9V28HaT53AUH8=";
+              };})
               zstd
               ctre
-              abseil-cpp
+              (abseil-cpp.override {cxxStandard = "20";})
               s2geometry
               re2
-            ];
-            cmakeFlags = [
-              "-DUSE_PARALLEL=true"
-              # "-D_NO_TIMING_TESTS=ON"
+              ((gtest.overrideAttrs { src = pkgs.fetchFromGitHub {
+                owner = "google";
+                repo = "googletest";
+                rev = "7917641ff965959afae189afb5f052524395525c";
+                hash = "sha256-Pfkx/hgtqryPz3wI0jpZwlRRco0s2FLcvUX1EgTGFIw=";
+              };}).override {cxx_standard = "20";}).dev
+              antlr4.runtime.cpp.dev
+              (pkgs.stdenv.mkDerivation {
+                pname = "fsst";
+                version = "unstable";
+                src = pkgs.fetchFromGitHub {
+                  repo = "fsst";
+                  owner = "cwida";
+                  rev = "89f49c580c6388acf3b6ed2a49e1bfde6c05e616";
+                  sha256 = "sha256-kP9InvstinqmOnC2X8pPad7t8h79W2VpUnDlW0F9ELQ=";
+                };
+                nativeBuildInputs = with pkgs; [ cmake ];
+                installPhase = ''
+                  mkdir -p $out/lib
+                  mv libfsst.a libfsst12.a $out/lib
+                  mkdir -p $out/include/fsst
+                  mv ../*.h $out/include/fsst/
+                '';
+              })
+              (pkgs.stdenv.mkDerivation {
+                pname = "spatialjoin";
+                version = "unstable";
+                src = pkgs.fetchFromGitHub {
+                    owner = "ad-freiburg";
+                    repo = "spatialjoin";
+                    rev = "7f5c9007090cd1b902ad1873beb064820caebf39";
+                    hash = "sha256-zvZCRJByvykVCQM9z0g0vUj1sDHaqhMDTbRzudp7jxQ=";
+                    fetchSubmodules = true;
+                };
+                nativeBuildInputs = with pkgs; [ cmake ];
+                patchPhase = ''
+                    sed -i 's|enable_testing()|# enable_testing()|g' CMakeLists.txt
+                    cat >> src/spatialjoin/CMakeLists.txt << 'EOF'
+                    install(
+                        TARGETS spatialjoin-dev
+                        EXPORT spatialjoin-dev-targets
+                        ARCHIVE DESTINATION lib
+                        LIBRARY DESTINATION lib
+                        RUNTIME DESTINATION bin
+                    )
+                    install(
+                        DIRECTORY ''${SPATIALJOIN_INCLUDE_DIR}/
+                        DESTINATION include
+                    )
+                    install(
+                        EXPORT spatialjoin-dev-targets
+                        FILE spatialjoin-dev-config.cmake
+                        NAMESPACE spatialjoin::
+                        DESTINATION lib/cmake/spatialjoin-dev
+                    )
+                    install(TARGETS pb_util
+                            EXPORT pb_utilTargets
+                            LIBRARY DESTINATION lib
+                            ARCHIVE DESTINATION lib
+                            RUNTIME DESTINATION bin
+                            INCLUDES DESTINATION include)
+                    install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/../
+                            DESTINATION include
+                            FILES_MATCHING PATTERN "*.h")
+                    install(EXPORT pb_utilTargets
+                            FILE pb_utilConfig.cmake
+                            NAMESPACE pb_util::
+                            DESTINATION lib/cmake/pb_util)
+                    EOF
+                '';
+              })
             ];
           };
         };

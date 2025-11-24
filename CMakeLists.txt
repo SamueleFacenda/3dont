@@ -11,5 +11,6 @@ find_package(OpenGL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Qt6 CONFIG REQUIRED COMPONENTS Widgets Network Gui OpenGLWidgets Core)
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
+find_package(QLever REQUIRED)
 
 add_subdirectory(threedont)
