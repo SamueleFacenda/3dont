@@ -19,7 +19,7 @@
 , spatialjoin
 }:
 
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   pname = "qlever";
   version = "unstable";
   src = fetchFromGitHub {
@@ -68,4 +68,6 @@ stdenv.mkDerivation {
     fsst
     spatialjoin
   ];
+
+  propagatedBuildInputs = buildInputs; # propagate everything since there is not private dependency
 }
