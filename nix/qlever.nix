@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
   buildInputs = [
     boost
     icu
-    jemalloc
+    (jemalloc.override { disableInitExecTls = true; })
     openssl.dev
     nlohmann_json
     (range-v3.overrideAttrs { src = fetchFromGitHub {

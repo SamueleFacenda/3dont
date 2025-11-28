@@ -1,5 +1,8 @@
 add_library(pyqlever MODULE
-    PyQlever.h)
+        PyQlever.cpp
+        PyQleverQueryResult.cpp
+        module.cpp
+)
 
 if (WIN32)
     target_compile_options(pyqlever PRIVATE /bigobj)
@@ -7,7 +10,8 @@ elseif (UNIX)
     set_target_properties(pyqlever PROPERTIES PREFIX "")
 endif ()
 
-target_include_directories(pyqlever PRIVATE ${Python_INCLUDE_DIRS})
+# Ugly trick because QLever doesn't configure include directories properly (target_include_directories)
+target_include_directories(pyqlever PRIVATE ${Python_INCLUDE_DIRS} ${QLever_DIR}/../../../include/qlever)
 target_link_libraries(pyqlever QLever::qlever ${Python_LIBRARIES})
 
 # install in source directory for development
