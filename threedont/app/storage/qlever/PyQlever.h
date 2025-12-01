@@ -7,7 +7,7 @@
 // Qlever Wrapper Object (abstract_storage)
 typedef struct {
   PyObject_HEAD
-  // Add members here as needed
+          qlever::Qlever qlever;
 } PyQleverObject;
 
 static void PyQlever_dealloc(PyQleverObject *self);
@@ -25,8 +25,7 @@ extern PyTypeObject PyQleverType;
 
 // QueryResult Object
 typedef struct {
-    PyObject_HEAD
-    PyQleverObject* qlever;
+  PyObject_HEAD PyQleverObject *qlever;
 } PyQleverQueryResultObject;
 
 static void PyQleverQueryResult_dealloc(PyQleverQueryResultObject *self);
