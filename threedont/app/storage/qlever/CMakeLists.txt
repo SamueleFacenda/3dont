@@ -4,6 +4,10 @@ add_library(pyqlever MODULE
         module.cpp
 )
 
+find_package(OpenMP REQUIRED)
+target_compile_options(pyqlever PRIVATE ${OpenMP_CXX_FLAGS})
+target_link_libraries(pyqlever PRIVATE ${OpenMP_CXX_LIBRARIES})
+
 if (WIN32)
     target_compile_options(pyqlever PRIVATE /bigobj)
 elseif (UNIX)

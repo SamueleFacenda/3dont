@@ -7,14 +7,15 @@
 // Qlever Wrapper Object (abstract_storage)
 typedef struct {
   PyObject_HEAD
-          qlever::Qlever qlever;
+  qlever::Qlever *qlever;
+  qlever::IndexBuilderConfig config;
 } PyQleverObject;
 
 static void PyQlever_dealloc(PyQleverObject *self);
 static PyObject *PyQlever_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
 static int PyQlever_init(PyQleverObject *self, PyObject *args, PyObject *kwds);
 
-static PyObject *PyQlever_setup_storage(PyQleverObject *self, PyObject *args);
+static PyObject *PyQlever_setup_storage(PyQleverObject *self, PyObject *args, PyObject *kwds);
 // static PyObject *PyQlever_query(PyQleverObject *self, PyObject *args); this is handled in python, creating a QueryResult object
 static PyObject *PyQlever_is_empty(PyQleverObject *self, PyObject *args);
 static PyObject *PyQlever_bind_to_path(PyQleverObject *self, PyObject *args);
