@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index bbb92cdc..5fea690f 100644
+index bbb92cdc..86a0d744 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -99,63 +99,37 @@ include(FetchContent)
@@ -73,15 +73,17 @@ index bbb92cdc..5fea690f 100644
  find_package(Threads REQUIRED)
  
  #################################
-@@ -223,7 +197,7 @@ find_package(OpenSSL REQUIRED)
+@@ -223,8 +197,8 @@ find_package(OpenSSL REQUIRED)
  # against the common libraries.
  function(qlever_target_link_libraries target)
      target_link_libraries(${target} ${ARGN} absl::compare absl::flat_hash_map
 -            absl::flat_hash_set absl::strings absl::str_format ICU::uc
+-            ICU::i18n OpenSSL::SSL OpenSSL::Crypto GTest::gtest GTest::gmock fsst nlohmann_json::nlohmann_json Boost::container)
 +            absl::flat_hash_set absl::strings absl::str_format ICU::uc ctre::ctre
-             ICU::i18n OpenSSL::SSL OpenSSL::Crypto GTest::gtest GTest::gmock fsst nlohmann_json::nlohmann_json Boost::container)
++            ICU::i18n OpenSSL::SSL OpenSSL::Crypto fsst nlohmann_json::nlohmann_json Boost::container)
  
      # memorySize is a utility library for defining memory sizes.
+     if (NOT ${target} STREQUAL "memorySize")
 @@ -272,37 +246,24 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
  ################################
  # CTRE, Compile-Time-Regular-Expressions

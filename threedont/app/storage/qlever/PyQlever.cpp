@@ -61,7 +61,7 @@ static PyMethodDef PyQlever_methods[] = {
   {nullptr}
 };
 
-PyTypeObject GuiWrapperType = {
+PyTypeObject PyQleverType = {
   .ob_base = PyVarObject_HEAD_INIT(nullptr, 0)
                      .tp_name = "pyqlever.Qlever",
   .tp_basicsize = sizeof(PyQleverObject),

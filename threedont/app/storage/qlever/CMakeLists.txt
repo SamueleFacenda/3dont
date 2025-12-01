@@ -12,7 +12,7 @@ endif ()
 
 # Ugly trick because QLever doesn't configure include directories properly (target_include_directories)
 target_include_directories(pyqlever PRIVATE ${Python_INCLUDE_DIRS} ${QLever_DIR}/../../../include/qlever)
-target_link_libraries(pyqlever QLever::qlever ${Python_LIBRARIES})
+target_link_libraries(pyqlever PRIVATE QLever::qlever ${Python_LIBRARIES})
 
 # install in source directory for development
 if (THREEDONT_DEVELOP_BUILD)

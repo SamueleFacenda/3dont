@@ -22,8 +22,6 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args);
 static PyObject *PyQlever_update(PyQleverObject *self, PyObject *args);
 
 extern PyTypeObject PyQleverType;
-PyMODINIT_FUNC PyInit_pyqlever(void);
-
 
 // QueryResult Object
 typedef struct {
@@ -45,6 +43,7 @@ static PyObject *PyQleverQueryResult_vars(PyQleverQueryResultObject *self, PyObj
 static PyObject *PyQleverQueryResult_has_var(PyQleverQueryResultObject *self, PyObject *args);
 
 extern PyTypeObject PyQleverQueryResultType;
-PyMODINIT_FUNC PyInit_pyqlever_query_result(void);
 
+
+PyMODINIT_FUNC PyInit_pyqlever(void);
 #endif // THREEDONT_PYQLEVER_H
