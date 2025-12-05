@@ -306,7 +306,7 @@ class Controller:
         self.gui.set_project_list(lst)
 
     def open_project(self, project_name):
-        print("Opening project: ", project_name)
+        print("Opening project:", project_name)
         self.project = Project(project_name)
         self.app_state.set_projectName(self.project.get_name())
         self.gui.set_statusbar_content(f"Opened project: {project_name}", 5)

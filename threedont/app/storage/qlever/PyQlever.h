@@ -8,7 +8,7 @@
 typedef struct {
   PyObject_HEAD
   qlever::Qlever *qlever;
-  qlever::IndexBuilderConfig config;
+  qlever::IndexBuilderConfig *config;
 } PyQleverObject;
 
 static void PyQlever_dealloc(PyQleverObject *self);

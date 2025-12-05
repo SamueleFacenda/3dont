@@ -7,16 +7,17 @@ set(CMAKE_CXX_STANDARD 20)
 
 option(THREEDONT_DEVELOP_BUILD "Enable development build" OFF)
 
+find_package(re2 REQUIRED) # Important to be before IDK, it's a qlever dependency btw
+
 find_package(OpenGL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Qt6 CONFIG REQUIRED COMPONENTS Widgets Network Gui OpenGLWidgets Core)
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
-# TODO add  these deps to qlever config
+# TODO add these deps to qlever config
 find_package(absl REQUIRED)
 find_package(Boost 1.81 COMPONENTS iostreams program_options url container REQUIRED CONFIG)
 find_package(OpenSSL REQUIRED)
-find_package(re2 REQUIRED)
 find_package(ctre REQUIRED)
 find_package(ICU 60 REQUIRED COMPONENTS uc i18n)
 # find_package(GTest REQUIRED)

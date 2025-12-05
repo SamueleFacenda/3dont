@@ -41,7 +41,7 @@ stdenv.mkDerivation rec {
     cmake
     pkg-config
   ];
-  buildInputs = [
+  propagatedBuildInputs = [ # propagate everything since there are no private dependencies
     boost
     icu
     (jemalloc.override { disableInitExecTls = true; })
@@ -57,7 +57,7 @@ stdenv.mkDerivation rec {
     ctre
     (abseil-cpp.override {cxxStandard = "20";})
     s2geometry
-    re2
+    (re2.override {abseil-cpp = abseil-cpp.override {cxxStandard = "20";};}).dev
     ((gtest.overrideAttrs { src = fetchFromGitHub {
       owner = "google";
       repo = "googletest";
@@ -68,6 +68,4 @@ stdenv.mkDerivation rec {
     fsst
     spatialjoin
   ];
-
-  propagatedBuildInputs = buildInputs; # propagate everything since there is not private dependency
 }

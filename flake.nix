@@ -48,7 +48,6 @@
             pyproject = true;
 
             stdenv = pkgs.clangStdenv; # better interoperability with darwin build env
-            
             build-system = with pkgs.python3Packages; [
               scikit-build-core
             ];
@@ -68,6 +67,9 @@
             postFixup = ''
                 wrapQtApp "$out/bin/threedont"
             '';
+
+            # QLever uses jemalloc, so we preload it here as well (ugly, but works)
+            qtWrapperArgs = [ "--set LD_PRELOAD ${pkgs.jemalloc}/lib/libjemalloc.so.2" ];
             
             buildInputs = with pkgs; [
               eigen
@@ -75,6 +77,7 @@
               hdt
               qendpoint
               qlever
+              llvmPackages.openmp.dev
               (graalvm-oracle.overrideAttrs {
                 src = fetchurl {
                   hash = "sha256-1KsCuhAp5jnwM3T9+RwkLh0NSQeYgOGvGTLqe3xDGDc=";
