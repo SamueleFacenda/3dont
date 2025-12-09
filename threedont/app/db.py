@@ -97,7 +97,6 @@ class SparqlBackend:
     def annotate_node(self, subject, predicate, object):
         query = ANNOTATE_NODE.format(graph=self.graph_uri, subject=subject, predicate=predicate, object=object,
                                      namespace=self.namespace)
-        # TODO use update endpoint instead of query
         self.storage.update(query)
 
     def select_all_subjects(self, predicate, object):

@@ -112,6 +112,7 @@
 
         devShells = {
           default = pkgs.mkShell {
+            # inherit (self.packages.${system}.threedont) qtWrapperArgs;
             inputsFrom = [ self.packages.${system}.threedont ];
             packages = with pkgs; [
               python3Packages.build
@@ -119,18 +120,19 @@
               gdb
               lldb
               qlever-control
-            ] ++ lib.optionals stdenv.hostPlatform.isLinux [ gammaray ];
-            nativeBuildInputs = with pkgs; [
               qt6.wrapQtAppsHook
               makeWrapper
-            ];
+            ] ++ lib.optionals stdenv.hostPlatform.isLinux [ gammaray ];
             # Qendpoint config
             JAVA_OPTIONS="-Xmx32G -Dspring.autoconfigure.exclude=org.springframework.boot.autoconfigure.http.client.HttpClientAutoConfiguration -Dspring.devtools.restart.enabled=false";
             # https://discourse.nixos.org/t/python-qt-woes/11808/10
-            shellHook = ''
+            shellHook = let
+              myQtWrapperArgs = pkgs.lib.concatStringsSep " " self.packages.${system}.threedont.qtWrapperArgs;
+            in
+             ''
               setQtEnvironment=$(mktemp --suffix .setQtEnvironment.sh)
               # echo "shellHook: setQtEnvironment = $setQtEnvironment"
-              makeWrapper "/bin/sh" "$setQtEnvironment" "''${qtWrapperArgs[@]}"
+              makeWrapper "/bin/sh" "$setQtEnvironment" "''${qtWrapperArgs[@]}" ${myQtWrapperArgs}
               sed "/^exec/d" -i "$setQtEnvironment"
               source "$setQtEnvironment"
               # cat "$setQtEnvironment"
