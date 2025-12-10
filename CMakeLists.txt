@@ -12,7 +12,8 @@ find_package(re2 REQUIRED) # Important to be before IDK, it's a qlever dependenc
 find_package(OpenGL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Qt6 CONFIG REQUIRED COMPONENTS Widgets Network Gui OpenGLWidgets Core)
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
+set(Python_FIND_UNVERSIONED_NAMES FIRST) # use shell python3
+find_package(Python COMPONENTS Interpreter Development NumPy REQUIRED)
 
 # TODO add these deps to qlever config
 find_package(absl REQUIRED)

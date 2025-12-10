@@ -33,6 +33,7 @@ static int PyQlever_init(PyQleverObject *self, PyObject *args, PyObject *kwds) {
   self->config->vocabType_ = ad_utility::VocabularyType(ad_utility::VocabularyType::Enum::OnDiskCompressed);
   self->config->prefixesForIdEncodedIris_ = {std::string(prefix)};
   self->config->validate();
+
   return 0;
 }
 

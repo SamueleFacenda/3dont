@@ -1,10 +1,12 @@
 add_library(pyqlever MODULE
         PyQlever.cpp
         PyQleverQueryResult.cpp
+        CsvStringParser.cpp
         module.cpp
 )
 
 find_package(OpenMP REQUIRED)
+find_package(FastFloat REQUIRED)
 target_compile_options(pyqlever PRIVATE ${OpenMP_CXX_FLAGS})
 target_link_libraries(pyqlever PRIVATE ${OpenMP_CXX_LIBRARIES})
 
@@ -16,7 +18,7 @@ endif ()
 
 # Ugly trick because QLever doesn't configure include directories properly (target_include_directories)
 target_include_directories(pyqlever PRIVATE ${Python_INCLUDE_DIRS} ${QLever_DIR}/../../../include/qlever)
-target_link_libraries(pyqlever PRIVATE QLever::qlever ${Python_LIBRARIES})
+target_link_libraries(pyqlever PRIVATE QLever::qlever ${Python_LIBRARIES} FastFloat::fast_float Python::NumPy)
 
 # install in source directory for development
 if (THREEDONT_DEVELOP_BUILD)

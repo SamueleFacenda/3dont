@@ -78,6 +78,7 @@
               qendpoint
               qlever
               llvmPackages.openmp.dev
+              fast-float
               (graalvm-oracle.overrideAttrs {
                 src = fetchurl {
                   hash = "sha256-1KsCuhAp5jnwM3T9+RwkLh0NSQeYgOGvGTLqe3xDGDc=";
