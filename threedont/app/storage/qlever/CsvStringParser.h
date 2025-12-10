@@ -23,6 +23,8 @@ public:
   }
   void parse();
   std::vector<PyObject*> getResult() const { return result; }
+  std::vector<std::string> getColNames() const { return colNames; }
+  std::vector<bool> getIsStringColumn() const { return isStringColumn; }
 private:
   const char* data;
   int length, rows, cols;
@@ -30,6 +32,7 @@ private:
   std::vector<std::array<std::vector<size_t>,PARSER_THREADS>> stringLengths;
   std::vector<std::array<std::vector<double>,PARSER_THREADS>> floatColumns;
   std::vector<bool> isStringColumn;
+  std::vector<std::string> colNames;
   std::vector<PyObject*> result;
 
   void worker(int threadId, int start, int end);

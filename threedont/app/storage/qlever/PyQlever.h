@@ -26,7 +26,10 @@ extern PyTypeObject PyQleverType;
 
 // QueryResult Object
 typedef struct {
-  PyObject_HEAD PyQleverObject *qlever;
+  PyObject_HEAD
+  std::vector<std::string> colNames;
+  std::vector<PyObject*> result;
+  std::vector<bool> isStringColumn;
 } PyQleverQueryResultObject;
 
 static void PyQleverQueryResult_dealloc(PyQleverQueryResultObject *self);

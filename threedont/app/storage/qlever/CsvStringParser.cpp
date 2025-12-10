@@ -11,9 +11,20 @@ void CsvStringParser::init() {
   floatColumns.resize(cols);
   isStringColumn.resize(cols, false);
   result.resize(cols);
+  colNames.resize(cols);
 
   char* current = const_cast<char*>(data);
   int colIt = 0;
+  while (colIt < cols) {
+    char* start = current;
+    while (*current != ',' && *current != '\n')
+      current++;
+
+    std::string colName(start, current - start);
+    colNames.push_back(colName);
+  }
+  current++; // skip newline
+  colIt = 0;
   while (colIt < cols) {
     isStringColumn[colIt] = *current == 'h'; // starts with http
 

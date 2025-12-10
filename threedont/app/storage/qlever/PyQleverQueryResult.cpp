@@ -1,5 +1,7 @@
 #include "PyQlever.h"
 
+#include "CsvStringParser.h"
+
 /**
   auto result = qlever->query(heritage_query + " LIMIT 10", ad_utility::MediaType::csv);
 p,x,y,z,r,g,b
@@ -14,25 +16,26 @@ http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/
 http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#1000002,50.7738,17.186,2.24453,24064.0,24064.0,20992.0
 http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#1000003,50.3173,17.453,2.2362,26624.0,24064.0,23808.0
 
-  ad_utility::LogstreamChoice::get().setStream();
 
  */
 static void PyQleverQueryResult_dealloc(PyQleverQueryResultObject *self) {
-  Py_XDECREF(self->qlever);
   Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 static PyObject *PyQleverQueryResult_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
   PyQleverQueryResultObject *self;
   self = (PyQleverQueryResultObject *) type->tp_alloc(type, 0);
-  if (self != nullptr)
-    self->qlever = nullptr;
   return (PyObject *) self;
+}
+
+std::pair<int, int> getResultShape(std::string log) {
+  std::cout << "Log stream:\n" << log << std::endl;
 }
 
 static int PyQleverQueryResult_init(PyQleverQueryResultObject *self, PyObject *args, PyObject *kwds) {
   PyObject *qleverObj;
-  if (!PyArg_ParseTuple(args, "O", &qleverObj))
+  char* queryStr;
+  if (!PyArg_ParseTuple(args, "Os", &qleverObj, &queryStr))
     return -1;
 
   if (!PyObject_TypeCheck(qleverObj, &PyQleverType)) {
@@ -40,8 +43,22 @@ static int PyQleverQueryResult_init(PyQleverQueryResultObject *self, PyObject *a
     return -1;
   }
 
-  Py_INCREF(qleverObj);
-  self->qlever = (PyQleverObject *) qleverObj;
+
+  auto qlever = reinterpret_cast<PyQleverObject *>(qleverObj); // TODO this might not work, it's a python object
+
+  std::stringstream logStream;
+  ad_utility::LogstreamChoice::get().setStream(&logStream);
+
+  std::string result = qlever->qlever->query(queryStr, ad_utility::MediaType::csv);
+
+  ad_utility::LogstreamChoice::get().setStream(&std::cout); // reset log stream
+  auto [rows, cols] = getResultShape(logStream.str());
+  CsvStringParser parser(result, rows, cols);
+  parser.parse();
+
+  self->isStringColumn = parser.getIsStringColumn();
+  self->colNames = parser.getColNames();
+  self->result = parser.getResult();
 
   return 0;
 }
