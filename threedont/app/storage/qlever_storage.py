@@ -9,8 +9,8 @@ import psutil
 
 class QleverQuery(QleverQueryResult, Query):
     def __init__(self, storage, query):
+        QleverQueryResult.__init__(self, storage)
         Query.__init__(self, query, chunked=False)
-        QLeverQueryResult.__init__(self, storage)
 
 @StorageFactory.register(is_local=True, priority=5)
 class QleverStorage(Qlever, AbstractStorage):

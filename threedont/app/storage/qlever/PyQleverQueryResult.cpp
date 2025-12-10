@@ -19,12 +19,17 @@ http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/
 
  */
 static void PyQleverQueryResult_dealloc(PyQleverQueryResultObject *self) {
+  Py_DECREF(self->qleverObj);
   Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 static PyObject *PyQleverQueryResult_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
   PyQleverQueryResultObject *self;
   self = (PyQleverQueryResultObject *) type->tp_alloc(type, 0);
+  if (self != nullptr) {
+    self->qleverObj = nullptr;
+    self->qlever = nullptr;
+  }
   return (PyObject *) self;
 }
 
@@ -34,8 +39,7 @@ std::pair<int, int> getResultShape(std::string log) {
 
 static int PyQleverQueryResult_init(PyQleverQueryResultObject *self, PyObject *args, PyObject *kwds) {
   PyObject *qleverObj;
-  char* queryStr;
-  if (!PyArg_ParseTuple(args, "Os", &qleverObj, &queryStr))
+  if (!PyArg_ParseTuple(args, "O", &qleverObj))
     return -1;
 
   if (!PyObject_TypeCheck(qleverObj, &PyQleverType)) {
@@ -43,29 +47,105 @@ static int PyQleverQueryResult_init(PyQleverQueryResultObject *self, PyObject *a
     return -1;
   }
 
+  Py_INCREF(qleverObj);
+  self->qleverObj = qleverObj;
+  // call get_ref_
+  PyObject* refObj = PyObject_CallMethod(qleverObj, "get_ref_", nullptr);
+  if (refObj == nullptr) {
+    PyErr_SetString(PyExc_RuntimeError, "Failed to get Qlever reference");
+    return -1;
+  }
+  QleverRefObject* qleverRef = reinterpret_cast<QleverRefObject*>(refObj);
+  self->qlever = qleverRef->qlever;
+  Py_DECREF(refObj);
 
-  auto qlever = reinterpret_cast<PyQleverObject *>(qleverObj); // TODO this might not work, it's a python object
+  return 0;
+}
+
+static PyObject *PyQleverQueryResult_append_chunk(PyQleverQueryResultObject *self, PyObject *args);
+
+static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *self, PyObject *args) {
+  char* queryStr;
+  if (!PyArg_ParseTuple(args, "s", &queryStr))
+    return nullptr;
 
   std::stringstream logStream;
-  ad_utility::LogstreamChoice::get().setStream(&logStream);
+  // ad_utility::LogstreamChoice::get().setStream(&logStream);
+  std::cout << "Performing query: " << queryStr << std::endl;
 
-  std::string result = qlever->qlever->query(queryStr, ad_utility::MediaType::csv);
+  std::string result = self->qlever->query(queryStr, ad_utility::MediaType::csv);
 
   ad_utility::LogstreamChoice::get().setStream(&std::cout); // reset log stream
   auto [rows, cols] = getResultShape(logStream.str());
   CsvStringParser parser(result, rows, cols);
   parser.parse();
 
-  self->isStringColumn = parser.getIsStringColumn();
+  self->isStringColumn = parser.getIsStringColumn(); // append the results to the object
   self->colNames = parser.getColNames();
   self->result = parser.getResult();
 
-  return 0;
+  Py_RETURN_NONE; // returns (result, len)
+}
+
+static PyObject *PyQleverQueryResult_len(PyQleverQueryResultObject *self, PyObject *args) {
+  return PyLong_FromSize_t(PyArray_DIM((PyArrayObject*)self->result[0], 0));
+}
+
+static PyObject *PyQleverQueryResult_iter(PyQleverQueryResultObject *self, PyObject *args) {
+  // TODO
+}
+
+static PyObject *PyQleverQueryResult_getitem(PyQleverQueryResultObject *self, PyObject *args) {
+  char* varName;
+  if (!PyArg_ParseTuple(args, "s", &varName))
+    return nullptr;
+
+  for (int i=0; i < self->colNames.size(); i++) {
+    if (self->colNames[i] == varName) {
+      Py_INCREF(self->result[i]);
+      return self->result[i];
+    }
+  }
+  return nullptr; // variable not found
+}
+
+static PyObject *PyQleverQueryResult_tuple_iterator(PyQleverQueryResultObject *self, PyObject *args) {
+  // TODO
+}
+
+static PyObject *PyQleverQueryResult_vars(PyQleverQueryResultObject *self, PyObject *args) {
+  auto pyList = PyList_New(self->colNames.size());
+  for (size_t i = 0; i < self->colNames.size(); i++) {
+    PyObject* pyStr = PyUnicode_FromString(self->colNames[i].c_str());
+    PyList_SetItem(pyList, i, pyStr); // steals reference
+  }
+  return pyList;
+}
+
+static PyObject *PyQleverQueryResult_has_var(PyQleverQueryResultObject *self, PyObject *args) {
+  char* varName;
+  if (!PyArg_ParseTuple(args, "s", &varName))
+    return nullptr;
+
+  for (const auto& name : self->colNames) {
+    if (name == varName) {
+      Py_RETURN_TRUE;
+    }
+  }
+  Py_RETURN_FALSE;
 }
 
 static PyMethodDef PyQleverQueryResult_methods[] = {
-        // Define methods for PyQleverQueryResult here
+        {"_perform_query", (PyCFunction) PyQleverQueryResult_perform_query, METH_VARARGS,"Perform a SPARQL query and store the result."},
+        {"_tuple_iterator", (PyCFunction) PyQleverQueryResult_tuple_iterator, METH_NOARGS, "Return an iterator that yields rows as tuples."},
+        {"vars", (PyCFunction) PyQleverQueryResult_vars, METH_NOARGS, "Return the list of variable names in the result."},
+        {"has_var", (PyCFunction) PyQleverQueryResult_has_var, METH_O, "Check if a variable is in the result."},
         {nullptr} // Sentinel
+};
+
+static PySequenceMethods PyQleverQueryResult_as_sequence = {
+  .sq_length = (lenfunc)PyQleverQueryResult_len,
+  .sq_item = (ssizeargfunc)PyQleverQueryResult_getitem,
 };
 
 PyTypeObject PyQleverQueryResultType = {
@@ -74,8 +154,10 @@ PyTypeObject PyQleverQueryResultType = {
         .tp_basicsize = sizeof(PyQleverQueryResultObject),
         .tp_itemsize = 0,
         .tp_dealloc = (destructor) PyQleverQueryResult_dealloc,
+        .tp_as_sequence = &PyQleverQueryResult_as_sequence,
         .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
         .tp_doc = "Query result wrapper and iterator",
+        .tp_iter = (getiterfunc)PyQleverQueryResult_iter,
         .tp_methods = PyQleverQueryResult_methods,
         .tp_init = (initproc) PyQleverQueryResult_init,
         .tp_new = PyQleverQueryResult_new};

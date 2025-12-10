@@ -112,12 +112,21 @@ static PyObject *PyQlever_update(PyQleverObject *self, PyObject *args) {
   Py_RETURN_NONE;
 }
 
+static PyObject *PyQlever_get_ref_(PyQleverObject *self, PyObject *args) {
+  QleverRefObject* refObj = PyObject_New(QleverRefObject, &QleverRefType);
+  if (refObj == nullptr)
+    return nullptr;
+  refObj->qlever = self->qlever;
+  return reinterpret_cast<PyObject *>(refObj);
+}
+
 static PyMethodDef PyQlever_methods[] = {
         {"setup_storage", (PyCFunction) PyQlever_setup_storage, METH_VARARGS | METH_KEYWORDS, "Sets up the storage"},
         {"is_empty", (PyCFunction) PyQlever_is_empty, METH_NOARGS, "Checks if the storage is empty"},
         {"bind_to_path", (PyCFunction) PyQlever_bind_to_path, METH_VARARGS, "Binds the storage to a given path"},
         {"load_file", (PyCFunction) PyQlever_load_file, METH_VARARGS, "Loads data from a specified file"},
         {"update", (PyCFunction) PyQlever_update, METH_VARARGS, "Update query on the storage"},
+        {"get_ref_", (PyCFunction) PyQlever_get_ref_, METH_NOARGS, "Get a reference to the underlying Qlever instance"},
         {nullptr}};
 
 PyTypeObject PyQleverType = {
