@@ -23,6 +23,10 @@ void CsvStringParser::init() {
     std::string colName(start, current - start);
     colNames.push_back(colName);
   }
+
+  if (rows == 0)
+    return; // no data
+
   current++; // skip newline
   colIt = 0;
   while (colIt < cols) {

@@ -23,12 +23,6 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args);
 static PyObject *PyQlever_update(PyQleverObject *self, PyObject *args);
 static PyObject *PyQlever_get_ref_(PyQleverObject *self, PyObject *args);
 
-typedef struct {
-  PyObject_HEAD
-  qlever::Qlever *qlever;
-} QleverRefObject;
-extern PyTypeObject QleverRefType; // TODO basic definition of this type
-
 extern PyTypeObject PyQleverType;
 
 // QueryResult Object
@@ -36,8 +30,7 @@ typedef struct {
   PyObject_HEAD
   PyObject* qleverObj;
   qlever::Qlever *qlever;
-  std::vector<std::string> colNames;
-  std::vector<PyObject*> result;
+  std::unordered_map<std::string, PyObject*> result;
   std::vector<bool> isStringColumn;
 } PyQleverQueryResultObject;
 

@@ -113,11 +113,7 @@ static PyObject *PyQlever_update(PyQleverObject *self, PyObject *args) {
 }
 
 static PyObject *PyQlever_get_ref_(PyQleverObject *self, PyObject *args) {
-  QleverRefObject* refObj = PyObject_New(QleverRefObject, &QleverRefType);
-  if (refObj == nullptr)
-    return nullptr;
-  refObj->qlever = self->qlever;
-  return reinterpret_cast<PyObject *>(refObj);
+  return PyCapsule_New(self->qlever, "qlever.Qlever", nullptr);
 }
 
 static PyMethodDef PyQlever_methods[] = {
@@ -126,7 +122,7 @@ static PyMethodDef PyQlever_methods[] = {
         {"bind_to_path", (PyCFunction) PyQlever_bind_to_path, METH_VARARGS, "Binds the storage to a given path"},
         {"load_file", (PyCFunction) PyQlever_load_file, METH_VARARGS, "Loads data from a specified file"},
         {"update", (PyCFunction) PyQlever_update, METH_VARARGS, "Update query on the storage"},
-        {"get_ref_", (PyCFunction) PyQlever_get_ref_, METH_NOARGS, "Get a reference to the underlying Qlever instance"},
+        {"get_ref_", (PyCFunction) PyQlever_get_ref_, METH_NOARGS, "Get a reference to the underlying Qlever instance (pycapsule"},
         {nullptr}};
 
 PyTypeObject PyQleverType = {
