@@ -1,7 +1,6 @@
 #pragma once
 
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+#include <Python.h>
 
 #include <string>
 #include <vector>
@@ -30,7 +29,7 @@ private:
   int length, rows, cols;
   std::vector<std::array<std::vector<const char*>,PARSER_THREADS>> stringColumns; // [col][thread][rel row]
   std::vector<std::array<std::vector<size_t>,PARSER_THREADS>> stringLengths;
-  std::vector<std::array<std::vector<double>,PARSER_THREADS>> floatColumns;
+  std::vector<std::array<std::vector<float>,PARSER_THREADS>> floatColumns;
   std::vector<bool> isStringColumn;
   std::vector<std::string> colNames;
   std::vector<PyObject*> result;

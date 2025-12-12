@@ -1,5 +1,9 @@
 #include "PyQlever.h"
 
+#define PY_ARRAY_UNIQUE_SYMBOL PyQlever_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
 #include "CsvStringParser.h"
 
 #include <regex>
@@ -40,7 +44,7 @@ static PyObject *PyQleverQueryResult_new(PyTypeObject *type, PyObject *args, PyO
 }
 
 std::pair<int, int> getResultShape(std::string log) {
-  std::cout << "Log stream:\n" << log << std::endl;
+  std::cout << log << std::endl;
   std::regex pattern(R"(Result has size (\d+) x (\d+))");
   std::smatch matches;
   if (std::regex_search(log, matches, pattern)) {

@@ -2,37 +2,45 @@
 
 #include "fast_float/fast_float.h"
 
+#define PY_ARRAY_UNIQUE_SYMBOL PyQlever_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
 #include <iostream>
 #include <thread>
 
 void CsvStringParser::init() {
-  stringColumns.resize(cols);
-  stringLengths.resize(cols);
-  floatColumns.resize(cols);
-  isStringColumn.resize(cols, false);
-  result.resize(cols);
-  colNames.resize(cols);
-
   char* current = const_cast<char*>(data);
-  int colIt = 0;
-  while (colIt < cols) {
+  for (int colIt = 0; colIt < cols; colIt++) {
     char* start = current;
     while (*current != ',' && *current != '\n')
       current++;
 
     std::string colName(start, current - start);
     colNames.push_back(colName);
+
+    if (*current == '\n') {
+      current++; // skip newline
+      cols = colIt + 1; // adjust cols if fewer columns found
+      break;
+    }
+    current++; // skip comma or newline
   }
 
+  length -= (current - data); // adjust length to skip header
+  data = current;
+
+  stringColumns.resize(cols);
+  stringLengths.resize(cols);
+  floatColumns.resize(cols);
+  isStringColumn.resize(cols, false);
+  result.resize(cols);
   if (rows == 0)
     return; // no data
 
-  current++; // skip newline
-  colIt = 0;
-  while (colIt < cols) {
+  for (int colIt = 0; colIt < cols; colIt++) {
     isStringColumn[colIt] = *current == 'h'; // starts with http
 
-    colIt++;
     while (colIt < cols && *current++ != ','); // there are no spaces
   }
 }
@@ -110,14 +118,20 @@ PyObject* CsvStringParser::mergeStringColumn(int col) {
 }
 
 PyObject* CsvStringParser::mergeFloatColumn(int col) {
-  std::vector<double> mergedFloats;
-  mergedFloats.reserve(rows);
-  for (int t = 0; t < PARSER_THREADS; t++)
-    mergedFloats.insert(mergedFloats.end(),
-                        floatColumns[col][t].begin(),
-                        floatColumns[col][t].end());
-  npy_intp dims[1] = {static_cast<npy_intp>(mergedFloats.size())};
-  PyObject *array = PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, mergedFloats.data());
+  npy_intp dims[1] = {static_cast<npy_intp>(rows)};
+  PyObject *array = PyArray_SimpleNew(1, dims, NPY_FLOAT);
+  if (rows == 0)
+    return array;
+
+  float *data = (float*)PyArray_DATA((PyArrayObject*)array);
+
+  size_t idx = 0;
+  for (int t = 0; t < PARSER_THREADS; t++) {
+    size_t chunkSize = floatColumns[col][t].size();
+    memcpy(data + idx, floatColumns[col][t].data(), chunkSize * sizeof(float));
+    idx += chunkSize;
+  }
+
   return array;
 }
 

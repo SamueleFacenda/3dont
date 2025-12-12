@@ -1,5 +1,8 @@
 #include "PyQlever.h"
 
+#define PY_ARRAY_UNIQUE_SYMBOL PyQlever_ARRAY_API
+#include <numpy/arrayobject.h>
+
 static PyModuleDef pyqlevermodule = {
         PyModuleDef_HEAD_INIT,
         "pyqlever",
@@ -8,6 +11,8 @@ static PyModuleDef pyqlevermodule = {
 };
 
 PyMODINIT_FUNC PyInit_pyqlever(void) {
+  import_array();
+
   PyObject *m;
   if (PyType_Ready(&PyQleverType) < 0)
     return nullptr;
