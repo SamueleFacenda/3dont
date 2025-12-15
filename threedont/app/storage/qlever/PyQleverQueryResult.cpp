@@ -28,7 +28,10 @@ static void PyQleverQueryResult_dealloc(PyQleverQueryResultObject *self) {
   Py_DECREF(self->qleverObj);
   for (auto& array : self->result)
     Py_DECREF(array.second);
-  self->result.clear();
+
+  // Explicitly call destructors
+  self->result.~unordered_map();
+  self->isStringColumn.~vector();
 
   Py_TYPE(self)->tp_free((PyObject *) self);
 }
@@ -39,6 +42,8 @@ static PyObject *PyQleverQueryResult_new(PyTypeObject *type, PyObject *args, PyO
   if (self != nullptr) {
     self->qleverObj = nullptr;
     self->qlever = nullptr;
+    new (&self->result) std::unordered_map<std::string, PyObject*>();
+    new (&self->isStringColumn) std::vector<bool>();
   }
   return (PyObject *) self;
 }
@@ -82,7 +87,44 @@ static int PyQleverQueryResult_init(PyQleverQueryResultObject *self, PyObject *a
 }
 
 static PyObject *PyQleverQueryResult_append_chunk(PyQleverQueryResultObject *self, PyObject *args) {
-  // TODO
+  PyObject* chunkDict;
+  if (!PyArg_ParseTuple(args, "O", &chunkDict))
+    return nullptr;
+
+  if (!PyDict_Check(chunkDict)) {
+    PyErr_SetString(PyExc_TypeError, "Expected a dictionary of numpy arrays");
+    return nullptr;
+  }
+  PyObject* key;
+  PyObject* value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(chunkDict, &pos, &key, &value)) {
+    if (!PyUnicode_Check(key)) {
+      PyErr_SetString(PyExc_TypeError, "Dictionary keys must be strings");
+      return nullptr;
+    }
+    const char* varName = PyUnicode_AsUTF8(key);
+
+    if (!PyArray_Check(value)) {
+      PyErr_SetString(PyExc_TypeError, "Dictionary values must be numpy arrays");
+      return nullptr;
+    }
+
+    // append the array to the existing one
+    if (!self->result.contains(varName)) {
+      PyErr_Format(PyExc_KeyError, "Variable '%s' not found in result", varName);
+      return nullptr;
+    }
+
+    if (self->result[varName] != nullptr) {
+      PyErr_Format(PyExc_RuntimeError, "Variable '%s' already set, this is not supported in PyQleverQueryResult (no chunk support yet)", varName);
+      return nullptr;
+    }
+
+    Py_INCREF(value);
+    self->result[varName] = value; // set the new array
+  }
+
   Py_RETURN_NONE;
 }
 
@@ -121,12 +163,18 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
 }
 
 static PyObject *PyQleverQueryResult_len(PyQleverQueryResultObject *self, PyObject *args) {
-  return PyLong_FromSize_t(PyArray_DIM((PyArrayObject*)self->result[0], 0));
+  if (self->result.empty() || self->result.begin()->second == nullptr) {
+    PyErr_SetString(PyExc_RuntimeError, "No result available");
+    return nullptr;
+  }
+
+  return PyLong_FromSize_t(PyArray_DIM((PyArrayObject*)self->result.begin()->second, 0));
 }
 
 static PyObject *PyQleverQueryResult_iter(PyQleverQueryResultObject *self, PyObject *args) {
-  // TODO
-  Py_RETURN_NONE;
+  PyErr_SetString(PyExc_NotImplementedError, "Iterator not implemented yet");
+  return nullptr;
+  // Py_RETURN_NONE;
 }
 
 static PyObject *PyQleverQueryResult_getitem(PyQleverQueryResultObject *self, PyObject *key) {
@@ -204,6 +252,7 @@ static PyMethodDef PyQleverQueryResult_methods[] = {
         {"_perform_query", (PyCFunction) PyQleverQueryResult_perform_query, METH_VARARGS,"Perform a SPARQL query and store the result."},
         {"tuple_iterator", (PyCFunction) PyQleverQueryResult_tuple_iterator, METH_VARARGS, "Return an iterator that yields rows as tuples."},
         {"vars", (PyCFunction) PyQleverQueryResult_vars, METH_NOARGS, "Return the list of variable names in the result."},
+        {"_append_chunk", (PyCFunction) PyQleverQueryResult_append_chunk, METH_VARARGS, "Append a chunk of result data."},
         {"has_var", (PyCFunction) PyQleverQueryResult_has_var, METH_O, "Check if a variable is in the result."},
         {nullptr} // Sentinel
 };
