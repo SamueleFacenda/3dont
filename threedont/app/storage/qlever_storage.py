@@ -17,7 +17,11 @@ class QleverStorage(Qlever, AbstractStorage):
     def __init__(self, project):
         # Prefix is used to compress IRIs, it's the most recurring IRIs prefix
         half_gb = psutil.virtual_memory().total // (1024 ** 3) // 2
-        Qlever.__init__(self, prefix=project.get_graphNamespace(), max_memory_gb=half_gb)
+        graph_namespace = project.get_graphNamespace()
+        if not graph_namespace.endswith(('#', '/')):
+            graph_namespace += '#'
+
+        Qlever.__init__(self, prefix=graph_namespace, max_memory_gb=half_gb)
         AbstractStorage.__init__(self, project)
 
     def query(self, query: str, chunked: bool = True):

@@ -332,7 +332,8 @@ void MainLayout::on_actionCreate_project_triggered() {
   
   QString graphUri = dialog.getGraphUri();
   QString ontologyNamespace = dialog.getOntologyNamespace();
-  QString ontologyPath = dialog.getOntologyPath();
+  QString graphNamespace = dialog.getGraphNamespace();
+  QString ontologyPath = dialog.getOntologyNamespace();
   
   if (graphUri.isEmpty() || ontologyNamespace.isEmpty() || ontologyPath.isEmpty()) {
     QMessageBox::warning(this, tr("Create Project"), tr("All parameters are required."));
@@ -360,8 +361,8 @@ void MainLayout::on_actionCreate_project_triggered() {
   }
   
   controllerWrapper->createProject(projectName.toStdString(), dbUrl.toStdString(), graphUri.toStdString(), 
-                                   ontologyNamespace.toStdString(), isLocal, originalPath.toStdString(), 
-                                   ontologyPath.toStdString());
+                                   graphNamespace.toStdString(), isLocal, originalPath.toStdString(),
+                                   ontologyNamespace.toStdString());
 }
 
 QStringList MainLayout::getPropertiesMapping(const QStringList &properties, const QStringList &words, const QStringList &defaults) {

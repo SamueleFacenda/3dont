@@ -77,12 +77,13 @@ void CreateProjectDialog::setupUI() {
   m_ontologyNamespaceEdit->setText("http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontology");
   paramsLayout->addRow("Ontology Namespace:", m_ontologyNamespaceEdit);
 
-  auto *ontologyLayout = new QHBoxLayout(paramsGroup);
-  m_ontologyPathEdit = new QLineEdit(paramsGroup);
-  m_ontologyBrowseButton = new QPushButton("Browse...", paramsGroup);
-  ontologyLayout->addWidget(m_ontologyPathEdit);
-  ontologyLayout->addWidget(m_ontologyBrowseButton);
-  paramsLayout->addRow("Ontology Path:", ontologyLayout);
+  // auto *ontologyLayout = new QHBoxLayout(paramsGroup);
+  m_graphNamespaceEdit = new QLineEdit(paramsGroup);
+  m_graphNamespaceEdit->setText("http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontolog/YTU3D");
+  // m_ontologyBrowseButton = new QPushButton("Browse...", paramsGroup);
+  // ontologyLayout->addWidget(m_graphNamespaceEdit);
+  // ontologyLayout->addWidget(m_ontologyBrowseButton);
+  paramsLayout->addRow("Graph Namespace :", m_graphNamespaceEdit);
 
   mainLayout->addWidget(paramsGroup);
 
@@ -96,15 +97,15 @@ void CreateProjectDialog::setupUI() {
   // Connect signals
   connect(m_localRadio, &QRadioButton::toggled, this, &CreateProjectDialog::onLocalToggled);
   connect(m_browseButton, &QPushButton::clicked, this, &CreateProjectDialog::onBrowseClicked);
-  connect(m_ontologyBrowseButton, &QPushButton::clicked, this, [this]() {
-    QString fileName = QFileDialog::getOpenFileName(
-            this,
-            "Select Ontology File",
-            QString(),
-            "Ontology Files (*.owl *.rdf *.ttl);;All Files (*.*)");
-    if (!fileName.isEmpty())
-      m_ontologyPathEdit->setText(fileName);
-  });
+  // connect(m_ontologyBrowseButton, &QPushButton::clicked, this, [this]() {
+  //   QString fileName = QFileDialog::getOpenFileName(
+  //           this,
+  //           "Select Ontology File",
+  //           QString(),
+  //           "Ontology Files (*.owl *.rdf *.ttl);;All Files (*.*)");
+  //   if (!fileName.isEmpty())
+  //     m_graphNamespaceEdit->setText(fileName);
+  // });
   connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
   connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
@@ -151,8 +152,8 @@ QString CreateProjectDialog::getOntologyNamespace() const {
   return m_ontologyNamespaceEdit->text();
 }
 
-QString CreateProjectDialog::getOntologyPath() const {
-  return m_ontologyPathEdit->text();
+QString CreateProjectDialog::getGraphNamespace() const {
+  return m_graphNamespaceEdit->text();
 }
 
 #include "moc_create_project_dialog.cpp"

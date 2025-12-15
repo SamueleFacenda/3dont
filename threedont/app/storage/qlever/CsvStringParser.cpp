@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <thread>
+#include <algorithm>
 
 void CsvStringParser::init() {
   char* current = const_cast<char*>(data);
@@ -48,7 +49,18 @@ void CsvStringParser::init() {
 void CsvStringParser::parse() {
   std::vector<std::thread> workers;
   int chunkSize = length / PARSER_THREADS;
+  int chunkRows = rows / PARSER_THREADS; // only a rough estimate
   for (int threadId = 0; threadId < PARSER_THREADS; threadId++) {
+    for (int colIt = 0; colIt < cols; colIt++) {
+      // preallocate guess size
+      if (isStringColumn[colIt]) {
+        stringColumns[colIt][threadId].reserve(chunkRows);
+        stringLengths[colIt][threadId].reserve(chunkRows);
+      } else {
+        floatColumns[colIt][threadId].reserve(chunkRows);
+      }
+    }
+
     int start = threadId * chunkSize;
     int end = (threadId == PARSER_THREADS - 1) ? length : (threadId + 1) * chunkSize;
     workers.emplace_back(&CsvStringParser::worker, this, threadId, start, end);
@@ -74,11 +86,18 @@ void CsvStringParser::worker(int threadId, int start, int end) {
         stringLengths[colIt][threadId].push_back(len);
       } else {
         auto [ptr, ec] = fast_float::from_chars(current, data + length, floatColumns[colIt][threadId].emplace_back());
-        current = ptr;
-        if (ec == std::errc()) {
-          std::cerr << "Error parsing float in CSV at char " << current - data << ", col " << colIt << std::endl;
+        if (ec != std::errc()) {
+          std::cerr << "Error parsing float in CSV at char " << current - data << ", col " << colIt << " with value: ";
+          std::cerr << std::make_error_code(ec).message() << std::endl;
+          std::cerr << "Data snippet [-10,|,10]: ";
+          for (int i = -10; i < 10; i++) {
+            if (i == 0) std::cerr << "|";
+            std::cerr << *(current + i);
+          }
+          std::cerr << std::endl;
           exit(1);
         }
+        current = ptr;
       }
       current++; // skip comma or newline
     }
@@ -86,10 +105,9 @@ void CsvStringParser::worker(int threadId, int start, int end) {
 }
 
 PyObject* CsvStringParser::mergeStringColumn(int col) {
-  int maxSize = 0;
+  size_t maxSize = 0;
   for (int t = 0; t < PARSER_THREADS; t++)
-    if (stringColumns[col][t].size() > maxSize)
-      maxSize = stringColumns[col][t].size();
+    maxSize = std::max(maxSize, *std::ranges::max_element(stringLengths[col][t]));
 
   npy_intp dims[1] = {static_cast<npy_intp>(rows)};
 

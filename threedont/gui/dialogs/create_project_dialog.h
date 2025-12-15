@@ -22,7 +22,7 @@ public:
   QString getServerUrl() const;
   QString getGraphUri() const;
   QString getOntologyNamespace() const;
-  QString getOntologyPath() const;
+  QString getGraphNamespace() const;
 
 private slots:
   void onLocalToggled(bool checked);
@@ -39,7 +39,7 @@ private:
   QLineEdit *m_serverUrlEdit;
   QLineEdit *m_graphUriEdit;
   QLineEdit *m_ontologyNamespaceEdit;
-  QLineEdit *m_ontologyPathEdit;
+  QLineEdit *m_graphNamespaceEdit;
   QPushButton *m_ontologyBrowseButton;
   QLabel *m_pathLabel;
   QLabel *m_urlLabel;

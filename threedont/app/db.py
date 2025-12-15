@@ -13,11 +13,11 @@ __all__ = ['SparqlBackend']
 class SparqlBackend:
     def __init__(self, project):
         self.graph_uri = project.get_graphUri()
-        namespace = project.get_graphNamespace()
-        if namespace.endswith('#'):
-            self.namespace = namespace
+        onto_namespace = project.get_ontologyNamespace()
+        if onto_namespace.endswith('#'):
+            self.onto_namespace = onto_namespace
         else:
-            self.namespace = namespace + "#"
+            self.onto_namespace = onto_namespace + "#"
 
         self.storage = StorageFactory.create(project)
         self.iri_to_id = {}
@@ -27,7 +27,7 @@ class SparqlBackend:
 
 
     def get_all(self):
-        query = SELECT_ALL_QUERY.format(graph=self.graph_uri, namespace=self.namespace)
+        query = SELECT_ALL_QUERY.format(graph=self.graph_uri, namespace=self.onto_namespace)
         start = time()
         results = self.storage.query(query)
         print("Time to query: ", time() - start)
@@ -85,23 +85,23 @@ class SparqlBackend:
         return self.id_to_iri[point_id]
 
     def get_node_details(self, iri):
-        query = GET_NODE_DETAILS.format(graph=self.graph_uri, point=iri, namespace=self.namespace)
+        query = GET_NODE_DETAILS.format(graph=self.graph_uri, point=iri, namespace=self.onto_namespace)
         results = self.storage.query(query, chunked=False)
         out = list(results.tuple_iterator(['p', 'o']))
         return out
 
     def execute_predicate_query(self, predicate):
-        query = PREDICATE_QUERY.format(graph=self.graph_uri, predicate=predicate, namespace=self.namespace)
+        query = PREDICATE_QUERY.format(graph=self.graph_uri, predicate=predicate, namespace=self.onto_namespace)
         return self.execute_scalar_query(query)
 
     def annotate_node(self, subject, predicate, object):
         query = ANNOTATE_NODE.format(graph=self.graph_uri, subject=subject, predicate=predicate, object=object,
-                                     namespace=self.namespace)
+                                     namespace=self.onto_namespace)
         self.storage.update(query)
 
     def select_all_subjects(self, predicate, object):
         query = SELECT_ALL_WITH_PREDICATE.format(graph=self.graph_uri, predicate=predicate, object=object,
-                                                 namespace=self.namespace)
+                                                 namespace=self.onto_namespace)
         iris = self.storage.query(query)['p']
         colors = np.copy(self.colors)
         for p in iris:

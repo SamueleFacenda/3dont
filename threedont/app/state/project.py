@@ -15,6 +15,7 @@ DEFAULT_PROJECT_CONFIG = {
     "name": "",
     "graphUri": "",
     "graphNamespace": "",
+    "ontologyNamespace": "",
     "dbUrl": "",
     "isLocal": False,  # whether the project is local or a sparql endpoint
     "originalPath": "",  # path to the original ontology file, if any
@@ -25,6 +26,7 @@ PROJECT_SCHEMA = {
     "name": str,
     "graphUri": str,
     "graphNamespace": str,
+    "ontologyNamespace": str,
     "dbUrl": str,
     "isLocal": bool,
     "originalPath": str,
@@ -70,9 +72,9 @@ class Project(AbstractConfig):
         return (project_path / PROJECT_FILE).exists()
 
     def get_ontoPath(self):
-        # ugly way for now
+        # ugly way for now # TODO improve
         assets_folder = resources.files("threedont.assets")
-        namespace = self.get_graphNamespace().lower()
+        namespace = self.get_ontologyNamespace().lower()
         if "heritage" in namespace:
             path = assets_folder / "Heritage_Ontology.rdf"
         elif "urban" in namespace:
