@@ -109,6 +109,8 @@ PyObject* CsvStringParser::mergeStringColumn(int col) {
   for (int t = 0; t < PARSER_THREADS; t++)
     maxSize = std::max(maxSize, *std::ranges::max_element(stringLengths[col][t]));
 
+  // TODO append < and > for IRIs and use unicode string (or use possible bytes logic somewhere else)
+
   npy_intp dims[1] = {static_cast<npy_intp>(rows)};
 
   PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_STRING);

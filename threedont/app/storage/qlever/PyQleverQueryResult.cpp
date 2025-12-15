@@ -137,6 +137,7 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
   ad_utility::LogstreamChoice::get().setStream(&logStream);
   std::cout << "Performing query: " << queryStr << std::endl;
 
+  // TODO handle exceptions (syntax errors, etc.)
   std::string result = self->qlever->query(queryStr, ad_utility::MediaType::csv);
 
   ad_utility::LogstreamChoice::get().setStream(&std::cout); // reset log stream

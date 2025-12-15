@@ -82,7 +82,17 @@ class SparqlBackend:
         return scalars
 
     def get_point_iri(self, point_id):
-        return self.id_to_iri[point_id]
+        out = self.id_to_iri[point_id]
+        # unify the type to str
+        if isinstance(out, np.bytes_):
+            out = out.astype(str)
+        if isinstance(out, bytes):
+            out = out.decode('utf-8')
+
+        if not out.startswith('<'):
+            out = '<' + out + '>'
+
+        return out
 
     def get_node_details(self, iri):
         query = GET_NODE_DETAILS.format(graph=self.graph_uri, point=iri, namespace=self.onto_namespace)
