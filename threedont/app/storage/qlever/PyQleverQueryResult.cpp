@@ -31,7 +31,7 @@ static void PyQleverQueryResult_dealloc(PyQleverQueryResultObject *self) {
 
   // Explicitly call destructors
   self->result.~unordered_map();
-  self->isStringColumn.~vector();
+  self->isStringColumn.~unordered_map();
 
   Py_TYPE(self)->tp_free((PyObject *) self);
 }
@@ -43,7 +43,7 @@ static PyObject *PyQleverQueryResult_new(PyTypeObject *type, PyObject *args, PyO
     self->qleverObj = nullptr;
     self->qlever = nullptr;
     new (&self->result) std::unordered_map<std::string, PyObject*>();
-    new (&self->isStringColumn) std::vector<bool>();
+    new (&self->isStringColumn) std::unordered_map<std::string, bool>();
   }
   return (PyObject *) self;
 }
@@ -144,10 +144,14 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
   CsvStringParser parser(result, rows, cols);
   parser.parse();
 
-  self->isStringColumn = parser.getIsStringColumn(); // append the results to the object
+  auto isStringColumn = parser.getIsStringColumn(); // append the results to the object
   auto varNames = parser.getColNames();
-  for (auto& name : varNames)
+  int i = 0;
+  for (auto& name : varNames) {
     self->result[name] = nullptr; // initialize with null pointers
+    self->isStringColumn[name] = isStringColumn[i];
+    i++;
+  }
 
   auto parsed = parser.getResult();
 
@@ -162,13 +166,13 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
   return returnTuple;
 }
 
-static PyObject *PyQleverQueryResult_len(PyQleverQueryResultObject *self, PyObject *args) {
+static Py_ssize_t PyQleverQueryResult_len(PyQleverQueryResultObject *self, PyObject *args) {
   if (self->result.empty() || self->result.begin()->second == nullptr) {
     PyErr_SetString(PyExc_RuntimeError, "No result available");
-    return nullptr;
+    return -1;
   }
 
-  return PyLong_FromSize_t(PyArray_DIM((PyArrayObject*)self->result.begin()->second, 0));
+  return PyArray_DIM((PyArrayObject*)self->result.begin()->second, 0);
 }
 
 static PyObject *PyQleverQueryResult_iter(PyQleverQueryResultObject *self, PyObject *args) {
@@ -221,9 +225,31 @@ static PyObject *PyQleverQueryResult_tuple_iterator(PyQleverQueryResultObject *s
     varNames.emplace_back(PyUnicode_AsUTF8(item));
   }
 
-  // TODO use custom iterator that yields MemoryMaps
+  // create the iterator object
+  PyQleverQueryResultTupleIteratorObject* iterator = PyObject_New(PyQleverQueryResultTupleIteratorObject, &PyQleverQueryResultTupleIteratorType);
+  if (iterator == nullptr) {
+    PyErr_SetString(PyExc_RuntimeError, "Failed to create iterator object");
+    return nullptr;
+  }
 
-  Py_RETURN_NONE;
+  for (const auto& varName : varNames) {
+    if (self->isStringColumn[varName]) {
+      PyErr_Format(PyExc_RuntimeError, "Tuple iterator does not support string columns yet (variable '%s')", varName.c_str());
+      PyObject_Del(iterator);
+      return nullptr;
+    }
+  }
+
+  iterator->result = new PyObject*[varNames.size()];
+  for (size_t i = 0; i < varNames.size(); i++)
+    iterator->result[i] = self->result[varNames[i]];
+
+  Py_INCREF(self);
+  iterator->index = 0;
+  iterator->cols = varNames.size();
+  iterator->current = new float[iterator->cols];
+  iterator->len = PyQleverQueryResult_len(self, nullptr) >= 0 ? PyQleverQueryResult_len(self, nullptr) : 0;
+  return (PyObject*)iterator;
 }
 
 static PyObject *PyQleverQueryResult_vars(PyQleverQueryResultObject *self, PyObject *args) {
@@ -248,6 +274,41 @@ static PyObject *PyQleverQueryResult_has_var(PyQleverQueryResultObject *self, Py
     Py_RETURN_FALSE;
 }
 
+static void PyQleverQueryResultTupleIterator_dealloc(PyQleverQueryResultTupleIteratorObject* self) {
+  Py_XDECREF(self->result);
+  delete self->current;
+  delete self->result;
+  Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+static PyObject* PyQleverQueryResultTupleIterator_next(PyQleverQueryResultTupleIteratorObject* self) {
+  if (self->index >= self->len) {
+    PyErr_SetNone(PyExc_StopIteration);
+    return nullptr;
+  }
+
+  for (int i = 0; i < self->cols; i++) {
+    float* dataPtr = (float*)PyArray_GETPTR2((PyArrayObject*)self->result[i], self->index, 0);
+    self->current[i] = *dataPtr;
+  }
+  self->index++;
+
+  // Create a memoryview from the current buffer
+  Py_buffer buffer;
+  buffer.buf = self->current;
+  buffer.obj = nullptr;
+  buffer.len = self->cols * sizeof(float);
+  buffer.itemsize = sizeof(float);
+  buffer.readonly = 1;
+  buffer.ndim = 1;
+  buffer.format = (char*)"f"; // float format
+  buffer.shape = &self->cols;
+  buffer.strides = nullptr;
+  buffer.suboffsets = nullptr;
+
+  return PyMemoryView_FromBuffer(&buffer);
+}
+
 static PyMethodDef PyQleverQueryResult_methods[] = {
         {"_perform_query", (PyCFunction) PyQleverQueryResult_perform_query, METH_VARARGS,"Perform a SPARQL query and store the result."},
         {"tuple_iterator", (PyCFunction) PyQleverQueryResult_tuple_iterator, METH_VARARGS, "Return an iterator that yields rows as tuples."},
@@ -269,7 +330,7 @@ static PyMappingMethods PyQleverQueryResult_as_mapping = {
 
 PyTypeObject PyQleverQueryResultType = {
         .ob_base = PyVarObject_HEAD_INIT(nullptr, 0)
-                           .tp_name = "pyqlever.QleverQueryResult",
+        .tp_name = "pyqlever.QleverQueryResult",
         .tp_basicsize = sizeof(PyQleverQueryResultObject),
         .tp_itemsize = 0,
         .tp_dealloc = (destructor) PyQleverQueryResult_dealloc,
@@ -281,3 +342,15 @@ PyTypeObject PyQleverQueryResultType = {
         .tp_methods = PyQleverQueryResult_methods,
         .tp_init = (initproc) PyQleverQueryResult_init,
         .tp_new = PyQleverQueryResult_new};
+
+PyTypeObject PyQleverQueryResultTupleIteratorType = {
+        .ob_base = PyVarObject_HEAD_INIT(nullptr, 0)
+        .tp_name = "pyqlever.QleverQueryResultTupleIterator",
+        .tp_basicsize = sizeof(PyQleverQueryResultTupleIteratorObject),
+        .tp_itemsize = 0,
+        .tp_dealloc = (destructor)PyQleverQueryResultTupleIterator_dealloc,
+        .tp_flags = Py_TPFLAGS_DEFAULT,
+        .tp_iter = PyObject_SelfIter,
+        .tp_iternext = (iternextfunc)PyQleverQueryResultTupleIterator_next,
+        .tp_new = PyType_GenericNew,
+};

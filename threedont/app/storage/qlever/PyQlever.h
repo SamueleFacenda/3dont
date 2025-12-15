@@ -31,7 +31,7 @@ typedef struct {
   PyObject* qleverObj;
   qlever::Qlever *qlever;
   std::unordered_map<std::string, PyObject*> result;
-  std::vector<bool> isStringColumn;
+  std::unordered_map<std::string, bool>  isStringColumn;
 } PyQleverQueryResultObject;
 
 static void PyQleverQueryResult_dealloc(PyQleverQueryResultObject *self);
@@ -40,14 +40,28 @@ static int PyQleverQueryResult_init(PyQleverQueryResultObject *self, PyObject *a
 
 static PyObject *PyQleverQueryResult_append_chunk(PyQleverQueryResultObject *self, PyObject *args);
 static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *self, PyObject *args);
-static PyObject *PyQleverQueryResult_len(PyQleverQueryResultObject *self, PyObject *args);
-static PyObject *PyQleverQueryResult_iter(PyQleverQueryResultObject *self, PyObject *args);
 static PyObject *PyQleverQueryResult_getitem(PyQleverQueryResultObject *self, PyObject *args);
 static PyObject *PyQleverQueryResult_tuple_iterator(PyQleverQueryResultObject *self, PyObject *args);
 static PyObject *PyQleverQueryResult_vars(PyQleverQueryResultObject *self, PyObject *args);
 static PyObject *PyQleverQueryResult_has_var(PyQleverQueryResultObject *self, PyObject *args);
+static PyObject *PyQleverQueryResult_iter(PyQleverQueryResultObject *self, PyObject *args);
+static Py_ssize_t PyQleverQueryResult_len(PyQleverQueryResultObject *self, PyObject *args);
 
 extern PyTypeObject PyQleverQueryResultType;
+
+typedef struct {
+  PyObject_HEAD
+  PyObject** result;
+  Py_ssize_t index;
+  Py_ssize_t cols;
+  Py_ssize_t len;
+  float* current;
+} PyQleverQueryResultTupleIteratorObject;
+
+static void PyQleverQueryResultTupleIterator_dealloc(PyQleverQueryResultTupleIteratorObject* self);
+static PyObject *PyQleverQueryResultTupleIterator_next(PyQleverQueryResultTupleIteratorObject* self);
+
+extern PyTypeObject PyQleverQueryResultTupleIteratorType;
 
 
 PyMODINIT_FUNC PyInit_pyqlever(void);

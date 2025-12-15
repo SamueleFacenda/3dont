@@ -21,7 +21,7 @@ static PyObject *PyQlever_new(PyTypeObject *type, PyObject *args, PyObject *kwds
 static int PyQlever_init(PyQleverObject *self, PyObject *args, PyObject *kwds) {
   int maxMemoryGb = 4; // default
   char* prefix = nullptr;
-  static char *kwlist[] = {"prefix", "max_memory_gb", nullptr};
+  static const char *kwlist[] = {"prefix", "max_memory_gb", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|i" , kwlist, &prefix, &maxMemoryGb)) {
     return -1;
   }
@@ -39,7 +39,7 @@ static int PyQlever_init(PyQleverObject *self, PyObject *args, PyObject *kwds) {
 
 static PyObject *PyQlever_setup_storage(PyQleverObject *self, PyObject *args, PyObject *kwds) {
   const char *identifier;
-  static char *kwlist[] = {"identifier", nullptr};
+  static const char *kwlist[] = {"identifier", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &identifier))
     return nullptr;
 

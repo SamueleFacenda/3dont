@@ -18,6 +18,8 @@ PyMODINIT_FUNC PyInit_pyqlever(void) {
     return nullptr;
   if (PyType_Ready(&PyQleverQueryResultType) < 0)
     return nullptr;
+  if (PyType_Ready(&PyQleverQueryResultTupleIteratorType) < 0)
+    return nullptr;
 
   m = PyModule_Create(&pyqlevermodule);
   if (m == nullptr)
@@ -28,6 +30,9 @@ PyMODINIT_FUNC PyInit_pyqlever(void) {
 
   Py_INCREF(&PyQleverQueryResultType);
   PyModule_AddObject(m, "QleverQueryResult", (PyObject *) &PyQleverQueryResultType);
+
+  Py_INCREF(&PyQleverQueryResultTupleIteratorType);
+  PyModule_AddObject(m, "QleverQueryResultTupleIterator", (PyObject *) &PyQleverQueryResultTupleIteratorType);
 
   return m;
 }
