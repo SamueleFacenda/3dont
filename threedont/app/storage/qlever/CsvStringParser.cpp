@@ -108,6 +108,7 @@ PyObject* CsvStringParser::mergeStringColumn(int col) {
   size_t maxSize = 0;
   for (int t = 0; t < PARSER_THREADS; t++)
     maxSize = std::max(maxSize, *std::ranges::max_element(stringLengths[col][t]));
+  maxSize++; // for null terminator
 
   // TODO append < and > for IRIs and use unicode string (or use possible bytes logic somewhere else)
 

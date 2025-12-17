@@ -55,7 +55,8 @@ typedef struct {
   Py_ssize_t index;
   Py_ssize_t cols;
   Py_ssize_t len;
-  float* current;
+  void* current;
+  char* format;
 } PyQleverQueryResultTupleIteratorObject;
 
 static void PyQleverQueryResultTupleIterator_dealloc(PyQleverQueryResultTupleIteratorObject* self);

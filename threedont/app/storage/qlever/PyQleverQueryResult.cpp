@@ -233,23 +233,33 @@ static PyObject *PyQleverQueryResult_tuple_iterator(PyQleverQueryResultObject *s
     return nullptr;
   }
 
+  bool onlyStrings = true, onlyFloats = true;
   for (const auto& varName : varNames) {
-    if (self->isStringColumn[varName]) {
-      PyErr_Format(PyExc_RuntimeError, "Tuple iterator does not support string columns yet (variable '%s')", varName.c_str());
-      PyObject_Del(iterator);
-      return nullptr;
-    }
+    if (self->isStringColumn[varName])
+      onlyFloats = false;
+    else
+      onlyStrings = false;
+  }
+
+  iterator->index = 0;
+  iterator->cols = varNames.size();
+  iterator->len = PyQleverQueryResult_len(self, nullptr) >= 0 ? PyQleverQueryResult_len(self, nullptr) : 0;
+  if (onlyFloats) {
+    iterator->format = (char*)"f"; // float format
+    iterator->current = new float[iterator->cols];
+  } else if (onlyStrings) {
+    iterator->format = (char*)"c"; // string format
+    iterator->current = new PyObject*[iterator->cols];
+  } else {
+    PyErr_SetString(PyExc_RuntimeError, "Mixed column types are not supported in tuple iterator");
+    PyObject_Del(iterator);
+    return nullptr;
   }
 
   iterator->result = new PyObject*[varNames.size()];
   for (size_t i = 0; i < varNames.size(); i++)
     iterator->result[i] = self->result[varNames[i]];
 
-  Py_INCREF(self);
-  iterator->index = 0;
-  iterator->cols = varNames.size();
-  iterator->current = new float[iterator->cols];
-  iterator->len = PyQleverQueryResult_len(self, nullptr) >= 0 ? PyQleverQueryResult_len(self, nullptr) : 0;
   return (PyObject*)iterator;
 }
 
@@ -277,8 +287,17 @@ static PyObject *PyQleverQueryResult_has_var(PyQleverQueryResultObject *self, Py
 
 static void PyQleverQueryResultTupleIterator_dealloc(PyQleverQueryResultTupleIteratorObject* self) {
   Py_XDECREF(self->result);
-  delete self->current;
-  delete self->result;
+  // if (self->format[0] == 's' && self->index > 0) {
+  //   // free string references
+  //   for (int i = 0; i < self->cols; i++)
+  //     Py_XDECREF(((PyObject**)self->current)[i]);
+  // }
+  if (self->format[0] == 'c')
+    delete[] (char**)self->current;
+  else
+    delete[] (float*)self->current;
+
+  delete[] self->result;
   Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -289,20 +308,33 @@ static PyObject* PyQleverQueryResultTupleIterator_next(PyQleverQueryResultTupleI
   }
 
   for (int i = 0; i < self->cols; i++) {
-    float* dataPtr = (float*)PyArray_GETPTR2((PyArrayObject*)self->result[i], self->index, 0);
-    self->current[i] = *dataPtr;
+    void* dataPtr = PyArray_GETPTR2((PyArrayObject*)self->result[i], self->index, 0);
+    if (self->format[0] == 'c') {
+      // convert to unicode string (this shouldn't happen in query-all)
+      // const char* str = (const char*)dataPtr;
+      // Py_ssize_t maxLen = PyArray_ITEMSIZE((PyArrayObject*)self->result[i]);
+      // Py_ssize_t len = strnlen(str, maxLen);  // Safe: stops at null or maxLen
+      // if (self->index != 0)
+      //   Py_DECREF(((PyObject**)self->current)[i]);
+      //
+      // ((PyObject**)self->current)[i] = PyUnicode_DecodeUTF8(str, len, "replace");
+      ((char**)self->current)[i] = (char*)dataPtr;
+    }else // float
+      ((float*)self->current)[i] = *(float*)dataPtr;
   }
   self->index++;
+
+  Py_ssize_t itemSize = self->format[0] == 'c' ? sizeof(char*) : sizeof(float);
 
   // Create a memoryview from the current buffer
   Py_buffer buffer;
   buffer.buf = self->current;
   buffer.obj = nullptr;
-  buffer.len = self->cols * sizeof(float);
-  buffer.itemsize = sizeof(float);
+  buffer.len = self->cols * itemSize;
+  buffer.itemsize = itemSize;
   buffer.readonly = 1;
   buffer.ndim = 1;
-  buffer.format = (char*)"f"; // float format
+  buffer.format = self->format;
   buffer.shape = &self->cols;
   buffer.strides = nullptr;
   buffer.suboffsets = nullptr;

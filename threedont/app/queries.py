@@ -42,7 +42,7 @@ WHERE {{
 {point} ?p ?o.
 FILTER (?p != base:Is_constituted_by)
 }}
-ORDER BY ?o
+ORDER BY DESC(?o)
 """
 
 SELECT_ALL_WITH_PREDICATE = """

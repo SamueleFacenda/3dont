@@ -81,6 +81,12 @@ class SparqlBackend:
             scalars[i] = scalar
         return scalars
 
+    @staticmethod
+    def uniform_iri(iri):
+        if not iri.startswith('<'):
+            iri = '<' + iri + '>'
+        return iri
+
     def get_point_iri(self, point_id):
         out = self.id_to_iri[point_id]
         # unify the type to str
@@ -89,27 +95,28 @@ class SparqlBackend:
         if isinstance(out, bytes):
             out = out.decode('utf-8')
 
-        if not out.startswith('<'):
-            out = '<' + out + '>'
-
         return out
 
     def get_node_details(self, iri):
+        iri = self.uniform_iri(iri)
         query = GET_NODE_DETAILS.format(graph=self.graph_uri, point=iri, namespace=self.onto_namespace)
         results = self.storage.query(query, chunked=False)
-        out = list(results.tuple_iterator(['p', 'o']))
+        out = list(map(tuple, results.tuple_iterator(['p', 'o'])))
         return out
 
     def execute_predicate_query(self, predicate):
+        predicate = self.uniform_iri(predicate)
         query = PREDICATE_QUERY.format(graph=self.graph_uri, predicate=predicate, namespace=self.onto_namespace)
         return self.execute_scalar_query(query)
 
     def annotate_node(self, subject, predicate, object):
+        subject, predicate, object = self.uniform_iri(subject), self.uniform_iri(predicate), self.uniform_iri(object)
         query = ANNOTATE_NODE.format(graph=self.graph_uri, subject=subject, predicate=predicate, object=object,
                                      namespace=self.onto_namespace)
         self.storage.update(query)
 
     def select_all_subjects(self, predicate, object):
+        predicate, object = self.uniform_iri(predicate), self.uniform_iri(object)
         query = SELECT_ALL_WITH_PREDICATE.format(graph=self.graph_uri, predicate=predicate, object=object,
                                                  namespace=self.onto_namespace)
         iris = self.storage.query(query)['p']
