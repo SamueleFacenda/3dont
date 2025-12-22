@@ -74,17 +74,17 @@
             buildInputs = with pkgs; [
               eigen
               qt6.qtbase
-              hdt
-              qendpoint
+              # hdt
+              # qendpoint
               qlever
               llvmPackages.openmp.dev
               fast-float
-              (graalvm-oracle.overrideAttrs {
-                src = fetchurl {
-                  hash = "sha256-1KsCuhAp5jnwM3T9+RwkLh0NSQeYgOGvGTLqe3xDGDc=";
-                  url = "https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-x64_bin.tar.gz";
-                };
-              }) # jre
+              # (graalvm-oracle.overrideAttrs {
+              #   src = fetchurl {
+              #     hash = "sha256-1KsCuhAp5jnwM3T9+RwkLh0NSQeYgOGvGTLqe3xDGDc=";
+              #     url = "https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-x64_bin.tar.gz";
+              #   };
+              # }) # jre
             ] ++ lib.optionals stdenv.hostPlatform.isLinux [
               libGL
               qt6Packages.qtstyleplugin-kvantum
@@ -103,7 +103,7 @@
               jarowinkler
               boto3
               awsiotpythonsdk
-              jpype1
+              # jpype1
               psutil
               # oxrdflib
               # pyoxigraph

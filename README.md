@@ -62,9 +62,9 @@ View, query and manually annotate pointclouds ontologies.
 - rdflib
 - oxigraph-rdflib
 - qendpoint (with jpype)
+- qlever (the best one)
 
 ### Backends to test
-- qlever
 - rdf-fusion
 
 note
@@ -74,7 +74,6 @@ owlready2 sqlite database
 metodo get_onto o get_graph che ritorna owlready (in project)
 output dir in project (con sottocartelle fisse)
 
- 
 ## License
 
 The LICENSE_PPTK file is the license of the viewer used as a base for this project. It is relative to the content of the folder
@@ -101,6 +100,9 @@ cmake ..
 make -j4
 ```
 
+Set `-DTHREEDONT_DEVELOP_BUILD=On` to have the python modules placed in the source tree. 
+This is useful when developing since allows to run the app with `python -m threedont`.
+
 ##### Requirements
 
 Listed are versions of libraries used to develop 3dont, though earlier versions
@@ -110,6 +112,7 @@ of these libraries may also work.
 * [Eigen](http://eigen.tuxfamily.org) 3.2.9
 * [Python](https://www.python.org/) 3.6+
 * [Numpy](http://www.numpy.org/) 1.13
+* fast-float 
 
 ## Build with nix
 
