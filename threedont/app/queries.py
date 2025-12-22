@@ -4,18 +4,18 @@ PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT DISTINCT ?p ?x ?y ?z 
-       (COALESCE(?r, 0) AS ?r) 
-       (COALESCE(?g, 0) AS ?g) 
-       (COALESCE(?b, 0) AS ?b)
+       (COALESCE(?_r, 0) AS ?r) 
+       (COALESCE(?_g, 0) AS ?g) 
+       (COALESCE(?_b, 0) AS ?b)
 FROM <{graph}>
 WHERE {{
     ?p base:X ?x;
         base:Y ?y;
         base:Z ?z.
     OPTIONAL {{
-        ?p base:R ?r.
-        ?p base:G ?g.
-        ?p base:B ?b.
+        ?p base:R ?_r.
+        ?p base:G ?_g.
+        ?p base:B ?_b.
     }}
 }}
 """
@@ -42,7 +42,7 @@ WHERE {{
 {point} ?p ?o.
 FILTER (?p != base:Is_constituted_by)
 }}
-ORDER BY ?o
+ORDER BY DESC(?o)
 """
 
 SELECT_ALL_WITH_PREDICATE = """
@@ -52,7 +52,7 @@ PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
 SELECT DISTINCT ?p
 FROM <{graph}>
 WHERE {{
-    ?p {predicate} {object}.
+    ?p {predicate} {object} .
 }}
 """
 

@@ -1,10 +1,12 @@
 #include "main_layout.h"
 #include "dialogs/properties_mapping_selection.h"
+#include "dialogs/create_project_dialog.h"
 #include <QAction>
 #include <QDebug>
 #include <QDockWidget>
 #include <QLineEdit>
 #include <QMenu>
+#include <QMessageBox>
 
 MainLayout::MainLayout(ControllerWrapper *controllerWrapper, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainLayout), controllerWrapper(controllerWrapper) {
@@ -113,6 +115,7 @@ void MainLayout::plotTabular(const QStringList &header, const QStringList &rows)
   tableWidget->setRowCount(rows.size() / nVars);
   tableWidget->setHorizontalHeaderLabels(header);
   tableWidget->verticalHeader()->setVisible(false);
+  tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
   for (int i = 0; i < rows.size() / nVars; ++i) {
     for (int j = 0; j < nVars; ++j) {
@@ -317,25 +320,50 @@ void MainLayout::setProjectList(const QStringList &projects) {
 }
 
 void MainLayout::on_actionCreate_project_triggered() {
-  bool ok;
-  QString projectName = QInputDialog::getText(this, tr("Connect to server"), tr("Project name:"),
-                                              QLineEdit::Normal, "test", &ok);
-  if (!ok || projectName.isEmpty()) return;
-
-  QString dbUrl = QInputDialog::getText(this, tr("Connect to server"), tr("Server URL:"),
-                                        QLineEdit::Normal, "http://localhost:8890", &ok); // TODO make this defaults parameters
-  if (!ok || dbUrl.isEmpty()) return;
-
-  QString graphUri = QInputDialog::getText(this, tr("Connect to server"), tr("Graph uri:"),
-                                           QLineEdit::Normal, "http://localhost:8890/Nettuno", &ok);
-  if (!ok || graphUri.isEmpty()) return;
-
-  QString ontologyNamespace = QInputDialog::getText(this, tr("Connect to server"), tr("Ontology namespace:"),
-                                                    QLineEdit::Normal, "http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontology", &ok);
-  if (!ok || ontologyNamespace.isEmpty()) return;
-
-  controllerWrapper->createProject(projectName.toStdString(), dbUrl.toStdString(), graphUri.toStdString(), ontologyNamespace.toStdString());
-  controllerWrapper->askProjectList();
+  CreateProjectDialog dialog(this);
+  if (dialog.exec() != QDialog::Accepted) {
+    return;
+  }
+  
+  QString projectName = dialog.getProjectName();
+  if (projectName.isEmpty()) {
+    QMessageBox::warning(this, tr("Create Project"), tr("Project name cannot be empty."));
+    return;
+  }
+  
+  QString graphUri = dialog.getGraphUri();
+  QString ontologyNamespace = dialog.getOntologyNamespace();
+  QString graphNamespace = dialog.getGraphNamespace();
+  QString ontologyPath = dialog.getOntologyNamespace();
+  
+  if (graphUri.isEmpty() || ontologyNamespace.isEmpty() || ontologyPath.isEmpty()) {
+    QMessageBox::warning(this, tr("Create Project"), tr("All parameters are required."));
+    return;
+  }
+  
+  bool isLocal = dialog.isLocal();
+  QString originalPath;
+  QString dbUrl;
+  
+  if (isLocal) {
+    originalPath = dialog.getOriginalPath();
+    if (originalPath.isEmpty()) {
+      QMessageBox::warning(this, tr("Create Project"), tr("Please select an original file."));
+      return;
+    }
+    dbUrl = ""; // Empty for local projects
+  } else {
+    dbUrl = dialog.getServerUrl();
+    if (dbUrl.isEmpty()) {
+      QMessageBox::warning(this, tr("Create Project"), tr("Please enter a server URL."));
+      return;
+    }
+    originalPath = ""; // Empty for server projects
+  }
+  
+  controllerWrapper->createProject(projectName.toStdString(), dbUrl.toStdString(), graphUri.toStdString(), 
+                                   graphNamespace.toStdString(), isLocal, originalPath.toStdString(),
+                                   ontologyNamespace.toStdString());
 }
 
 QStringList MainLayout::getPropertiesMapping(const QStringList &properties, const QStringList &words, const QStringList &defaults) {

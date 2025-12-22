@@ -11,6 +11,9 @@ result
 /virtuoso/
 /tmp.*.tdb
 .env
+/qendpoint/
+*.bak
 
 .DS_Store
 __MACOSX/
+.gdbinit

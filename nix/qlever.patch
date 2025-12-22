@@ -1,0 +1,257 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bbb92cdc..86a0d744 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -99,63 +99,37 @@ include(FetchContent)
+ ################################
+ # GTEST AND GMOCK
+ ################################
+-FetchContent_Declare(
+-        googletest
+-        GIT_REPOSITORY https://github.com/google/googletest.git
+-        GIT_TAG 7917641ff965959afae189afb5f052524395525c # main branch on 2025/09/11
+-)
++find_package(GTest REQUIRED)
+ 
+ ################################
+ # NLOHMANN JSON
+ ################################
+ # Use URL to avoid downloading large repository as recommended here:
+-# https://json.nlohmann.me/integration/cmake/#fetchcontent
+-FetchContent_Declare(
+-        nlohmann-json
+-        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+-        URL_HASH SHA3_224=b9237e8e8242e915de5be631aa944369c38a377c5e79aa505ba741a9
+-)
++find_package(nlohmann_json REQUIRED)
+ 
+ ###############################
+ # ANTLR CPP RUNTIME FOR THE SPARQL PARSER
+ ###############################
+ set(ANTLR_BUILD_CPP_TESTS OFF CACHE BOOL "don't try to build googletest twice")
+ set(ANTLR_BUILD_SHARED OFF CACHE BOOL "We're only interested in the static library")
+-FetchContent_Declare(
+-        antlr
+-        GIT_REPOSITORY https://github.com/antlr/antlr4.git
+-        GIT_TAG cc82115a4e7f53d71d9d905caa2c2dfa4da58899 # 4.13.12
+-        SOURCE_SUBDIR runtime/Cpp
+-)
++find_package(antlr4-runtime REQUIRED)
+ 
+ #################################
+ # Range v3 (for C++-17 backwards compatibility)
+ ################################
+ 
+-FetchContent_Declare(
+-        range-v3
+-        #TODO<joka921> Merge this fork into the `qlever` GitHub organisation as soon as it exists.
+-        GIT_REPOSITORY https://github.com/joka921/range-v3
+-        # This branch removes some differences in the interface between `range-v3` and `std::ranges` s.t.
+-        # the former can be used as an (almost) drop-in replacement for the latter.
+-        GIT_TAG 5ae161451ec1baaac352d7567298d3ac143bccae # branch fork-for-qlever
+-)
+-
++find_package(range-v3 REQUIRED)
+ 
+ #################################
+ # libspatialjoin
+ ################################
+-FetchContent_Declare(
+-        spatialjoin
+-        GIT_REPOSITORY https://github.com/ad-freiburg/spatialjoin
+-        GIT_TAG 7f5c9007090cd1b902ad1873beb064820caebf39
+-)
++find_package(spatialjoin-dev REQUIRED)
++find_package(pb_util REQUIRED)
+ # disable bzip2 and zlib support in spatialjoin, we don't need it
+ add_compile_definitions(SPATIALJOIN_NO_BZIP2=True SPATIALJOIN_NO_ZLIB=True)
+ 
+ ################################
+-# Threading
+-################################
++# Threading################################
+ find_package(Threads REQUIRED)
+ 
+ #################################
+@@ -223,8 +197,8 @@ find_package(OpenSSL REQUIRED)
+ # against the common libraries.
+ function(qlever_target_link_libraries target)
+     target_link_libraries(${target} ${ARGN} absl::compare absl::flat_hash_map
+-            absl::flat_hash_set absl::strings absl::str_format ICU::uc
+-            ICU::i18n OpenSSL::SSL OpenSSL::Crypto GTest::gtest GTest::gmock fsst nlohmann_json::nlohmann_json Boost::container)
++            absl::flat_hash_set absl::strings absl::str_format ICU::uc ctre::ctre
++            ICU::i18n OpenSSL::SSL OpenSSL::Crypto fsst nlohmann_json::nlohmann_json Boost::container)
+ 
+     # memorySize is a utility library for defining memory sizes.
+     if (NOT ${target} STREQUAL "memorySize")
+@@ -272,37 +246,24 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+ ################################
+ # CTRE, Compile-Time-Regular-Expressions
+ ################################
+-FetchContent_Declare(
+-        ctre
+-        GIT_REPOSITORY https://github.com/hanickadot/compile-time-regular-expressions.git
+-        GIT_TAG e34c26ba149b9fd9c34aa0f678e39739641a0d1e # v3.10.0
+-)
++find_package(ctre REQUIRED)
++get_target_property(CTRE_INCLUDE_DIR ctre::ctre INTERFACE_INCLUDE_DIRECTORIES)
+ 
+ ################################
+-# ABSEIL
+-################################
++# ABSEIL################################
+ set(ABSL_ENABLE_INSTALL ON)
+ set(ABSL_USE_SYSTEM_INCLUDES ON)
+ set(ABSL_PROPAGATE_CXX_STD ON)
+-FetchContent_Declare(
+-        abseil
+-        GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+-        GIT_TAG 93ac3a4f9ee7792af399cebd873ee99ce15aed08  # 2024-05-16
+-)
++find_package(absl REQUIRED)
+ 
+ ################################
+ # S2 Geometry
+ ################################
+ set(BUILD_TESTS OFF CACHE BOOL "no tests for s2")
+-FetchContent_Declare(
+-        s2
+-        GIT_REPOSITORY https://github.com/google/s2geometry.git
+-        GIT_TAG 5b5eccd54a08ae03b4467e79ffbb076d0b5f221e  #version 0.11.1
+-        SYSTEM
+-)
++find_package(s2 REQUIRED)
+ 
+ 
+-if (USE_PARALLEL)
++if (USE_PARALLEL)    
+     include(FindOpenMP)
+     if (OPENMP_FOUND)
+         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+@@ -343,43 +304,51 @@ add_compile_definitions(QUERY_CANCELLATION_MODE=${QUERY_CANCELLATION_MODE})
+ ################################
+ # FSST
+ ################################
+-FetchContent_Declare(
+-        fsst
+-        GIT_REPOSITORY https://github.com/cwida/fsst.git
+-        GIT_TAG b228af6356196095eaf9f8f5654b0635f969661e # main branch from 27th May 2025
++# FetchContent_Declare(
++#         fsst
++#         GIT_REPOSITORY https://github.com/cwida/fsst.git
++#         GIT_TAG b228af6356196095eaf9f8f5654b0635f969661e # main branch from 27th May 2025
++# )
++find_path(fsst_INCLUDE_DIR
++    NAMES fsst/fsst.h
++    REQUIRED
++)
++set(fsst_INCLUDE_DIR "${fsst_INCLUDE_DIR}/fsst")
++
++find_library(fsst_LIB
++    NAMES fsst
++    REQUIRED
+ )
+ 
++add_library(fsst STATIC IMPORTED)
++set_target_properties(fsst PROPERTIES
++    IMPORTED_LOCATION "${fsst_LIB}"
++    INTERFACE_INCLUDE_DIRECTORIES "${fsst_INCLUDE_DIR}"
++)
+ 
+ ################################
+ # RE2
+ ################################
+ set(RE2_BUILD_TESTING OFF CACHE BOOL "enable testing for RE2" FORCE)
+-FetchContent_Declare(
+-        re2
+-        GIT_REPOSITORY https://github.com/google/re2.git
+-        GIT_TAG bc0faab533e2b27b85b8ad312abf061e33ed6b5d # v.2023-11-01
+-        GIT_SHALLOW TRUE
+-        OVERRIDE_FIND_PACKAGE
+-)
++find_package(re2 REQUIRED)
+ 
+ ################################
+ # Apply FetchContent
+ ################################
+-FetchContent_MakeAvailable(googletest ctre abseil re2 fsst s2 nlohmann-json antlr range-v3 spatialjoin)
++# FetchContent_MakeAvailable(googletest ctre abseil re2 fsst s2 nlohmann-json antlr range-v3 spatialjoin)
+ # Disable some warnings in RE2 and GTEST
+-target_compile_options(s2 PRIVATE -Wno-sign-compare -Wno-unused-parameter -Wno-class-memaccess -Wno-comment -Wno-redundant-move -Wno-unknown-warning-option -Wno-maybe-uninitialized -Wno-class-memaccess -Wno-unused-but-set-variable -Wno-unused-function)
+-target_compile_options(re2 PRIVATE -Wno-unused-parameter)
++# target_compile_options(s2 PRIVATE -Wno-sign-compare -Wno-unused-parameter -Wno-class-memaccess -Wno-comment -Wno-redundant-move -Wno-unknown-warning-option -Wno-maybe-uninitialized -Wno-class-memaccess -Wno-unused-but-set-variable -Wno-unused-function)
++# target_compile_options(re2 PRIVATE -Wno-unused-parameter)
+ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+-    target_compile_options(gtest PRIVATE -Wno-maybe-uninitialized)
++    # target_compile_options(gtest PRIVATE -Wno-maybe-uninitialized)
+ endif ()
+-include_directories(${ctre_SOURCE_DIR}/single-header)
+-target_compile_options(fsst PRIVATE -Wno-extra -Wno-all -Wno-error)
+-target_compile_options(fsst12 PRIVATE -Wno-extra -Wno-all -Wno-error)
+-include_directories(${fsst_SOURCE_DIR})
+-include_directories(${range-v3_SOURCE_DIR}/include)
+-target_compile_options(antlr4_static PRIVATE -Wno-all -Wno-extra -Wno-error -Wno-deprecated-declarations)
++# target_compile_options(fsst PRIVATE -Wno-extra -Wno-all -Wno-error)
++# target_compile_options(fsst12 PRIVATE -Wno-extra -Wno-all -Wno-error)
++include_directories(${fsst_INCLUDE_DIR})
++include_directories(${range-v3_INCLUDE_DIR})
++# target_compile_options(antlr4_static PRIVATE -Wno-all -Wno-extra -Wno-error -Wno-deprecated-declarations)
+ # Only required because a lot of classes that do not explicitly link against antlr4_static use the headers.
+-include_directories(SYSTEM "${antlr_SOURCE_DIR}/runtime/Cpp/runtime/src")
++include_directories(SYSTEM "${ANTLR4_INCLUDE_DIR}")
+ 
+ message(STATUS ---)
+ message(STATUS "CXX_FLAGS are : " ${CMAKE_CXX_FLAGS})
+@@ -440,7 +409,7 @@ endif ()
+ ##################################################
+ # Precompiled headers
+ set(PRECOMPILED_HEADER_FILES_ENGINE src/util/HashMap.h src/engine/Operation.h src/engine/QueryExecutionTree.h)
+-set(PRECOMPILED_HEADER_FILES_PARSER src/engine/sparqlExpressions/AggregateExpression.h ${ctre_SOURCE_DIR}/single-header/ctre-unicode.hpp ${antlr_SOURCE_DIR}/runtime/Cpp/runtime/src/antlr4-runtime.h)
++set(PRECOMPILED_HEADER_FILES_PARSER src/engine/sparqlExpressions/AggregateExpression.h ${CTRE_INCLUDE_DIR}/ctre-unicode.hpp ${ANTLR4_INCLUDE_DIR}/antlr4-runtime.h)
+ 
+ add_subdirectory(src/parser)
+ add_subdirectory(src/engine)
+@@ -481,3 +450,19 @@ qlever_target_link_libraries(VocabularyMergerMain index parser ${CMAKE_THREAD_LI
+ 
+ add_executable(PrintIndexVersionMain src/PrintIndexVersionMain.cpp)
+ qlever_target_link_libraries(PrintIndexVersionMain util)
++
++# install targets and config for qlever library vocabulary
++install(TARGETS qlever parser engine index util memorySize global vocabulary rdfTypes rdfEscaping sparqlParser sparqlExpressions http httpParser parserData mediaTypes SortPerformanceEstimator
++        EXPORT QLeverTargets
++        LIBRARY DESTINATION lib
++        ARCHIVE DESTINATION lib
++        RUNTIME DESTINATION bin)
++        
++# Include all headers for installation
++install(DIRECTORY src/
++        DESTINATION include/qlever
++        FILES_MATCHING PATTERN "*.h")
++install(EXPORT QLeverTargets
++        FILE QLeverConfig.cmake
++        NAMESPACE QLever::
++        DESTINATION lib/cmake/QLever)
+diff --git a/src/parser/sparqlParser/CMakeLists.txt b/src/parser/sparqlParser/CMakeLists.txt
+index 463eb07f..d802b38a 100644
+--- a/src/parser/sparqlParser/CMakeLists.txt
++++ b/src/parser/sparqlParser/CMakeLists.txt
+@@ -7,7 +7,7 @@ add_library(sparqlParser
+ qlever_target_link_libraries(sparqlParser antlr4_static)
+ 
+ if (USE_PRECOMPILED_HEADERS)
+-  target_precompile_headers(sparqlParser PRIVATE "${antlr_SOURCE_DIR}/runtime/Cpp/runtime/src/antlr4-runtime.h")
++  target_precompile_headers(sparqlParser PRIVATE "${ANTLR4_INCLUDE_DIR}/antlr4-runtime.h")
+ endif()
+ # Silence warnings in files that are auto-generated by ANTLR.
+ # TODO<joka921> Submit a pull request to ANTLR to fix those warnings.
+diff --git a/src/util/http/HttpParser/CMakeLists.txt b/src/util/http/HttpParser/CMakeLists.txt
+index 9a3638ca..31d4e7f0 100644
+--- a/src/util/http/HttpParser/CMakeLists.txt
++++ b/src/util/http/HttpParser/CMakeLists.txt
+@@ -7,5 +7,5 @@ add_library(httpParser AcceptHeaderQleverVisitor.h AcceptHeaderQleverVisitor.cpp
+ qlever_target_link_libraries(httpParser antlr4_static util)
+ 
+ if (USE_PRECOMPILED_HEADERS)
+-  target_precompile_headers(httpParser PRIVATE "${antlr_SOURCE_DIR}/runtime/Cpp/runtime/src/antlr4-runtime.h")
++  target_precompile_headers(httpParser PRIVATE "${ANTLR4_INCLUDE_DIR}/antlr4-runtime.h")
+ endif()

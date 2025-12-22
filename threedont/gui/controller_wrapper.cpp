@@ -108,8 +108,8 @@ void ControllerWrapper::provisionalSetArgs(const std::string &graph_uri, const s
 void ControllerWrapper::openProject(const std::string &projectName) {
   callPythonMethod(controller, "open_project", "s", projectName.c_str());
 }
-void ControllerWrapper::createProject(const std::string &projectName, const std::string &dbUrl, const std::string &graphUri, const std::string &ontologyNamespace) {
-  callPythonMethod(controller, "create_project", "ssss", projectName.c_str(), dbUrl.c_str(), graphUri.c_str(), ontologyNamespace.c_str());
+void ControllerWrapper::createProject(const std::string &projectName, const std::string &dbUrl, const std::string &graphUri, const std::string &graphNamespace, bool isLocal, const std::string& originalPath, const std::string& ontologyNamespace) {
+  callPythonMethod(controller, "create_project", "ssssOss", projectName.c_str(), dbUrl.c_str(), graphUri.c_str(), graphNamespace.c_str(), isLocal ? Py_True : Py_False, originalPath.c_str(), ontologyNamespace.c_str());
 }
 void ControllerWrapper::askProjectList() {
   callPythonMethod(controller, "update_project_list", "");

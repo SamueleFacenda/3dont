@@ -5,9 +5,8 @@ from queue import Queue
 from urllib.error import URLError
 
 import owlready2 as owl2
-from SPARQLWrapper.SPARQLExceptions import QueryBadFormed
-
-from .db import SparqlEndpoint, WrongResultFormatException, EmptyResultSetException
+from .db import SparqlBackend
+from .exceptions import WrongResultFormatException, EmptyResultSetException
 from .state import Project
 from .viewer import Viewer, get_color_map
 from ..gui import GuiWrapper
@@ -53,7 +52,7 @@ def report_errors_to_gui(func):
         except URLError as e:
             self.gui.set_statusbar_content(f"Connection error: {e}", 5)
             raise e
-        except QueryBadFormed as e:
+        except ValueError as e:
             response = str(e).split("Response:\n")[1]
             self.gui.set_query_error(f"Bad query: {response}")
             raise e
@@ -141,11 +140,11 @@ class Controller:
         self._send_legend(scalars)
 
     @report_errors_to_gui
-    def connect_to_server(self, graph_url, db_url, namespace):
-        print("Loading all the points... ", graph_url)
+    def connect_to_server(self, project):
+        print("Loading all the points... ", project.get_graphUri())
         self.gui.set_statusbar_content("Connecting to server...", 5)
         # TODO handle graph_url in GUI
-        self.sparql_client = SparqlEndpoint(graph_url, db_url, namespace)
+        self.sparql_client = SparqlBackend(project)
         print("Connected to server")
         self.gui.set_statusbar_content("Loading points from server...", 60)
         coords, colors = self.sparql_client.get_all()
@@ -182,9 +181,8 @@ class Controller:
 
     @report_errors_to_gui
     def tabular_query(self, query):
-        result = self.sparql_client.raw_query(query)
-        header = list(result.keys())
-        rows = list(zip(*(result[key] for key in result)))
+        header, content = self.sparql_client.raw_query(query)
+        rows = list(map(lambda r: tuple(map(str, r)), content))
         self.gui.plot_tabular(header, rows)
 
     def _send_legend(self, scalars):
@@ -282,7 +280,7 @@ class Controller:
 
     def natural_language_query(self, nl_query):
         print("Natural language query: ", nl_query)
-        onto_path = self.project.get_onto_path()
+        onto_path = self.project.get_ontoPath()
         openai_client = init_client()  # TODO understand if can be done only once
         query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(),
                             openai_client, self.gui)
@@ -308,13 +306,13 @@ class Controller:
         self.gui.set_project_list(lst)
 
     def open_project(self, project_name):
-        print("Opening project: ", project_name)
+        print("Opening project:", project_name)
         self.project = Project(project_name)
         self.app_state.set_projectName(self.project.get_name())
         self.gui.set_statusbar_content(f"Opened project: {project_name}", 5)
-        self.connect_to_server(self.project.get_graphUri(), self.project.get_dbUrl(), self.project.get_graphNamespace())
+        self.connect_to_server(self.project)
 
-    def create_project(self, project_name, db_url, graph_uri, graph_namespace):
+    def create_project(self, project_name, db_url, graph_uri, graph_namespace, is_local, original_path, onto_namespace):
         print("Creating project: ", project_name)
         if Project.exists(project_name):
             # TODO use proper error handling in GUI
@@ -326,7 +324,11 @@ class Controller:
         self.project.set_dbUrl(db_url)
         self.project.set_graphUri(graph_uri)
         self.project.set_graphNamespace(graph_namespace)
+        self.project.set_ontologyNamespace(onto_namespace)
+        self.project.set_isLocal(is_local)
+        self.project.set_originalPath(original_path)
         self.project.save()
+        self.update_project_list()
         self.gui.set_statusbar_content(f"Created project: {project_name}", 5)
         self.open_project(project_name)  # maybe remove this
 

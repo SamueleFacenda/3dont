@@ -29,6 +29,7 @@ View, query and manually annotate pointclouds ontologies.
 - [x] fix OpenGL
 - [x] fix some random crashes
 - [ ] scalar templates
+- [x] optimize query speed
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
 - [ ] add default to scalar queries equal to color
@@ -46,6 +47,34 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] more configuration options (e.g. select color) and settings dialog
 - [ ] fix lookat lines width
 - [ ] use QOpenglBuffer for buffer management
+- [ ] investigate projects not showing sometimes
+- [ ] test queries with type:point
+- [ ] plot 3d graph with relations
+- [ ] make quendpoint/sparql storage superclass
+- [ ] check [this](https://github.com/csse-uoft/owlready2/blob/master/src/owlready2/namespace.py) owlready alternative
+- [ ] check [rdf-fusion](https://github.com/tobixdev/rdf-fusion)
+- [x] check [qlever](https://github.com/ad-freiburg/qlever)
+
+### Tested backends:
+- virtuoso
+- virtuoso hybrid (points as relational table linked view)
+- oxigraph
+- owlready2
+- rdflib
+- oxigraph-rdflib
+- qendpoint (with jpype)
+
+### Backends to test
+- qlever
+- rdf-fusion
+
+note
+file las pointcloud in project
+epsg code in project
+owlready2 sqlite database
+metodo get_onto o get_graph che ritorna owlready (in project)
+output dir in project (con sottocartelle fisse)
+
  
 ## License
 

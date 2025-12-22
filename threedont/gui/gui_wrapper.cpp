@@ -1,19 +1,9 @@
-#include "controller_wrapper.h"
-#include "main_layout.h"
-#include <Python.h>
-#include <QApplication>
+#include "gui_wrapper.h"
+
 #include <csignal>
-#include <thread>
 
-typedef struct {
-  PyObject_HEAD ControllerWrapper *controllerWrapper;
-  MainLayout *mainLayout;
-  QApplication *app;
-  std::thread guiThread;
 
-} GuiWrapperObject;
-
-static bool pyListToQStringList(PyObject *pyList, QStringList &qStringList, const std::string &name = "List") {
+static bool pyListToQStringList(PyObject *pyList, QStringList &qStringList, const std::string &name) {
   if (!PyList_Check(pyList)) {
     PyErr_SetString(PyExc_TypeError, (name + " must be a list").c_str());
     return false;
@@ -154,19 +144,20 @@ static PyObject *GuiWrapper_view_node_details(GuiWrapperObject *self, PyObject *
   if (PyList_Check(details)) {
     Py_ssize_t size = PyList_Size(details);
     for (Py_ssize_t i = 0; i < size; i++) {
-      PyObject *item = PyList_GetItem(details, i);
-      if (!PyTuple_Check(item)) {
-        PyErr_SetString(PyExc_TypeError, "Details must be a list of tuples");
+      PyObject *row = PyList_GetItem(details, i);
+      if (!PySequence_Check(row)) {
+        PyErr_SetString(PyExc_TypeError, "Details must be a list of sequences");
         return nullptr;
       }
-      Py_ssize_t tupleSize = PyTuple_Size(item);
-      for (Py_ssize_t j = 0; j < tupleSize; j++) {
-        PyObject *tupleItem = PyTuple_GetItem(item, j);
-        if (!PyUnicode_Check(tupleItem)) {
-          PyErr_SetString(PyExc_TypeError, "Tuple items must be strings");
+      Py_ssize_t rowSize = PySequence_Size(row);
+      for (Py_ssize_t j = 0; j < rowSize; j++) {
+        PyObject *item = PySequence_GetItem(row, j);
+        if (PyUnicode_Check(item)) {
+          detailsList.append(QString(PyUnicode_AsUTF8(item)));
+        } else {
+          PyErr_SetString(PyExc_TypeError, "Details items must be strings");
           return nullptr;
         }
-        detailsList.append(QString(PyUnicode_AsUTF8(tupleItem)));
       }
     }
   } else {
@@ -353,7 +344,7 @@ static PyMethodDef GuiWrapper_methods[] = {
         {"get_properties_mapping", (PyCFunction) GuiWrapper_get_properties_mapping, METH_VARARGS, "Gets the properties mapping from the user"},
         {nullptr}};
 
-static PyTypeObject GuiWrapperType = {
+PyTypeObject GuiWrapperType = {
         .ob_base = PyVarObject_HEAD_INIT(nullptr, 0)
                            .tp_name = "gui.GuiWrapper",
         .tp_basicsize = sizeof(GuiWrapperObject),

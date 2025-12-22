@@ -24,6 +24,8 @@ public:
   void setChildrenLoaded(bool loaded);
   [[nodiscard]] QString nodeId() const;
   [[nodiscard]] bool isLeaf() const;
+  [[nodiscard]] bool getIsFetching() const;
+  void setIsFetching(bool fetching);
 
 private:
   static QString removeNamespace(const QString &str);
@@ -33,6 +35,7 @@ private:
   GraphTreeItem *parentItem;
   QList<GraphTreeItem *> childItems;
   bool childrenLoaded = false;
+  bool isFetching = false;
 };
 
 #endif // THREEDONT_GRAPH_TREE_ITEM_H

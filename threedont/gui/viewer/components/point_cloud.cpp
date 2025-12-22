@@ -384,7 +384,7 @@ void PointCloud::setColorMapScale(float color_map_min, float color_map_max) {
       _color_map_max = attr[0] + 1.0f;
     } else {
       _color_map_min = std::numeric_limits<float>::max();
-      _color_map_max = -std::numeric_limits<float>::max();
+      _color_map_max = std::numeric_limits<float>::lowest();
       for (std::size_t i = 0; i < attr.size(); i++) {
         if (attr[i] == attr[i]) { // skip if attr[i] is NaN
           _color_map_min = qMin(_color_map_min, attr[i]);
@@ -501,6 +501,9 @@ void PointCloud::initColors() {
   bool broadcast_attr = _attributes.size(curr_attr_idx) == 1;
   const std::vector<float> &attr = _attributes[curr_attr_idx];
 
+  if (_color_map_auto)
+    setColorMapScale(1.0f, 0.0f);
+
   glActiveTexture(GL_TEXTURE0);
   glDeleteTextures(1, &_texture_color_map);
   glGenTextures(1, &_texture_color_map);
@@ -531,9 +534,6 @@ void PointCloud::initColors() {
   }
 
   glBindTexture(GL_TEXTURE_2D, 0);
-
-  if (_color_map_auto)
-    setColorMapScale(1.0f, 0.0f);
 }
 
 void PointCloud::updateSelectionMask() {

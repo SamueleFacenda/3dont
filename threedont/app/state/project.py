@@ -15,14 +15,22 @@ DEFAULT_PROJECT_CONFIG = {
     "name": "",
     "graphUri": "",
     "graphNamespace": "",
+    "ontologyNamespace": "",
     "dbUrl": "",
+    "isLocal": False,  # whether the project is local or a sparql endpoint
+    "originalPath": "",  # path to the original ontology file, if any
+    "ontoPath": "",  # path to the unpopulated ontology file used in the project, if any
 }
 
 PROJECT_SCHEMA = {
     "name": str,
     "graphUri": str,
     "graphNamespace": str,
+    "ontologyNamespace": str,
     "dbUrl": str,
+    "isLocal": bool,
+    "originalPath": str,
+    "ontoPath": str,
 }
 
 
@@ -63,10 +71,10 @@ class Project(AbstractConfig):
         project_path = Path(user_data_dir("threedont")) / "projects" / f"{safe_filename(project_name)}"
         return (project_path / PROJECT_FILE).exists()
 
-    def get_onto_path(self):
-        # ugly way for now
+    def get_ontoPath(self):
+        # ugly way for now # TODO improve
         assets_folder = resources.files("threedont.assets")
-        namespace = self.get_graphNamespace().lower()
+        namespace = self.get_ontologyNamespace().lower()
         if "heritage" in namespace:
             path = assets_folder / "Heritage_Ontology.rdf"
         elif "urban" in namespace:
@@ -76,3 +84,11 @@ class Project(AbstractConfig):
         if not path.exists():
             raise Exception("Path should exists but doesn't: " + str(path))  # TODO make better also here
         return str(path)
+
+    def get_storage_path(self):
+        if not self.get_isLocal():
+            raise Exception("Storage path is only available for local projects.")
+
+        out = self.project_path / "storage"
+        out.mkdir(parents=True, exist_ok=True)
+        return str(out)

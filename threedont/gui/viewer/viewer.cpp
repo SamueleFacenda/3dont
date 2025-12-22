@@ -838,3 +838,5 @@ QPointF Viewer::win2ndc(QPointF p) {
                 QVector2D(-1.0f, 1.0f);
   return QPointF(v.x(), v.y());
 }
+
+#include "moc_viewer.cpp"
