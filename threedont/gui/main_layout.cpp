@@ -115,6 +115,7 @@ void MainLayout::plotTabular(const QStringList &header, const QStringList &rows)
   tableWidget->setRowCount(rows.size() / nVars);
   tableWidget->setHorizontalHeaderLabels(header);
   tableWidget->verticalHeader()->setVisible(false);
+  tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
   for (int i = 0; i < rows.size() / nVars; ++i) {
     for (int j = 0; j < nVars; ++j) {
