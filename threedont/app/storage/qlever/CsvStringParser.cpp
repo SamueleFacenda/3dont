@@ -45,7 +45,7 @@ void CsvStringParser::init() {
   for (int colIt = 0; colIt < cols; colIt++) {
     isStringColumn[colIt] = *current == 'h'; // starts with http
 
-    while (colIt < cols && *current++ != ','); // there are no spaces
+    while (colIt < cols - 1 && *current++ != ','); // there are no spaces
   }
 }
 
