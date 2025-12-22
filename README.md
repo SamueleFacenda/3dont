@@ -37,8 +37,6 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] better loading screen
 - [ ] gui error report (generic)
 - [ ] override config with cli arguments
-- [ ] use oxrdflib in rdflib as query engine
-- [ ] embed virtuoso in the application
 - [ ] move from QTcpServer to QLocalServer
 - [ ] dynamically compute fast rendering LOD (based on render time)
 - [ ] investigate big point glitch
