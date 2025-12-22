@@ -29,7 +29,7 @@ View, query and manually annotate pointclouds ontologies.
 - [x] fix OpenGL
 - [x] fix some random crashes
 - [ ] scalar templates
-- [ ] optimize query speed
+- [x] optimize query speed
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
 - [ ] add default to scalar queries equal to color
@@ -53,7 +53,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] make quendpoint/sparql storage superclass
 - [ ] check [this](https://github.com/csse-uoft/owlready2/blob/master/src/owlready2/namespace.py) owlready alternative
 - [ ] check [rdf-fusion](https://github.com/tobixdev/rdf-fusion)
-- [ ] check [qlever](https://github.com/ad-freiburg/qlever)
+- [x] check [qlever](https://github.com/ad-freiburg/qlever)
 
 ### Tested backends:
 - virtuoso
