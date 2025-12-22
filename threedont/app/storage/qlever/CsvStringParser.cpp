@@ -86,7 +86,8 @@ void CsvStringParser::parse() {
   for (auto& worker : workers)
     worker.join();
 
-  computeNumRows(); // input num rows is just a hint
+  if (rows == -1)
+    computeNumRows();
   merge();
 }
 
@@ -95,7 +96,7 @@ void CsvStringParser::worker(int threadId, int start, int end) {
   if (threadId != 0) {
     while (*current++ != '\n'); // move to next line
   }
-  while (current < data + length && current < data + end) {
+  while (current < data + length && current <= data + end) {
     for (int colIt = 0; colIt < cols; colIt++) {
       if (isStringColumn[colIt]) {
         const char* strIt = current;

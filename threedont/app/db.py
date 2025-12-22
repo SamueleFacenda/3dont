@@ -83,7 +83,7 @@ class SparqlBackend:
 
     @staticmethod
     def uniform_iri(iri):
-        if not iri.startswith('<'):
+        if iri.startswith('http'):
             iri = '<' + iri + '>'
         return iri
 

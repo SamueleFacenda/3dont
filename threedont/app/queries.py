@@ -52,7 +52,7 @@ PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
 SELECT DISTINCT ?p
 FROM <{graph}>
 WHERE {{
-    ?p {predicate} {object}.
+    ?p {predicate} {object} .
 }}
 """
 
