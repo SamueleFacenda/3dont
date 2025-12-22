@@ -54,7 +54,7 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] check [this](https://github.com/csse-uoft/owlready2/blob/master/src/owlready2/namespace.py) owlready alternative
 - [ ] check [rdf-fusion](https://github.com/tobixdev/rdf-fusion)
 - [x] check [qlever](https://github.com/ad-freiburg/qlever)
-- [ ] qlever errors handling
+- [x] qlever errors handling
 
 ### Tested backends:
 - virtuoso

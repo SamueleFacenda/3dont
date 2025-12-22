@@ -53,8 +53,12 @@ def report_errors_to_gui(func):
             self.gui.set_statusbar_content(f"Connection error: {e}", 5)
             raise e
         except ValueError as e:
-            response = str(e).split("Response:\n")[1]
-            self.gui.set_query_error(f"Bad query: {response}")
+            if "Response:\n" in str(e): # Sparql query error
+                message = str(e).split("Response:\n")[0]
+                message = f"Bad query: {message}"
+            else: # Probably qlever error
+                message = str(e)
+            self.gui.set_query_error(message)
             raise e
         except WrongResultFormatException as e:
             self.gui.set_query_error(f"Wrong result format: {e}")
