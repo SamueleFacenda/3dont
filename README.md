@@ -50,10 +50,11 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] investigate projects not showing sometimes
 - [ ] test queries with type:point
 - [ ] plot 3d graph with relations
-- [ ] make quendpoint/sparql storage superclass
+- [x] make quendpoint/sparql storage superclass
 - [ ] check [this](https://github.com/csse-uoft/owlready2/blob/master/src/owlready2/namespace.py) owlready alternative
 - [ ] check [rdf-fusion](https://github.com/tobixdev/rdf-fusion)
 - [x] check [qlever](https://github.com/ad-freiburg/qlever)
+- [ ] qlever errors handling
 
 ### Tested backends:
 - virtuoso
