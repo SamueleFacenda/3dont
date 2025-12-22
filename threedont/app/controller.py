@@ -182,7 +182,7 @@ class Controller:
     @report_errors_to_gui
     def tabular_query(self, query):
         header, content = self.sparql_client.raw_query(query)
-        rows = list(map(tuple, content))
+        rows = list(map(lambda r: tuple(map(str, r)), content))
         self.gui.plot_tabular(header, rows)
 
     def _send_legend(self, scalars):
