@@ -129,8 +129,7 @@ PyObject* CsvStringParser::mergeStringColumn(int col) {
 
       memcpy(dest, src, len);
       // Zero-pad remaining bytes
-      if (len < maxSize)
-        memset(dest + len, 0, maxSize - len);
+      memset(dest + len, 0, maxSize - len);
 
       idx++;
     }

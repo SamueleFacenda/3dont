@@ -46,8 +46,9 @@ QVariant GraphTreeItem::data(int column, bool removeNS) const {
 
 QString GraphTreeItem::removeNamespace(const QString &str) {
   int index = str.lastIndexOf('#');
+  bool hasBracket = str.endsWith(">");
   if (index != -1)
-    return str.mid(index + 1, str.length() - index - 2); // assumes closing angle bracket
+    return str.mid(index + 1, str.length() - index - 1 - hasBracket );
   return str;
 }
 
@@ -74,7 +75,7 @@ int GraphTreeItem::childIndex() const {
 }
 
 bool GraphTreeItem::isLeaf() const {
-  return !object.startsWith("<http"); // heuristic
+  return !object.startsWith("<http") && !object.startsWith("http"); // heuristic
 }
 
 bool GraphTreeItem::getIsFetching() const {

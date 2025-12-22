@@ -8,22 +8,6 @@
 
 #include <regex>
 
-/**
-  auto result = qlever->query(heritage_query + " LIMIT 10", ad_utility::MediaType::csv);
-p,x,y,z,r,g,b
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#1,31.8442,20.499,8.84419,26880.0,23040.0,21504.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#10,30.4088,19.883,8.83623,23808.0,17920.0,15872.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#100,30.5682,20.095,8.76665,24064.0,15360.0,8704.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#1000,27.1402,20.81,8.71594,26112.0,17408.0,10240.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#10000,32.9632,7.06799,10.0808,25856.0,15360.0,7680.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#100000,26.31,20.104,3.82942,17152.0,11776.0,8704.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#1000000,50.5543,17.251,2.20139,30720.0,29440.0,30208.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#1000001,50.2631,17.187,2.43121,13824.0,13824.0,12544.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#1000002,50.7738,17.186,2.24453,24064.0,24064.0,20992.0
-http://www.semanticweb.org/matteocodiglione/ontologies/2024/9/Heritage_Ontology/Neptune_Temple_Paestum_predicted#1000003,50.3173,17.453,2.2362,26624.0,24064.0,23808.0
-
-
- */
 static void PyQleverQueryResult_dealloc(PyQleverQueryResultObject *self) {
   Py_DECREF(self->qleverObj);
   for (auto& array : self->result)
@@ -58,7 +42,7 @@ std::pair<int, int> getResultShape(std::string log) {
     return {rows, cols};
   }
 
-  return {0, 0}; // no match found
+  return {-1, -1}; // no match found
 }
 
 static int PyQleverQueryResult_init(PyQleverQueryResultObject *self, PyObject *args, PyObject *kwds) {
@@ -248,8 +232,7 @@ static PyObject *PyQleverQueryResult_tuple_iterator(PyQleverQueryResultObject *s
     iterator->format = (char*)"f"; // float format
     iterator->current = new float[iterator->cols];
   } else if (onlyStrings) {
-    iterator->format = (char*)"c"; // string format
-    iterator->current = new PyObject*[iterator->cols];
+    iterator->format = (char*)"S"; // string format
   } else {
     PyErr_SetString(PyExc_RuntimeError, "Mixed column types are not supported in tuple iterator");
     PyObject_Del(iterator);
@@ -287,15 +270,8 @@ static PyObject *PyQleverQueryResult_has_var(PyQleverQueryResultObject *self, Py
 
 static void PyQleverQueryResultTupleIterator_dealloc(PyQleverQueryResultTupleIteratorObject* self) {
   Py_XDECREF(self->result);
-  // if (self->format[0] == 's' && self->index > 0) {
-  //   // free string references
-  //   for (int i = 0; i < self->cols; i++)
-  //     Py_XDECREF(((PyObject**)self->current)[i]);
-  // }
-  if (self->format[0] == 'c')
-    delete[] (char**)self->current;
-  else
-    delete[] (float*)self->current;
+  if (self->format[0] == 'f')
+    delete[] (float**)self->current;
 
   delete[] self->result;
   Py_TYPE(self)->tp_free((PyObject*)self);
@@ -307,31 +283,31 @@ static PyObject* PyQleverQueryResultTupleIterator_next(PyQleverQueryResultTupleI
     return nullptr;
   }
 
+  PyObject *tupleResult;
+  if (self->format[0] == 'S')
+    tupleResult = PyTuple_New(self->cols);
+
   for (int i = 0; i < self->cols; i++) {
     void* dataPtr = PyArray_GETPTR2((PyArrayObject*)self->result[i], self->index, 0);
-    if (self->format[0] == 'c') {
+    if (self->format[0] == 'S') {
       // convert to unicode string (this shouldn't happen in query-all)
-      // const char* str = (const char*)dataPtr;
-      // Py_ssize_t maxLen = PyArray_ITEMSIZE((PyArrayObject*)self->result[i]);
-      // Py_ssize_t len = strnlen(str, maxLen);  // Safe: stops at null or maxLen
-      // if (self->index != 0)
-      //   Py_DECREF(((PyObject**)self->current)[i]);
-      //
-      // ((PyObject**)self->current)[i] = PyUnicode_DecodeUTF8(str, len, "replace");
-      ((char**)self->current)[i] = (char*)dataPtr;
+      const char* str = (const char*)dataPtr;
+      Py_ssize_t maxLen = PyArray_ITEMSIZE((PyArrayObject*)self->result[i]);
+      Py_ssize_t len = strnlen(str, maxLen);  // Safe: stops at null or maxLen
+
+      PyObject* tmp = PyUnicode_DecodeUTF8(str, len, "replace");
+      PyTuple_SetItem(tupleResult, i, tmp); // steals reference
     }else // float
       ((float*)self->current)[i] = *(float*)dataPtr;
   }
   self->index++;
 
-  Py_ssize_t itemSize = self->format[0] == 'c' ? sizeof(char*) : sizeof(float);
-
   // Create a memoryview from the current buffer
   Py_buffer buffer;
   buffer.buf = self->current;
   buffer.obj = nullptr;
-  buffer.len = self->cols * itemSize;
-  buffer.itemsize = itemSize;
+  buffer.len = self->cols * sizeof(float);
+  buffer.itemsize = sizeof(float);
   buffer.readonly = 1;
   buffer.ndim = 1;
   buffer.format = self->format;
@@ -339,7 +315,10 @@ static PyObject* PyQleverQueryResultTupleIterator_next(PyQleverQueryResultTupleI
   buffer.strides = nullptr;
   buffer.suboffsets = nullptr;
 
-  return PyMemoryView_FromBuffer(&buffer);
+  if (self->format[0] == 'S')
+    return tupleResult;
+  else
+    return PyMemoryView_FromBuffer(&buffer);
 }
 
 static PyMethodDef PyQleverQueryResult_methods[] = {
