@@ -36,6 +36,7 @@ private:
 
   void worker(int threadId, int start, int end);
   void merge();
+  void computeNumRows();
   PyObject* mergeStringColumn(int col);
   PyObject* mergeFloatColumn(int col);
 

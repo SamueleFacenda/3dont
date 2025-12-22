@@ -9,9 +9,12 @@
 #include <iostream>
 #include <thread>
 #include <algorithm>
+#include <climits>
 
 void CsvStringParser::init() {
   char* current = const_cast<char*>(data);
+  if (cols == -1) // unknown, parse until newline
+    cols = INT_MAX;
   for (int colIt = 0; colIt < cols; colIt++) {
     char* start = current;
     while (*current != ',' && *current != '\n')
@@ -22,7 +25,7 @@ void CsvStringParser::init() {
 
     if (*current == '\n') {
       current++; // skip newline
-      cols = colIt + 1; // adjust cols if fewer columns found
+      cols = colIt + 1; // adjust cols
       break;
     }
     current++; // skip comma or newline
@@ -46,18 +49,33 @@ void CsvStringParser::init() {
   }
 }
 
+void CsvStringParser::computeNumRows() {
+  if (cols == 0)
+    return; // no columns
+  rows = 0;
+  for (int t = 0; t < PARSER_THREADS; t++) {
+    if (isStringColumn[0])
+      rows += stringColumns[0][t].size();
+    else
+      rows += floatColumns[0][t].size();
+  }
+}
+
+
 void CsvStringParser::parse() {
   std::vector<std::thread> workers;
   int chunkSize = length / PARSER_THREADS;
   int chunkRows = rows / PARSER_THREADS; // only a rough estimate
   for (int threadId = 0; threadId < PARSER_THREADS; threadId++) {
-    for (int colIt = 0; colIt < cols; colIt++) {
-      // preallocate guess size
-      if (isStringColumn[colIt]) {
-        stringColumns[colIt][threadId].reserve(chunkRows);
-        stringLengths[colIt][threadId].reserve(chunkRows);
-      } else {
-        floatColumns[colIt][threadId].reserve(chunkRows);
+    if (rows != -1) { // preallocate only if we know the number of rows
+      for (int colIt = 0; colIt < cols; colIt++) {
+        // preallocate guess size
+        if (isStringColumn[colIt]) {
+          stringColumns[colIt][threadId].reserve(chunkRows);
+          stringLengths[colIt][threadId].reserve(chunkRows);
+        } else {
+          floatColumns[colIt][threadId].reserve(chunkRows);
+        }
       }
     }
 
@@ -68,6 +86,8 @@ void CsvStringParser::parse() {
   for (auto& worker : workers)
     worker.join();
 
+  if (rows == -1)
+    computeNumRows();
   merge();
 }
 
@@ -106,8 +126,10 @@ void CsvStringParser::worker(int threadId, int start, int end) {
 
 PyObject* CsvStringParser::mergeStringColumn(int col) {
   size_t maxSize = 0;
-  for (int t = 0; t < PARSER_THREADS; t++)
-    maxSize = std::max(maxSize, *std::ranges::max_element(stringLengths[col][t]));
+  for (int t = 0; t < PARSER_THREADS; t++) {
+    if (!stringLengths[col][t].empty())
+      maxSize = std::max(maxSize, *std::ranges::max_element(stringLengths[col][t]));
+  }
   maxSize++; // for null terminator
 
   // TODO append < and > for IRIs and use unicode string (or use possible bytes logic somewhere else)
