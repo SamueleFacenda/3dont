@@ -257,10 +257,8 @@ static PyObject *PyQleverQueryResult_vars(PyQleverQueryResultObject *self, PyObj
   return pyList;
 }
 
-static PyObject *PyQleverQueryResult_has_var(PyQleverQueryResultObject *self, PyObject *args) {
-  char* varName;
-  if (!PyArg_ParseTuple(args, "s", &varName))
-    return nullptr;
+static PyObject *PyQleverQueryResult_has_var(PyQleverQueryResultObject *self, PyObject *pyName) {
+  const char* varName = PyUnicode_AsUTF8(pyName);
 
   if (self->result.contains(varName))
     Py_RETURN_TRUE;

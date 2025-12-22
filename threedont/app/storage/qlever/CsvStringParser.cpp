@@ -86,8 +86,7 @@ void CsvStringParser::parse() {
   for (auto& worker : workers)
     worker.join();
 
-  if (rows == -1)
-    computeNumRows();
+  computeNumRows(); // input num rows is just a hint
   merge();
 }
 
