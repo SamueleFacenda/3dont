@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index bbb92cdc..86a0d744 100644
+index e01916a5..05d3ff08 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -99,63 +99,37 @@ include(FetchContent)
+@@ -104,56 +104,33 @@ include(FetchContent)
  ################################
  # GTEST AND GMOCK
  ################################
@@ -17,11 +17,11 @@ index bbb92cdc..86a0d744 100644
  # NLOHMANN JSON
  ################################
  # Use URL to avoid downloading large repository as recommended here:
--# https://json.nlohmann.me/integration/cmake/#fetchcontent
+ # https://json.nlohmann.me/integration/cmake/#fetchcontent
 -FetchContent_Declare(
 -        nlohmann-json
--        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
--        URL_HASH SHA3_224=b9237e8e8242e915de5be631aa944369c38a377c5e79aa505ba741a9
+-        URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+-        URL_HASH SHA3_224=0ad805c53f1769489a9c6bdeefd0a36c19f74239785cdb9c4344e8c1
 -)
 +find_package(nlohmann_json REQUIRED)
  
@@ -48,9 +48,8 @@ index bbb92cdc..86a0d744 100644
 -        GIT_REPOSITORY https://github.com/joka921/range-v3
 -        # This branch removes some differences in the interface between `range-v3` and `std::ranges` s.t.
 -        # the former can be used as an (almost) drop-in replacement for the latter.
--        GIT_TAG 5ae161451ec1baaac352d7567298d3ac143bccae # branch fork-for-qlever
+-        GIT_TAG 42340ef354f7b4e4660268b788e37008d9cc85aa # branch fork-for-qlever
 -)
--
 +find_package(range-v3 REQUIRED)
  
  #################################
@@ -59,21 +58,14 @@ index bbb92cdc..86a0d744 100644
 -FetchContent_Declare(
 -        spatialjoin
 -        GIT_REPOSITORY https://github.com/ad-freiburg/spatialjoin
--        GIT_TAG 7f5c9007090cd1b902ad1873beb064820caebf39
+-        GIT_TAG c358e479ebb5f40df99522e69a0b52d73416020b
 -)
 +find_package(spatialjoin-dev REQUIRED)
 +find_package(pb_util REQUIRED)
  # disable bzip2 and zlib support in spatialjoin, we don't need it
  add_compile_definitions(SPATIALJOIN_NO_BZIP2=True SPATIALJOIN_NO_ZLIB=True)
  
- ################################
--# Threading
--################################
-+# Threading################################
- find_package(Threads REQUIRED)
- 
- #################################
-@@ -223,8 +197,8 @@ find_package(OpenSSL REQUIRED)
+@@ -227,8 +204,8 @@ find_package(OpenSSL REQUIRED)
  # against the common libraries.
  function(qlever_target_link_libraries target)
      target_link_libraries(${target} ${ARGN} absl::compare absl::flat_hash_map
@@ -84,7 +76,7 @@ index bbb92cdc..86a0d744 100644
  
      # memorySize is a utility library for defining memory sizes.
      if (NOT ${target} STREQUAL "memorySize")
-@@ -272,37 +246,24 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+@@ -276,37 +253,24 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
  ################################
  # CTRE, Compile-Time-Regular-Expressions
  ################################
@@ -128,7 +120,7 @@ index bbb92cdc..86a0d744 100644
      include(FindOpenMP)
      if (OPENMP_FOUND)
          set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-@@ -343,43 +304,51 @@ add_compile_definitions(QUERY_CANCELLATION_MODE=${QUERY_CANCELLATION_MODE})
+@@ -347,43 +311,51 @@ add_compile_definitions(QUERY_CANCELLATION_MODE=${QUERY_CANCELLATION_MODE})
  ################################
  # FSST
  ################################
@@ -144,14 +136,14 @@ index bbb92cdc..86a0d744 100644
 +find_path(fsst_INCLUDE_DIR
 +    NAMES fsst/fsst.h
 +    REQUIRED
-+)
+ )
 +set(fsst_INCLUDE_DIR "${fsst_INCLUDE_DIR}/fsst")
-+
+ 
 +find_library(fsst_LIB
 +    NAMES fsst
 +    REQUIRED
- )
- 
++)
++
 +add_library(fsst STATIC IMPORTED)
 +set_target_properties(fsst PROPERTIES
 +    IMPORTED_LOCATION "${fsst_LIB}"
@@ -202,7 +194,7 @@ index bbb92cdc..86a0d744 100644
  
  message(STATUS ---)
  message(STATUS "CXX_FLAGS are : " ${CMAKE_CXX_FLAGS})
-@@ -440,7 +409,7 @@ endif ()
+@@ -444,7 +416,7 @@ endif ()
  ##################################################
  # Precompiled headers
  set(PRECOMPILED_HEADER_FILES_ENGINE src/util/HashMap.h src/engine/Operation.h src/engine/QueryExecutionTree.h)
@@ -211,7 +203,7 @@ index bbb92cdc..86a0d744 100644
  
  add_subdirectory(src/parser)
  add_subdirectory(src/engine)
-@@ -481,3 +450,19 @@ qlever_target_link_libraries(VocabularyMergerMain index parser ${CMAKE_THREAD_LI
+@@ -485,3 +457,19 @@ qlever_target_link_libraries(VocabularyMergerMain index parser ${CMAKE_THREAD_LI
  
  add_executable(PrintIndexVersionMain src/PrintIndexVersionMain.cpp)
  qlever_target_link_libraries(PrintIndexVersionMain util)

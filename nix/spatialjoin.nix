@@ -9,8 +9,8 @@ stdenv.mkDerivation {
   src = fetchFromGitHub {
       owner = "ad-freiburg";
       repo = "spatialjoin";
-      rev = "7f5c9007090cd1b902ad1873beb064820caebf39";
-      hash = "sha256-zvZCRJByvykVCQM9z0g0vUj1sDHaqhMDTbRzudp7jxQ=";
+      rev = "c358e479ebb5f40df99522e69a0b52d73416020b";
+      hash = "sha256-/BQzyCx1KxnOeLLZkvqno2KN/VHAEu228zrsJaqYu/c=";
       fetchSubmodules = true;
   };
   nativeBuildInputs = [ cmake ];

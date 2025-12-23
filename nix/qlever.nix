@@ -1,4 +1,4 @@
-{ stdenv
+{ clangStdenv
 , fetchFromGitHub
 , cmake
 , pkg-config
@@ -19,14 +19,16 @@
 , spatialjoin
 }:
 
-stdenv.mkDerivation rec {
+clangStdenv.mkDerivation rec {
   pname = "qlever";
   version = "unstable";
   src = fetchFromGitHub {
     repo = "qlever";
     owner = "ad-freiburg";
-    rev = "ae21741ece88a14bd8392e3167bd84f89c25969d";
-    hash = "sha256-56/33GR+t6TFO/cWJNk7ZbL8v/BXH+q7Qkhy11QppNE=";
+    # rev = "ae21741ece88a14bd8392e3167bd84f89c25969d";
+    # hash = "sha256-56/33GR+t6TFO/cWJNk7ZbL8v/BXH+q7Qkhy11QppNE=";
+    rev = "5b09c6a55da48b0d7d9bc958f2ca3458d07fd9e0";
+    hash = "sha256-f/q36+8/26e75VUrQdqjGgmpv9KEE7hlC8fapeHxMNw=";
   };
   patches = [ ./qlever.patch ];
   cmakeBuildType = "Release";
