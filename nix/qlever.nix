@@ -34,7 +34,7 @@ clangStdenv.mkDerivation rec {
   cmakeBuildType = "Release";
   cmakeFlags = [
     "-DUSE_PARALLEL=true"
-    "-DUSE_CPP_17_BACKPORTS=On"
+    # "-DUSE_CPP_17_BACKPORTS=On"
     "-DSINGLE_TEST_BINARY=On"
   ];
   buildFlags = [ "qlever" ]; # build only libqlever target!
