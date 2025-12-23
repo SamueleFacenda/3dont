@@ -151,7 +151,9 @@ void GraphTreeModel::onRowExpanded(const QModelIndex &index) {
   if (!index.isValid()) return;
   GraphTreeItem *item = itemFromIndex(index);
 
-  if (item->data(0) == "Constitutes")
+  if (item->data(0) == "Constitutes" ||
+      item->data(0) == "Is_part_of" ||
+      item->data(0) == "Has_as_part")
     controllerWrapper->selectAllSubjects(item->data(0, false).toString().toStdString(),
                                          item->data(1, false).toString().toStdString());
 
