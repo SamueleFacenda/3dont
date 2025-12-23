@@ -6,9 +6,6 @@
 #include <vector>
 #include <array>
 
-// TODO make this configurable
-#define PARSER_THREADS 4
-
 /**
  * parses a CSV string and provides access to its data.
  * Only supports strings and floats.
@@ -26,10 +23,10 @@ public:
   std::vector<bool> getIsStringColumn() const { return isStringColumn; }
 private:
   const char* data;
-  int length, rows, cols;
-  std::vector<std::array<std::vector<const char*>,PARSER_THREADS>> stringColumns; // [col][thread][rel row]
-  std::vector<std::array<std::vector<size_t>,PARSER_THREADS>> stringLengths;
-  std::vector<std::array<std::vector<float>,PARSER_THREADS>> floatColumns;
+  int length, rows, cols, threadsCount;
+  std::vector<std::vector<std::vector<const char*>>> stringColumns; // [col][thread][rel row]
+  std::vector<std::vector<std::vector<size_t>>> stringLengths;
+  std::vector<std::vector<std::vector<float>>> floatColumns;
   std::vector<bool> isStringColumn;
   std::vector<std::string> colNames;
   std::vector<PyObject*> result;
@@ -40,5 +37,8 @@ private:
   PyObject* mergeStringColumn(int col);
   PyObject* mergeFloatColumn(int col);
 
+  void processHeader();
+  void allocateColumnsSpace();
+  void detectColumnType();
   void init();
 };

@@ -11,12 +11,14 @@
 #include <algorithm>
 #include <climits>
 
-void CsvStringParser::init() {
-  char* current = const_cast<char*>(data);
+#define FALLBACK_PARSER_THREADS 4
+
+void CsvStringParser::processHeader() {
+  const char* current = data;
   if (cols == -1) // unknown, parse until newline
     cols = INT_MAX;
   for (int colIt = 0; colIt < cols; colIt++) {
-    char* start = current;
+    const char *start = current;
     while (*current != ',' && *current != '\n')
       current++;
 
@@ -24,7 +26,7 @@ void CsvStringParser::init() {
     colNames.push_back(colName);
 
     if (*current == '\n') {
-      current++; // skip newline
+      current++;        // skip newline
       cols = colIt + 1; // adjust cols
       break;
     }
@@ -33,27 +35,50 @@ void CsvStringParser::init() {
 
   length -= (current - data); // adjust length to skip header
   data = current;
+}
 
+void CsvStringParser::allocateColumnsSpace() {
   stringColumns.resize(cols);
   stringLengths.resize(cols);
   floatColumns.resize(cols);
   isStringColumn.resize(cols, false);
   result.resize(cols);
-  if (rows == 0)
-    return; // no data
 
+  threadsCount = std::thread::hardware_concurrency();
+  if (threadsCount == 0)
+    threadsCount = FALLBACK_PARSER_THREADS;
   for (int colIt = 0; colIt < cols; colIt++) {
-    isStringColumn[colIt] = *current == 'h'; // starts with http
+    stringColumns[colIt].resize(threadsCount);
+    stringLengths[colIt].resize(threadsCount);
+    floatColumns[colIt].resize(threadsCount);
+  }
+}
+
+void CsvStringParser::detectColumnType() {
+  const char* current = data;
+  for (int colIt = 0; colIt < cols; colIt++) {
+    isStringColumn[colIt] = *current == 'h';       // starts with http
 
     while (colIt < cols - 1 && *current++ != ','); // there are no spaces
   }
+}
+
+void CsvStringParser::init() {
+  processHeader();
+
+  allocateColumnsSpace();
+
+  if (rows == 0)
+    return; // no data
+
+  detectColumnType();
 }
 
 void CsvStringParser::computeNumRows() {
   if (cols == 0)
     return; // no columns
   rows = 0;
-  for (int t = 0; t < PARSER_THREADS; t++) {
+  for (int t = 0; t < threadsCount; t++) {
     if (isStringColumn[0])
       rows += stringColumns[0][t].size();
     else
@@ -64,9 +89,9 @@ void CsvStringParser::computeNumRows() {
 
 void CsvStringParser::parse() {
   std::vector<std::thread> workers;
-  int chunkSize = length / PARSER_THREADS;
-  int chunkRows = rows / PARSER_THREADS; // only a rough estimate
-  for (int threadId = 0; threadId < PARSER_THREADS; threadId++) {
+  int chunkSize = length / threadsCount;
+  int chunkRows = rows / threadsCount; // only a rough estimate
+  for (int threadId = 0; threadId < threadsCount; threadId++) {
     if (rows != -1) { // preallocate only if we know the number of rows
       for (int colIt = 0; colIt < cols; colIt++) {
         // preallocate guess size
@@ -80,7 +105,7 @@ void CsvStringParser::parse() {
     }
 
     int start = threadId * chunkSize;
-    int end = (threadId == PARSER_THREADS - 1) ? length : (threadId + 1) * chunkSize;
+    int end = (threadId == threadsCount - 1) ? length : (threadId + 1) * chunkSize;
     workers.emplace_back(&CsvStringParser::worker, this, threadId, start, end);
   }
   for (auto& worker : workers)
@@ -126,14 +151,11 @@ void CsvStringParser::worker(int threadId, int start, int end) {
 
 PyObject* CsvStringParser::mergeStringColumn(int col) {
   size_t maxSize = 0;
-  for (int t = 0; t < PARSER_THREADS; t++) {
+  for (int t = 0; t < threadsCount; t++) {
     if (!stringLengths[col][t].empty())
       maxSize = std::max(maxSize, *std::ranges::max_element(stringLengths[col][t]));
   }
   maxSize++; // for null terminator
-
-  // TODO append < and > for IRIs and use unicode string (or use possible bytes logic somewhere else)
-
   npy_intp dims[1] = {static_cast<npy_intp>(rows)};
 
   PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_STRING);
@@ -143,7 +165,7 @@ PyObject* CsvStringParser::mergeStringColumn(int col) {
   char *data = (char *) PyArray_DATA((PyArrayObject *) array);
 
   size_t idx = 0;
-  for (int t = 0; t < PARSER_THREADS; t++) {
+  for (int t = 0; t < threadsCount; t++) {
     for (size_t i = 0; i < stringColumns[col][t].size(); i++) {
       const char *src = stringColumns[col][t][i];
       size_t len = stringLengths[col][t][i];
@@ -168,7 +190,7 @@ PyObject* CsvStringParser::mergeFloatColumn(int col) {
   float *data = (float*)PyArray_DATA((PyArrayObject*)array);
 
   size_t idx = 0;
-  for (int t = 0; t < PARSER_THREADS; t++) {
+  for (int t = 0; t < threadsCount; t++) {
     size_t chunkSize = floatColumns[col][t].size();
     memcpy(data + idx, floatColumns[col][t].data(), chunkSize * sizeof(float));
     idx += chunkSize;

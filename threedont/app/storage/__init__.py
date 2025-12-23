@@ -4,7 +4,7 @@ from .sparql_rdflib_storage import SparqlRDFLibStorage
 # from .oxigraph_rdflib_storage import OxigraphRDFLibStorage
 from .sparqlwrapper_storage import SparqlWrapperStorage
 # from .oxigraph_storage import OxigraphStorage
-from .qendpoint_storage import QendpointStorage
+# from .qendpoint_storage import QendpointStorage
 from .qlever_storage import QleverStorage
 
 __all__ = [ "StorageFactory" ]

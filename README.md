@@ -28,8 +28,11 @@ View, query and manually annotate pointclouds ontologies.
 - [x] fix viewer focus issue
 - [x] fix OpenGL
 - [x] fix some random crashes
-- [ ] scalar templates
 - [x] optimize query speed
+- [x] make quendpoint/sparql storage superclass
+- [x] check [qlever](https://github.com/ad-freiburg/qlever)
+- [x] qlever errors handling
+- [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
 - [ ] add default to scalar queries equal to color
@@ -37,8 +40,6 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] better loading screen
 - [ ] gui error report (generic)
 - [ ] override config with cli arguments
-- [ ] move from QTcpServer to QLocalServer
-- [ ] dynamically compute fast rendering LOD (based on render time)
 - [ ] investigate big point glitch
 - [ ] investigate empty view on heritage loading
 - [ ] avoid startup lag for dependency dowload
@@ -48,11 +49,10 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] investigate projects not showing sometimes
 - [ ] test queries with type:point
 - [ ] plot 3d graph with relations
-- [x] make quendpoint/sparql storage superclass
 - [ ] check [this](https://github.com/csse-uoft/owlready2/blob/master/src/owlready2/namespace.py) owlready alternative
 - [ ] check [rdf-fusion](https://github.com/tobixdev/rdf-fusion)
-- [x] check [qlever](https://github.com/ad-freiburg/qlever)
-- [x] qlever errors handling
+- [ ] move from QTcpServer to QLocalServer
+- [ ] dynamically compute fast rendering LOD (based on render time)
 
 ### Tested backends:
 - virtuoso
