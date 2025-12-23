@@ -122,7 +122,7 @@ void CreateProjectDialog::onBrowseClicked() {
           this,
           "Select Original Ontology File", // populated ontology file
           QString(),
-          "Ontology files (*.rdf *.ttl *.xml);;All Files (*.*)");
+          "Ontology files (*.rdf *.ttl *.xml *.nt);;All Files (*.*)");
 
   if (!fileName.isEmpty())
     m_originalPathEdit->setText(fileName);
