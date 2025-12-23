@@ -33,6 +33,7 @@ View, query and manually annotate pointclouds ontologies.
 - [x] check [qlever](https://github.com/ad-freiburg/qlever)
 - [x] qlever errors handling
 - [x] investigate big point glitch
+- [x] avoid startup lag for dependency dowload
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
@@ -42,7 +43,6 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] gui error report (generic)
 - [ ] override config with cli arguments
 - [ ] investigate empty view on heritage loading
-- [ ] avoid startup lag for dependency dowload
 - [ ] more configuration options (e.g. select color) and settings dialog
 - [ ] fix lookat lines width
 - [ ] use QOpenglBuffer for buffer management
