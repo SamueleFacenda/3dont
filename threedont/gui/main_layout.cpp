@@ -304,7 +304,7 @@ void MainLayout::setProjectList(const QStringList &projects) {
   auto *fileMenu = ui->menubar->findChild<QMenu *>("menuFile");
   auto *openProjectMenu = fileMenu->findChild<QMenu *>("menuOpen_project");
   if (!openProjectMenu) {
-    openProjectMenu = new QMenu(tr("Open project"), this);
+    openProjectMenu = new QMenu(tr("Open project"), fileMenu);
     openProjectMenu->setObjectName("menuOpen_project");
     fileMenu->addMenu(openProjectMenu);
   } else {
