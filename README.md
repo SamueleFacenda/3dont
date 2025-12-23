@@ -32,6 +32,7 @@ View, query and manually annotate pointclouds ontologies.
 - [x] make quendpoint/sparql storage superclass
 - [x] check [qlever](https://github.com/ad-freiburg/qlever)
 - [x] qlever errors handling
+- [x] investigate big point glitch
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
@@ -40,7 +41,6 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] better loading screen
 - [ ] gui error report (generic)
 - [ ] override config with cli arguments
-- [ ] investigate big point glitch
 - [ ] investigate empty view on heritage loading
 - [ ] avoid startup lag for dependency dowload
 - [ ] more configuration options (e.g. select color) and settings dialog

@@ -39,7 +39,7 @@ void Octree::buildTree(std::vector<float> &point_xyz,
   _ptr_point_xyz = &point_xyz;
   _ptr_point_size = &point_size;
 
-  point_size.resize(_num_points, 0.0f);
+  point_size.assign(_num_points, 0.0f);
 
   if (_num_points == 0) {
     _root = nullptr;
