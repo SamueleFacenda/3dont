@@ -1,4 +1,5 @@
-{ clangStdenv
+{ clang18Stdenv
+, lib
 , fetchFromGitHub
 , cmake
 , pkg-config
@@ -18,8 +19,10 @@
 , fsst
 , spatialjoin
 }:
-
-clangStdenv.mkDerivation rec {
+let
+  stdenv = clang18Stdenv;
+in
+stdenv.mkDerivation rec {
   pname = "qlever";
   version = "unstable";
   src = fetchFromGitHub {
@@ -33,9 +36,11 @@ clangStdenv.mkDerivation rec {
   patches = [ ./qlever.patch ];
   cmakeBuildType = "Release";
   cmakeFlags = [
-    "-DUSE_PARALLEL=true"
-    # "-DUSE_CPP_17_BACKPORTS=On"
+    "-DUSE_PARALLEL=${if stdenv.hostPlatform.isLinux then "true" else "false"}"
     "-DSINGLE_TEST_BINARY=On"
+    "-DADDITIONAL_COMPILER_FLAGS=-fsized-deallocation" # needed by clang 18
+  ] ++ lib.optionals stdenv.hostPlatform.isMacOS [
+    "-DADDITIONAL_COMPILER_FLAGS=-fexperimental-library"
   ];
   buildFlags = [ "qlever" ]; # build only libqlever target!
   installPhase = "cmake --install . -j \${NIX_BUILD_CORES}"; # the default (make install) tries to build all the tests and fails.
