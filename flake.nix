@@ -47,13 +47,16 @@
             inherit version;
             pyproject = true;
 
-            stdenv = pkgs.clangStdenv; # better interoperability with darwin build env
+            stdenv = pkgs.clang18Stdenv; # better interoperability with darwin build env
             build-system = with pkgs.python3Packages; [
               scikit-build-core
             ];
             
             cmakeBuildType = "Release";
             dontUseCmakeConfigure = true;
+            cmakeFlags = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isMacOS [
+              "-DADDITIONAL_COMPILER_FLAGS=-fexperimental-library"
+            ];
 
             nativeBuildInputs = with pkgs; [
               qt6.wrapQtAppsHook
@@ -77,7 +80,6 @@
               # hdt
               # qendpoint
               qlever
-              llvmPackages.openmp.dev
               fast-float
               # (graalvm-oracle.overrideAttrs {
               #   src = fetchurl {
@@ -88,6 +90,7 @@
             ] ++ lib.optionals stdenv.hostPlatform.isLinux [
               libGL
               qt6Packages.qtstyleplugin-kvantum
+              llvmPackages.openmp.dev # qlever is parallel only on linux
             ];
             
             dependencies = with pkgs.python3Packages; [

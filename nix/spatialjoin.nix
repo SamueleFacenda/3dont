@@ -47,6 +47,19 @@ stdenv.mkDerivation {
               FILE pb_utilConfig.cmake
               NAMESPACE pb_util::
               DESTINATION lib/cmake/pb_util)
+      install(TARGETS pb_util_geo
+              EXPORT pb_util_geoTargets
+              LIBRARY DESTINATION lib
+              ARCHIVE DESTINATION lib
+              RUNTIME DESTINATION bin
+              INCLUDES DESTINATION include)
+      install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/../
+              DESTINATION include
+              FILES_MATCHING PATTERN "*.h")
+      install(EXPORT pb_util_geoTargets
+              FILE pb_util_geoConfig.cmake
+              NAMESPACE pb_util_geo::
+              DESTINATION lib/cmake/pb_util_geo)
       EOF
   '';
 }

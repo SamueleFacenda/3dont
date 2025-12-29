@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e01916a5..05d3ff08 100644
+index e01916a5..065853ff 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -104,56 +104,33 @@ include(FetchContent)
+@@ -104,56 +104,34 @@ include(FetchContent)
  ################################
  # GTEST AND GMOCK
  ################################
@@ -62,10 +62,11 @@ index e01916a5..05d3ff08 100644
 -)
 +find_package(spatialjoin-dev REQUIRED)
 +find_package(pb_util REQUIRED)
++find_package(pb_util_geo REQUIRED)
  # disable bzip2 and zlib support in spatialjoin, we don't need it
  add_compile_definitions(SPATIALJOIN_NO_BZIP2=True SPATIALJOIN_NO_ZLIB=True)
  
-@@ -227,8 +204,8 @@ find_package(OpenSSL REQUIRED)
+@@ -227,8 +205,8 @@ find_package(OpenSSL REQUIRED)
  # against the common libraries.
  function(qlever_target_link_libraries target)
      target_link_libraries(${target} ${ARGN} absl::compare absl::flat_hash_map
@@ -76,7 +77,7 @@ index e01916a5..05d3ff08 100644
  
      # memorySize is a utility library for defining memory sizes.
      if (NOT ${target} STREQUAL "memorySize")
-@@ -276,37 +253,24 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+@@ -276,37 +254,24 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
  ################################
  # CTRE, Compile-Time-Regular-Expressions
  ################################
@@ -120,7 +121,7 @@ index e01916a5..05d3ff08 100644
      include(FindOpenMP)
      if (OPENMP_FOUND)
          set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-@@ -347,43 +311,51 @@ add_compile_definitions(QUERY_CANCELLATION_MODE=${QUERY_CANCELLATION_MODE})
+@@ -347,43 +312,51 @@ add_compile_definitions(QUERY_CANCELLATION_MODE=${QUERY_CANCELLATION_MODE})
  ################################
  # FSST
  ################################
@@ -194,7 +195,7 @@ index e01916a5..05d3ff08 100644
  
  message(STATUS ---)
  message(STATUS "CXX_FLAGS are : " ${CMAKE_CXX_FLAGS})
-@@ -444,7 +416,7 @@ endif ()
+@@ -444,7 +417,7 @@ endif ()
  ##################################################
  # Precompiled headers
  set(PRECOMPILED_HEADER_FILES_ENGINE src/util/HashMap.h src/engine/Operation.h src/engine/QueryExecutionTree.h)
@@ -203,7 +204,7 @@ index e01916a5..05d3ff08 100644
  
  add_subdirectory(src/parser)
  add_subdirectory(src/engine)
-@@ -485,3 +457,19 @@ qlever_target_link_libraries(VocabularyMergerMain index parser ${CMAKE_THREAD_LI
+@@ -485,3 +458,19 @@ qlever_target_link_libraries(VocabularyMergerMain index parser ${CMAKE_THREAD_LI
  
  add_executable(PrintIndexVersionMain src/PrintIndexVersionMain.cpp)
  qlever_target_link_libraries(PrintIndexVersionMain util)
