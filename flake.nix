@@ -80,7 +80,6 @@
               # hdt
               # qendpoint
               qlever
-              llvmPackages.openmp.dev
               fast-float
               # (graalvm-oracle.overrideAttrs {
               #   src = fetchurl {
@@ -91,6 +90,7 @@
             ] ++ lib.optionals stdenv.hostPlatform.isLinux [
               libGL
               qt6Packages.qtstyleplugin-kvantum
+              llvmPackages.openmp.dev # qlever is parallel only on linux
             ];
             
             dependencies = with pkgs.python3Packages; [
