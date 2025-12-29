@@ -54,6 +54,9 @@
             
             cmakeBuildType = "Release";
             dontUseCmakeConfigure = true;
+            cmakeFlags = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isMacOS [
+              "-DADDITIONAL_COMPILER_FLAGS=-fexperimental-library"
+            ];
 
             nativeBuildInputs = with pkgs; [
               qt6.wrapQtAppsHook
