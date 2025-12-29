@@ -90,7 +90,6 @@
             ] ++ lib.optionals stdenv.hostPlatform.isLinux [
               libGL
               qt6Packages.qtstyleplugin-kvantum
-              llvmPackages.openmp.dev # qlever is parallel only on linux
             ];
             
             dependencies = with pkgs.python3Packages; [
