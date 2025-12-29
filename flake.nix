@@ -47,7 +47,7 @@
             inherit version;
             pyproject = true;
 
-            stdenv = pkgs.clangStdenv; # better interoperability with darwin build env
+            stdenv = pkgs.clang18Stdenv; # better interoperability with darwin build env
             build-system = with pkgs.python3Packages; [
               scikit-build-core
             ];
