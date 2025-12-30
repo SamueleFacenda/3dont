@@ -138,7 +138,7 @@ class SparqlBackend:
     def autodetect_query_nl(self, query):
         # TODO refactor
         result = self.storage.query(query)
-        columns = list(result.keys())
+        columns = result.vars()
         if 'x1' in columns and 'y1' in columns and 'z1' in columns:
             # select query
             print("Detected select query, columns: ", columns)
