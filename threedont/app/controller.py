@@ -286,7 +286,7 @@ class Controller:
         print("Natural language query: ", nl_query)
         onto_path = self.project.get_ontoPath()
         openai_client = init_client()  # TODO understand if can be done only once
-        query = nl_2_sparql(nl_query, onto_path, self.project.get_graphNamespace(), self.project.get_graphUri(),
+        query = nl_2_sparql(nl_query, onto_path, self.project.get_ontologyNamespace(), self.project.get_graphUri(),
                             openai_client, self.gui)
         query = "\n".join(query)
         print("Generated SPARQL query: ", query)
