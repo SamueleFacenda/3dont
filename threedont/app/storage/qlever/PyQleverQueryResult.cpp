@@ -142,10 +142,7 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
   ad_utility::LogstreamChoice::get().setStream(&std::cout); // reset log stream
   auto [rows, cols] = getResultShape(logStream.str());
   CsvStringParser parser(result, rows, cols);
-
-  Py_BEGIN_ALLOW_THREADS
   parser.parse();
-  Py_END_ALLOW_THREADS
 
   auto isStringColumn = parser.getIsStringColumn(); // append the results to the object
   auto varNames = parser.getColNames();

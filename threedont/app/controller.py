@@ -1,7 +1,10 @@
+import functools
 import logging
 import sys
 from math import pi
 from queue import Queue
+import concurrent.futures
+import multiprocessing
 from urllib.error import URLError
 
 import owlready2 as owl2
@@ -99,15 +102,19 @@ class Controller:
             if last_project and Project.exists(last_project):
                 self.open_project(last_project)
 
-        command = self.commands_queue.get()
-        while command is not None:
-            function_name, args = command
+        def log_future_exception(future, function_name):
             try:
-                getattr(self, function_name)(*args)
+                future.result()
             except Exception:
                 logging.exception("Error in controller running function %s", function_name)
 
-            command = self.commands_queue.get()
+        command = self.commands_queue.get()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+            while command is not None:
+                function_name, args = command
+                future = executor.submit(getattr(self, function_name), *args)
+                future.add_done_callback(functools.partial(log_future_exception, function_name=function_name))
+                command = self.commands_queue.get()
 
     @report_errors_to_gui
     def select_query(self, query):
