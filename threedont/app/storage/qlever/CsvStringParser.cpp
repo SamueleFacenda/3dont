@@ -88,6 +88,7 @@ void CsvStringParser::computeNumRows() {
 
 
 void CsvStringParser::parse() {
+  Py_BEGIN_ALLOW_THREADS
   std::vector<std::thread> workers;
   int chunkSize = length / threadsCount;
   int chunkRows = rows / threadsCount; // only a rough estimate
@@ -113,6 +114,7 @@ void CsvStringParser::parse() {
 
   if (rows == -1)
     computeNumRows();
+  Py_END_ALLOW_THREADS
   merge();
 }
 

@@ -87,6 +87,8 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "s", &filePath))
     return nullptr;
 
+  Py_BEGIN_ALLOW_THREADS
+
   // Requires the input in N-Quad format for now
   self->config->inputFiles_[0].filename_ = std::string(filePath);
 
@@ -99,6 +101,8 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args) {
     return nullptr;
   }
 
+  Py_END_ALLOW_THREADS
+
   Py_RETURN_NONE;
 }
 
@@ -107,7 +111,9 @@ static PyObject *PyQlever_update(PyQleverObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "s", &updateQuery))
     return nullptr;
 
+  Py_BEGIN_ALLOW_THREADS
   self->qlever->query(std::string(updateQuery));
+  Py_END_ALLOW_THREADS
 
   Py_RETURN_NONE;
 }
