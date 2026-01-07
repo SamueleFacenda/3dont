@@ -117,25 +117,35 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
   if (!PyArg_ParseTuple(args, "s", &queryStr))
     return nullptr;
 
+  std::string result;
   std::ostringstream logStream;
+  bool success = true;
+
+  Py_BEGIN_ALLOW_THREADS
   ad_utility::LogstreamChoice::get().setStream(&logStream);
   std::cout << "Performing query: " << queryStr << std::endl;
 
-  std::string result;
   try {
-     result = self->qlever->query(queryStr, ad_utility::MediaType::csv);
+    result = self->qlever->query(queryStr, ad_utility::MediaType::csv);
   } catch (const std::exception& e) {
     PyErr_SetString(PyExc_ValueError, e.what());
-    return nullptr;
+    success = false;
   } catch (...) {
     PyErr_SetString(PyExc_RuntimeError, "Unknown error during query execution");
-    return nullptr;
+    success = false;
   }
+  Py_END_ALLOW_THREADS
+
+  if (!success)
+    return nullptr;
 
   ad_utility::LogstreamChoice::get().setStream(&std::cout); // reset log stream
   auto [rows, cols] = getResultShape(logStream.str());
   CsvStringParser parser(result, rows, cols);
+
+  Py_BEGIN_ALLOW_THREADS
   parser.parse();
+  Py_END_ALLOW_THREADS
 
   auto isStringColumn = parser.getIsStringColumn(); // append the results to the object
   auto varNames = parser.getColNames();
@@ -145,6 +155,7 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
     self->isStringColumn[name] = isStringColumn[i];
     i++;
   }
+
 
   auto parsed = parser.getResult();
 
