@@ -435,7 +435,7 @@ QByteArray Viewer::processCommand(const char* msg, size_t len) {
         return comm::sendScalar<unsigned int>((unsigned int) _points->getCurrentAttributeIndex());
       } else {
         std::string err = "Unrecognized property name \"" + propertyName + "\"";
-        return QByteArray(err);
+        return comm::sendError<unsigned int>(err.data(), err.size());
       }
       break;
     }
@@ -486,9 +486,7 @@ QByteArray Viewer::processCommand(const char* msg, size_t len) {
 
       // create new camera dolly
       delete _dolly;
-      _dolly = new CameraDolly(ts, cam_poses,
-                               (CameraDolly::InterpolationType) interp);
-
+      _dolly = new CameraDolly(ts, cam_poses, (CameraDolly::InterpolationType) interp);
       break;
     }
     case 9: { // playback camera path animation
@@ -529,7 +527,7 @@ QByteArray Viewer::processCommand(const char* msg, size_t len) {
       // do nothing
   }
 
-  return QByteArray();
+  return {};
 }
 
 void Viewer::drawRefinedPointsDelayed() {

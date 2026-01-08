@@ -80,8 +80,7 @@ class Controller:
         self.commands_queue = Queue()
         action_controller = ActionController(self.commands_queue, self.run_event_loop)
         self.gui = GuiWrapper(action_controller, sys.argv)
-        viewer_server_port = self.gui.get_viewer_server_port()
-        self.viewer_client = Viewer(viewer_server_port)
+        self.viewer_client = Viewer(self.gui.send_viewer_command)
         self.sparql_client = None
         self.sensorArgs = SensorArgs()
         self.project = None

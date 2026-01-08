@@ -24,6 +24,26 @@ namespace comm {
   struct TypeCode<unsigned int> {
     static const unsigned char value = 4;
   };
+
+  template<typename T>
+  QByteArray sendError(const char *msg, const quint64 size) {
+    QByteArray out;
+    // send data type
+    unsigned char dataType = 0;
+    out.append((char *) &dataType, 1);
+
+    // send number of dimensions
+    quint64 numDims = 1;
+    out.append((char *) &numDims, sizeof(quint64));
+
+    // send dimensions
+    out.append((char *) &size, sizeof(quint64));
+
+    // send array elements
+    out.append((char *) msg, sizeof(char) * size);
+    return out;
+  }
+
   // Template functions remain in header
   template<typename T>
   QByteArray sendScalar(const T value) {
