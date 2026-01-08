@@ -116,7 +116,7 @@ static PyObject *GuiWrapper_run(GuiWrapperObject *self, PyObject *args) {
   qDebug() << "GUI event loop exited";
   Py_END_ALLOW_THREADS
 
-          return Py_None;
+  return Py_None;
 }
 
 static PyObject *GuiWrapper_view_node_details(GuiWrapperObject *self, PyObject *args) {
@@ -323,7 +323,15 @@ static PyObject *GuiWrapper_get_properties_mapping(GuiWrapperObject *self, PyObj
   return pyResult;
 }
 
-static PyObject *GuiWrapper_send_viewer_command(GuiWrapperObject *self, PyObject *msg) {
+static PyObject *GuiWrapper_send_viewer_command(GuiWrapperObject *self, PyObject *args) {
+  PyObject *msg;
+  bool return_response = false;
+
+  if (!PyArg_ParseTuple(args, "O|p", &msg, &return_response)) {
+    PyErr_SetString(PyExc_TypeError, "GuiWrapper.send_viewer_command requires a bytes object and an optional boolean");
+    return nullptr;
+  }
+
   // check if msg is a bytes object
   if (!PyBytes_Check(msg)) {
     PyErr_SetString(PyExc_TypeError, "Message must be a bytes object");
@@ -334,18 +342,31 @@ static PyObject *GuiWrapper_send_viewer_command(GuiWrapperObject *self, PyObject
   Py_ssize_t size = PyBytes_Size(msg);
   QByteArray byteArray(data, static_cast<int>(size));
 
-  QByteArray result;
-  // use a blocking queued connection to ensure that the array is not deleted before being processed
-  QMetaObject::invokeMethod(self->mainLayout, "sendViewerCommand", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QByteArray, result), Q_ARG(QByteArray, byteArray));
+  if (return_response) {
+    QByteArray result;
+    // use a blocking queued connection to ensure that the array is not deleted before being processed
+    QMetaObject::invokeMethod(self->mainLayout, "sendViewerCommand", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QByteArray, result), Q_ARG(QByteArray, byteArray));
 
-  // result to python bytes
-  PyObject *pyResult = PyBytes_FromStringAndSize(result.constData(), result.size());
-  if (!pyResult) {
-    PyErr_SetString(PyExc_RuntimeError, "Failed to create result bytes object");
-    return nullptr;
+    // result to python bytes
+    PyObject *pyResult = PyBytes_FromStringAndSize(result.constData(), result.size());
+    if (!pyResult) {
+      PyErr_SetString(PyExc_RuntimeError, "Failed to create result bytes object");
+      return nullptr;
+    }
+
+    return pyResult;
+  } else {
+    // ensure msg is not deleted before being processed
+    Py_INCREF(msg); // prevent deletion of msg while in queued connection
+    QMetaObject::invokeMethod(self->mainLayout, "sendViewerCommand", Qt::QueuedConnection, Q_ARG(QByteArray, byteArray));
+    QTimer::singleShot(0, self->mainLayout, [msg]() {
+      PyGILState_STATE gstate = PyGILState_Ensure();
+      Py_DECREF(msg); // decrement reference count after processing
+      PyGILState_Release(gstate);
+    });
+
+    Py_RETURN_NONE;
   }
-
-  return pyResult;
 }
 
 static PyMethodDef GuiWrapper_methods[] = {
@@ -357,7 +378,7 @@ static PyMethodDef GuiWrapper_methods[] = {
         {"set_legend", (PyCFunction) GuiWrapper_set_legend, METH_VARARGS, "Sets the legend"},
         {"set_project_list", (PyCFunction) GuiWrapper_set_project_list, METH_VARARGS, "Sets the project list"},
         {"get_properties_mapping", (PyCFunction) GuiWrapper_get_properties_mapping, METH_VARARGS, "Gets the properties mapping from the user"},
-        {"send_viewer_command", (PyCFunction) GuiWrapper_send_viewer_command, METH_O, "Sends a command to the viewer"},
+        {"send_viewer_command", (PyCFunction) GuiWrapper_send_viewer_command, METH_VARARGS, "Sends a command to the viewer"},
         {nullptr}};
 
 PyTypeObject GuiWrapperType = {

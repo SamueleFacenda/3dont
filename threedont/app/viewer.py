@@ -385,10 +385,11 @@ class Viewer:
         self.__send(msg)
 
     def __send(self, msg):
-        self._send_fn(msg)
+        print("Calling _send_fn with message of length", len(msg), msg)
+        self._send_fn(msg, False) # no response expected
 
     def __query(self, msg):
-        ret = self._send_fn(msg)
+        ret = self._send_fn(msg, True) # response expected
 
         # layout of response message:
         # 0: data type (0 - error msg, 1 - char, 2 - float, 3 - int, 4 - uint)
