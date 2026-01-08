@@ -87,10 +87,23 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "s", &filePath))
     return nullptr;
 
-  Py_BEGIN_ALLOW_THREADS
-
   // Requires the input in N-Quad format for now
   self->config->inputFiles_[0].filename_ = std::string(filePath);
+  // check extension (nquad or turtle)
+  std::string extension = std::filesystem::path(filePath).extension().string();
+  if (extension == ".nt" || extension == ".nq" || extension == ".nquad") {
+    self->config->inputFiles_[0].filetype_ = qlever::Filetype::NQuad;
+  } else if (extension == ".ttl" || extension == ".turtle") {
+    self->config->inputFiles_[0].filetype_ = qlever::Filetype::Turtle;
+  } else {
+    std::string errorMsg = "Unsupported file extension: " + extension + ". Supported extensions are .nt, .nq, .nquad, .ttl, .turtle.";
+    std::cerr << errorMsg << std::endl;
+    PyErr_SetString(PyExc_RuntimeError, errorMsg.c_str());
+    return nullptr;
+  }
+
+  bool indexBuild = true;
+  Py_BEGIN_ALLOW_THREADS
 
   try {
     qlever::Qlever::buildIndex(*self->config);
@@ -98,10 +111,13 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args) {
   } catch (const std::exception& e) {
     std::cerr << "Building the index failed: " << e.what() << std::endl;
     PyErr_SetString(PyExc_RuntimeError, e.what());
-    return nullptr;
+    indexBuild = false;
   }
 
   Py_END_ALLOW_THREADS
+
+  if (!indexBuild)
+    return nullptr;
 
   Py_RETURN_NONE;
 }
