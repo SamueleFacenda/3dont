@@ -384,30 +384,6 @@ class Viewer:
             # todo: need to check whether write succeeded
             #       ideally, capture(...) should return filename
 
-    def wait(self):
-        """
-
-        Blocks until :kbd:`Enter`/:kbd:`Return` key is pressed in viewer
-
-        Examples:
-
-            >>> v = pptk.Viewer(xyz)
-            >>> v.wait()
-
-        Press enter in viewer to return control to python terminal.
-
-        """
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('localhost', self._portNumber))
-        s.send(struct.pack('b', 7))
-        s.setblocking(1)
-        buf = b''
-        while len(buf) == 0:
-            buf += s.recv(1)
-        if buf != b'x':
-            raise RuntimeError('expecting return code \'x\'')
-        s.close()
-
     def __load(self, positions):
         # if no points, then done
         if positions.size == 0:

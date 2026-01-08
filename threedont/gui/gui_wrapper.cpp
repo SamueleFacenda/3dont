@@ -119,15 +119,6 @@ static PyObject *GuiWrapper_run(GuiWrapperObject *self, PyObject *args) {
           return Py_None;
 }
 
-static PyObject *GuiWrapper_get_viewer_server_port(GuiWrapperObject *self, PyObject *args) {
-  if (self->mainLayout == nullptr) {
-    PyErr_SetString(PyExc_RuntimeError, "MainLayout not initialized");
-    return nullptr;
-  }
-
-  return PyLong_FromLong(self->mainLayout->getViewerServerPort());
-}
-
 static PyObject *GuiWrapper_view_node_details(GuiWrapperObject *self, PyObject *args) {
   if (self->mainLayout == nullptr) {
     PyErr_SetString(PyExc_RuntimeError, "MainLayout not initialized");
@@ -332,16 +323,41 @@ static PyObject *GuiWrapper_get_properties_mapping(GuiWrapperObject *self, PyObj
   return pyResult;
 }
 
+static PyObject *GuiWrapper_send_viewer_command(GuiWrapperObject *self, PyObject *msg) {
+  // check if msg is a bytes object
+  if (!PyBytes_Check(msg)) {
+    PyErr_SetString(PyExc_TypeError, "Message must be a bytes object");
+    return nullptr;
+  }
+
+  char *data = PyBytes_AsString(msg);
+  Py_ssize_t size = PyBytes_Size(msg);
+  QByteArray byteArray(data, static_cast<int>(size));
+
+  QByteArray result;
+  // use a blocking queued connection to ensure that the array is not deleted before being processed
+  QMetaObject::invokeMethod(self->mainLayout, "sendViewerCommand", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QByteArray, result), Q_ARG(QByteArray, byteArray));
+
+  // result to python bytes
+  PyObject *pyResult = PyBytes_FromStringAndSize(result.constData(), result.size());
+  if (!pyResult) {
+    PyErr_SetString(PyExc_RuntimeError, "Failed to create result bytes object");
+    return nullptr;
+  }
+
+  return pyResult;
+}
+
 static PyMethodDef GuiWrapper_methods[] = {
         {"run", (PyCFunction) GuiWrapper_run, METH_NOARGS, "Runs the GUI event loop"},
         {"set_statusbar_content", (PyCFunction) GuiWrapper_set_statusbar_content, METH_VARARGS, "Sets the content of the status bar"},
-        {"get_viewer_server_port", (PyCFunction) GuiWrapper_get_viewer_server_port, METH_NOARGS, "Returns the server port of the viewer"},
         {"view_node_details", (PyCFunction) GuiWrapper_view_node_details, METH_VARARGS, "Displays the details of a point"},
         {"set_query_error", (PyCFunction) GuiWrapper_set_query_error, METH_VARARGS, "Sets the query error"},
         {"plot_tabular", (PyCFunction) GuiWrapper_plot_tabular, METH_VARARGS, "Plots the tabular data"},
         {"set_legend", (PyCFunction) GuiWrapper_set_legend, METH_VARARGS, "Sets the legend"},
         {"set_project_list", (PyCFunction) GuiWrapper_set_project_list, METH_VARARGS, "Sets the project list"},
         {"get_properties_mapping", (PyCFunction) GuiWrapper_get_properties_mapping, METH_VARARGS, "Gets the properties mapping from the user"},
+        {"send_viewer_command", (PyCFunction) GuiWrapper_send_viewer_command, METH_O, "Sends a command to the viewer"},
         {nullptr}};
 
 PyTypeObject GuiWrapperType = {

@@ -25,8 +25,6 @@ public:
   explicit MainLayout(ControllerWrapper *controllerWrapper, QWidget *parent = nullptr);
   ~MainLayout() override;
 
-  int getViewerServerPort();
-
 protected:
   void closeEvent(QCloseEvent *event) override;
 
@@ -50,6 +48,7 @@ private slots:
   void on_actionUpdate_Sensors_and_Reason_triggered();
   void setProjectList(const QStringList &projects);
 
+  [[nodiscard]] QByteArray sendViewerCommand(const QByteArray &message);
   [[nodiscard]] QStringList getPropertiesMapping(const QStringList &properties, const QStringList &words, const QStringList &defaults);
 
 private:

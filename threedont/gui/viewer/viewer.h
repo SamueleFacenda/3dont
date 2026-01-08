@@ -11,8 +11,6 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
 #include <QString>
-#include <QTcpServer>
-#include <QTcpSocket>
 #include <QTimer>
 #include <QVector3D>
 #include <QWheelEvent>
@@ -45,7 +43,7 @@ public:
   void initializeGL() override;
   void resizeGL(int w, int h) override;
   void paintGL() override;
-  int getServerPort();
+  QByteArray processCommand(const char* cmd, size_t len);
 
 signals:
   void singlePointSelected(unsigned int);
@@ -59,7 +57,6 @@ protected:
   void wheelEvent(QWheelEvent *ev) override;
 
 private slots:
-  void reply();
   void drawRefinedPointsDelayed();
   void renderPointsFine();
   void playCameraAnimation();
@@ -73,7 +70,6 @@ private:
   void renderPoints();
   QPointF win2ndc(QPointF p);
 
-  QTcpServer *_server;
   QPointF _pressPos;
 
   QtCamera _camera;
@@ -97,7 +93,6 @@ private:
   std::size_t _max_chunk_size;
   std::vector<unsigned int> _refined_indices;
 
-  QTcpSocket *_socket_waiting_on_enter_key;
   double _render_time;
   bool _show_text;
   bool _fine_rendering_available;

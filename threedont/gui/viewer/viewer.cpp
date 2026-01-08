@@ -6,7 +6,6 @@
 
 Viewer::Viewer(QWidget *parent) : QOpenGLWidget(parent) {
   // initalize various states
-  _socket_waiting_on_enter_key = nullptr;
   _timer_fine_render_delay = nullptr;
   _fine_render_state = INACTIVE;
   _fine_rendering_available = false;
@@ -17,14 +16,6 @@ Viewer::Viewer(QWidget *parent) : QOpenGLWidget(parent) {
   _timer_fine_render_delay->setSingleShot(true);
   connect(_timer_fine_render_delay, SIGNAL(timeout()), this, SLOT(drawRefinedPointsDelayed()));
 
-  // set up TCP server for receiving commands from Python terminal (client)
-  _server = new QTcpServer();
-  if (!_server->listen(QHostAddress::LocalHost, 0)) {
-    qDebug() << _server->errorString().toLocal8Bit().constData();
-    exit(1);
-  }
-  connect(_server, SIGNAL(newConnection()), this, SLOT(reply()));
-  qDebug() << "Viewer: TCP server set up on port " << _server->serverPort();
 }
 
 Viewer::~Viewer() {
@@ -35,7 +26,6 @@ Viewer::~Viewer() {
   delete _selection_box;
   delete _text;
   delete _dolly;
-  delete _server;
 }
 
 void Viewer::initializeGL() {
@@ -94,10 +84,6 @@ void Viewer::paintGL() {
   // glFinish();
 }
 
-int Viewer::getServerPort() {
-  return _server->serverPort();
-}
-
 void Viewer::keyPressEvent(QKeyEvent *ev) {
   qDebug() << "Viewer: key pressed" << ev->key();
   _dolly->stop();
@@ -136,12 +122,6 @@ void Viewer::keyPressEvent(QKeyEvent *ev) {
     _camera.setLookAtPosition(_points->computeSelectionCentroid());
     _camera.save();
     updateSlow();
-  } else if ((ev->key() == Qt::Key_Enter || ev->key() == Qt::Key_Return) &&
-             _socket_waiting_on_enter_key) {
-    const char *msg = "x";
-    comm::sendBytes(msg, 1, _socket_waiting_on_enter_key);
-    _socket_waiting_on_enter_key->disconnectFromHost();
-    _socket_waiting_on_enter_key = nullptr;
   } else {
     QWidget::keyPressEvent(ev);
     return;
@@ -247,29 +227,21 @@ void Viewer::wheelEvent(QWheelEvent *ev) {
   scheduleFineRendering(200);
 }
 
-void Viewer::reply() {
-  QTcpSocket *clientConnection = _server->nextPendingConnection();
-  connect(clientConnection, SIGNAL(disconnected()), clientConnection,
-          SLOT(deleteLater()));
-
-  // read first byte of incoming message
-  char msgType;
-  comm::receiveBytes(&msgType, 1, clientConnection);
-  // qDebug() << "Viewer: received message type" << ((int) msgType);
-
+QByteArray Viewer::processCommand(const char* msg, size_t len) {
+  // qDebug() << "Viewer: received message type" << ((int) msg[0]);
   // switch on message type
-  switch (msgType) {
+  switch (*msg++) {
     case 1: { // load points
       // receive point count (next 4 bytes)
-      qint32 numPoints;
-      comm::receiveBytes((char *) &numPoints, sizeof(qint32), clientConnection);
+      qint32 numPoints = *(qint32*) msg;
+      msg += sizeof(qint32);
       qDebug() << "Viewer: expecting" << numPoints << "points";
 
       // receive position vectors
       // (next 3 x numPoints x sizeof(float) bytes)
-      std::vector<float> positions(3 * numPoints);
-      comm::receiveBytes((char *) &positions[0],
-                         positions.size() * sizeof(float), clientConnection);
+      const auto *fptr = reinterpret_cast<const float*>(msg);
+      std::vector<float> positions(fptr, fptr + 3 * numPoints);
+      msg += 3 * numPoints * sizeof(float);
       qDebug() << "Viewer: received positions";
 
       makeCurrent();
@@ -296,24 +268,19 @@ void Viewer::reply() {
     }
     case 4: { // set viewer property
       // receive length of property name string
-      quint64 stringLength;
-      comm::receiveBytes((char *) &stringLength, sizeof(quint64),
-                         clientConnection);
+      quint64 stringLength = *(quint64*) msg;
+      msg += sizeof(quint64);
 
       // receive property name string
-      std::string propertyName(stringLength, 'x');
-      comm::receiveBytes((char *) &propertyName[0], (qint64) stringLength,
-                         clientConnection);
+      std::string propertyName(msg, stringLength);
+      msg += stringLength;
 
       //  receive length of payload
-      quint64 payloadLength;
-      comm::receiveBytes((char *) &payloadLength, sizeof(quint64),
-                         clientConnection);
+      quint64 payloadLength = *(quint64*) msg;
+      msg += sizeof(quint64);
 
       // receive payload
-      std::vector<char> payload(payloadLength, 0);
-      comm::receiveBytes(&payload[0], (qint64) payloadLength,
-                         clientConnection);
+      std::vector<char> payload(msg, msg + payloadLength);
 
       // set viewer properties accordingly
       // ignore set requests with unexpected payload lengths
@@ -418,109 +385,94 @@ void Viewer::reply() {
     }
     case 5: { // get viewer property
       // receive length of property name string
-      quint64 stringLength;
-      comm::receiveBytes((char *) &stringLength, sizeof(quint64),
-                         clientConnection);
+      quint64 stringLength = *(quint64*) msg;
+      msg += sizeof(quint64);
 
       // receive property name string
-      std::string propertyName(stringLength, 'x');
-      comm::receiveBytes((char *) &propertyName[0], stringLength,
-                         clientConnection);
+      std::string propertyName(msg, stringLength);
+      msg += stringLength;
 
       // send property
       if (!strcmp(propertyName.c_str(), "selected")) {
         std::vector<unsigned int> selected_ids;
         selected_ids.reserve(_points->getNumSelected());
         _points->getSelected(selected_ids);
-        comm::sendArray<unsigned int>(&selected_ids[0], selected_ids.size(),
-                                      clientConnection);
+        return comm::sendArray<unsigned int>(&selected_ids[0], selected_ids.size());
       } else if (!strcmp(propertyName.c_str(), "eye")) {
         float eye[3];
         _camera.getCameraPosition(eye);
-        comm::sendArray<float>(&eye[0], 3, clientConnection);
+        return comm::sendArray<float>(&eye[0], 3);
       } else if (!strcmp(propertyName.c_str(), "lookat")) {
         float lookat[3];
         _camera.getLookAtPosition(lookat);
-        comm::sendArray<float>(&lookat[0], 3, clientConnection);
+        return comm::sendArray<float>(&lookat[0], 3);
       } else if (!strcmp(propertyName.c_str(), "view")) {
         float view[3];
         _camera.getViewVector(view);
-        comm::sendArray<float>(&view[0], 3, clientConnection);
+        return comm::sendArray<float>(&view[0], 3);
       } else if (!strcmp(propertyName.c_str(), "right")) {
         float right[3];
         _camera.getRightVector(right);
-        comm::sendArray<float>(&right[0], 3, clientConnection);
+        return comm::sendArray<float>(&right[0], 3);
       } else if (!strcmp(propertyName.c_str(), "up")) {
         float up[3];
         _camera.getUpVector(up);
-        comm::sendArray<float>(&up[0], 3, clientConnection);
+        return comm::sendArray<float>(&up[0], 3);
       } else if (!strcmp(propertyName.c_str(), "phi")) {
-        comm::sendScalar<float>(_camera.getPhi(), clientConnection);
+        return comm::sendScalar<float>(_camera.getPhi());
       } else if (!strcmp(propertyName.c_str(), "theta")) {
-        comm::sendScalar<float>(_camera.getTheta(), clientConnection);
+        return comm::sendScalar<float>(_camera.getTheta());
       } else if (!strcmp(propertyName.c_str(), "r")) {
-        comm::sendScalar<float>(_camera.getCameraDistance(),
-                                clientConnection);
+        return comm::sendScalar<float>(_camera.getCameraDistance());
       } else if (!strcmp(propertyName.c_str(), "mvp")) {
         QMatrix4x4 mvp = _camera.computeMVPMatrix(_points->getBox());
-        comm::sendMatrix<float>((float *) mvp.data(), 4, 4, clientConnection);
+        return comm::sendMatrix<float>((float *) mvp.data(), 4, 4);
       } else if (!strcmp(propertyName.c_str(), "num_points")) {
-        comm::sendScalar<unsigned int>((unsigned int) _points->getNumPoints(),
-                                       clientConnection);
+        return comm::sendScalar<unsigned int>((unsigned int) _points->getNumPoints());
       } else if (!strcmp(propertyName.c_str(), "num_attributes")) {
-        comm::sendScalar<unsigned int>(
-                (unsigned int) _points->getNumAttributes(), clientConnection);
+        return comm::sendScalar<unsigned int>((unsigned int) _points->getNumAttributes());
       } else if (!strcmp(propertyName.c_str(), "curr_attribute_id")) {
-        comm::sendScalar<unsigned int>(
-                (unsigned int) _points->getCurrentAttributeIndex(),
-                clientConnection);
+        return comm::sendScalar<unsigned int>((unsigned int) _points->getCurrentAttributeIndex());
       } else {
-        std::string msg =
-                "Unrecognized property name \"" + propertyName + "\"";
-        comm::sendError(&msg[0], msg.length(), clientConnection);
+        std::string err = "Unrecognized property name \"" + propertyName + "\"";
+        return QByteArray(err);
       }
       break;
     }
     case 6: { // print screen
       // receive length of property name string
-      quint64 stringLength;
-      comm::receiveBytes((char *) &stringLength, sizeof(quint64),
-                         clientConnection);
+      quint64 stringLength = *(quint64*) msg;
+      msg += sizeof(quint64);
 
       // receive property name string
-      std::string filename(stringLength, 'x');
-      comm::receiveBytes((char *) &filename[0], stringLength, clientConnection);
+      std::string filename(msg, stringLength);
+      msg += stringLength;
       printScreen(filename);
       break;
     }
-    case 7: { // wait for enter
-      // save current connection socket and return
-      _socket_waiting_on_enter_key = clientConnection;
-      return;
-    }
     case 8: { // load camera path animation
       // receive number of poses (1 int)
-      qint32 numPoses;
-      comm::receiveBytes((char *) &numPoses, sizeof(qint32), clientConnection);
+      qint32 numPoses = *(qint32*) msg;
+      msg += sizeof(qint32);
 
       // receive poses (6n floats)
-      std::vector<float> poses(6 * numPoses);
-      comm::receiveBytes((char *) &poses[0], 6 * numPoses * sizeof(float),
-                         clientConnection);
+
+      const auto *fptr = reinterpret_cast<const float*>(msg);
+      std::vector<float> poses(fptr, fptr + 6 * numPoses);
+      msg += 6 * numPoses * sizeof(float);
 
       // receive number of time stamps (1 int)
-      qint32 numTimeStamps;
-      comm::receiveBytes((char *) &numTimeStamps, sizeof(qint32),
-                         clientConnection);
+      qint32 numTimeStamps = *(qint32*) msg;
+      msg += sizeof(qint32);
 
       // receive time stamps (n floats)
-      std::vector<float> ts(numTimeStamps);
-      comm::receiveBytes((char *) &ts[0], numTimeStamps * sizeof(float),
-                         clientConnection);
+      fptr = reinterpret_cast<const float*>(msg);
+      std::vector<float> ts(fptr, fptr + numTimeStamps);
+      msg += numTimeStamps * sizeof(float);
 
       // receive interpolation code (1 byte)
-      quint8 interp;
-      comm::receiveBytes((char *) &interp, sizeof(quint8), clientConnection);
+      quint8 interp = *(quint8*) msg;
+      msg += sizeof(quint8);
 
       // reorganize poses into vector of CameraPoses
       std::vector<CameraPose> cam_poses(poses.size() / 6);
@@ -541,14 +493,14 @@ void Viewer::reply() {
     }
     case 9: { // playback camera path animation
       // receive playback time range (2 float)
-      float tmin, tmax;
-      comm::receiveBytes((char *) &tmin, sizeof(float), clientConnection);
-      comm::receiveBytes((char *) &tmax, sizeof(float), clientConnection);
+      float tmin = *(float*) msg;
+      msg += sizeof(float);
+      float tmax = *(float*) msg;
+      msg += sizeof(float);
 
       // receive repeat flag (1 bool)
-      bool repeat;
-      comm::receiveBytes((char *) &repeat, sizeof(bool), clientConnection);
-
+      bool repeat = *(bool*) msg;
+      msg += sizeof(bool);
       // start playback
       _dolly->setStartTime(tmin);
       _dolly->setEndTime(tmax);
@@ -560,14 +512,11 @@ void Viewer::reply() {
     }
     case 10: { // set per point attributes
       //  receive length of payload
-      quint64 payloadLength;
-      comm::receiveBytes((char *) &payloadLength, sizeof(quint64),
-                         clientConnection);
+      quint64 payloadLength = *(quint64*) msg;
+      msg += sizeof(quint64);
 
       // receive payload
-      std::vector<char> payload(payloadLength, 0);
-      comm::receiveBytes(&payload[0], (qint64) payloadLength,
-                         clientConnection);
+      std::vector<char> payload(msg, msg + payloadLength);
 
       makeCurrent();
       _points->loadAttributes(payload);
@@ -579,8 +528,8 @@ void Viewer::reply() {
       break;
       // do nothing
   }
-  clientConnection->write("1234");
-  clientConnection->disconnectFromHost();
+
+  return QByteArray();
 }
 
 void Viewer::drawRefinedPointsDelayed() {
@@ -802,13 +751,6 @@ void Viewer::displayInfo() {
   cursor_x = pad;
   cursor_y -= _text->computeTextSize(attr_text).height();
   _text->renderText(cursor_x, cursor_y, attr_text).height();
-
-  // display port number
-  QString port_text = QString::asprintf("port %d", _server->serverPort());
-  QSizeF port_text_size = _text->computeTextSize(port_text);
-  cursor_x = width() - pad - port_text_size.width();
-  cursor_y = height() - pad - port_text_size.height();
-  _text->renderText(cursor_x, cursor_y, port_text);
 
   // display fps
   QString fps_text = QString::asprintf("%.1f fps", 1.0f / _render_time);
