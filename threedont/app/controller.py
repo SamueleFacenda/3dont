@@ -299,9 +299,10 @@ class Controller:
         print("Generated SPARQL query: ", query)
         result, query_type = self.sparql_client.autodetect_query_nl(query)
         if query_type == "tabular":
-            header = list(result.keys())
-            rows = list(zip(*(result[key] for key in result)))
-            self.gui.plot_tabular(header, rows)
+            header = result.vars()
+            content = result.tuple_iterator(header)
+            rows = list(map(lambda r: tuple(map(str, r)), content))
+            self.gui.plot_tabular(result[0], rows)
         elif query_type == "scalar":
             self.viewer_client.attributes(self.sparql_client.colors, result)
             self.viewer_client.set(curr_attribute_id=1)
