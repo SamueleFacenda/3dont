@@ -754,7 +754,7 @@ void Viewer::displayInfo() {
   QString fps_text = QString::asprintf("%.1f fps", 1.0f / _render_time);
   QSizeF fps_text_size = _text->computeTextSize(fps_text);
   cursor_x = width() - pad - fps_text_size.width();
-  cursor_y -= fps_text_size.height();
+  cursor_y = height() - pad - fps_text_size.height();
   _text->renderText(cursor_x, cursor_y, fps_text);
 }
 
