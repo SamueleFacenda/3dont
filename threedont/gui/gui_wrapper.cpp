@@ -104,17 +104,16 @@ static PyObject *GuiWrapper_run(GuiWrapperObject *self, PyObject *args) {
   signal(SIGINT, stop);
   signal(SIGTERM, stop);
 
-  Py_BEGIN_ALLOW_THREADS
-          qDebug()
-          << "Starting GUI event loop";
+  qDebug() << "Starting GUI event loop";
 
   self->mainLayout->show();
-  self->app->exec(); // long running
 
+  Py_BEGIN_ALLOW_THREADS
+  self->app->exec(); // long running
   self->guiThread.join();
+  Py_END_ALLOW_THREADS
 
   qDebug() << "GUI event loop exited";
-  Py_END_ALLOW_THREADS
 
   return Py_None;
 }
@@ -301,9 +300,11 @@ static PyObject *GuiWrapper_get_properties_mapping(GuiWrapperObject *self, PyObj
     return nullptr; // Error already set in pyListToQStringList
 
   QStringList result;
+  Py_BEGIN_ALLOW_THREADS
   QMetaObject::invokeMethod(self->mainLayout, "getPropertiesMapping", Qt::BlockingQueuedConnection,
                             Q_RETURN_ARG(QStringList, result),
                             Q_ARG(QStringList, properties), Q_ARG(QStringList, words), Q_ARG(QStringList, defaults));
+  Py_END_ALLOW_THREADS
 
   PyObject *pyResult = PyList_New(result.size());
   if (!pyResult) {
@@ -325,7 +326,7 @@ static PyObject *GuiWrapper_get_properties_mapping(GuiWrapperObject *self, PyObj
 
 static PyObject *GuiWrapper_send_viewer_command(GuiWrapperObject *self, PyObject *args) {
   PyObject *msg;
-  bool return_response = false;
+  int return_response = false;
 
   if (!PyArg_ParseTuple(args, "O|p", &msg, &return_response)) {
     PyErr_SetString(PyExc_TypeError, "GuiWrapper.send_viewer_command requires a bytes object and an optional boolean");
@@ -340,12 +341,14 @@ static PyObject *GuiWrapper_send_viewer_command(GuiWrapperObject *self, PyObject
 
   char *data = PyBytes_AsString(msg);
   Py_ssize_t size = PyBytes_Size(msg);
-  QByteArray byteArray(data, static_cast<int>(size));
+  QByteArrayView byteArray(data, static_cast<int>(size));
 
   if (return_response) {
     QByteArray result;
     // use a blocking queued connection to ensure that the array is not deleted before being processed
-    QMetaObject::invokeMethod(self->mainLayout, "sendViewerCommand", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QByteArray, result), Q_ARG(QByteArray, byteArray));
+    Py_BEGIN_ALLOW_THREADS
+    QMetaObject::invokeMethod(self->mainLayout, "sendViewerCommand", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QByteArray, result), Q_ARG(QByteArrayView, byteArray));
+    Py_END_ALLOW_THREADS
 
     // result to python bytes
     PyObject *pyResult = PyBytes_FromStringAndSize(result.constData(), result.size());
@@ -358,8 +361,8 @@ static PyObject *GuiWrapper_send_viewer_command(GuiWrapperObject *self, PyObject
   } else {
     // ensure msg is not deleted before being processed
     Py_INCREF(msg); // prevent deletion of msg while in queued connection
-    QMetaObject::invokeMethod(self->mainLayout, "sendViewerCommand", Qt::QueuedConnection, Q_ARG(QByteArray, byteArray));
-    QTimer::singleShot(0, self->mainLayout, [msg]() {
+    QMetaObject::invokeMethod(self->mainLayout, "sendViewerCommand", Qt::QueuedConnection, Q_ARG(QByteArrayView, byteArray));
+    QTimer::singleShot(0, self->mainLayout, [msg]() { // enqueue a no-op to decrement the reference count
       PyGILState_STATE gstate = PyGILState_Ensure();
       Py_DECREF(msg); // decrement reference count after processing
       PyGILState_Release(gstate);

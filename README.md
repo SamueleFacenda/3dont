@@ -34,6 +34,7 @@ View, query and manually annotate pointclouds ontologies.
 - [x] qlever errors handling
 - [x] investigate big point glitch
 - [x] avoid startup lag for dependency dowload
+- [x] remove viewer self tcp connection
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
@@ -51,7 +52,6 @@ View, query and manually annotate pointclouds ontologies.
 - [ ] plot 3d graph with relations
 - [ ] check [this](https://github.com/csse-uoft/owlready2/blob/master/src/owlready2/namespace.py) owlready alternative
 - [ ] check [rdf-fusion](https://github.com/tobixdev/rdf-fusion)
-- [ ] move from QTcpServer to QLocalServer
 - [ ] dynamically compute fast rendering LOD (based on render time)
 
 ### Tested backends:

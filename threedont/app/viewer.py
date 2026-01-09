@@ -385,7 +385,6 @@ class Viewer:
         self.__send(msg)
 
     def __send(self, msg):
-        print("Calling _send_fn with message of length", len(msg), msg)
         self._send_fn(msg, False) # no response expected
 
     def __query(self, msg):
@@ -398,7 +397,7 @@ class Viewer:
         # ?: body
         lookupSize = {0: 1, 1: 1, 2: 4, 3: 4, 4: 4}
         i = 0
-        dataType = ord(ret[i])
+        dataType = ret[i]
         i += 1
         numDims = struct.unpack('Q', ret[i: i+8])[0]
         i += 8

@@ -79,7 +79,7 @@ class Controller:
         self.app_state = app_state
         self.commands_queue = Queue()
         action_controller = ActionController(self.commands_queue, self.run_event_loop)
-        self.gui = GuiWrapper(action_controller, sys.argv)
+        self.gui = GuiWrapper(action_controller, sys.argv) # argv is used by qt for qt cli args
         self.viewer_client = Viewer(self.gui.send_viewer_command)
         self.sparql_client = None
         self.sensorArgs = SensorArgs()
@@ -93,26 +93,32 @@ class Controller:
         # this will create a thread that runs `run_event_loop`
         self.gui.run()
 
+
+    @staticmethod
+    def log_future_exception(future, function_name):
+        try:
+            future.result()
+        except Exception:
+            logging.exception("Error in controller running function %s", function_name)
+
+
     def run_event_loop(self):
         print("Running controller")
         self.update_project_list()
+        command = None
         if self.config.get_general_loadLastProject():
             last_project = self.app_state.get_projectName()
             if last_project and Project.exists(last_project):
-                self.open_project(last_project)
+                command = ("open_project", (last_project,))
 
-        def log_future_exception(future, function_name):
-            try:
-                future.result()
-            except Exception:
-                logging.exception("Error in controller running function %s", function_name)
-
-        command = self.commands_queue.get()
+        if command is None:
+            command = self.commands_queue.get()
+        print("Controller: starting event loop")
         with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
             while command is not None:
                 function_name, args = command
                 future = executor.submit(getattr(self, function_name), *args)
-                future.add_done_callback(functools.partial(log_future_exception, function_name=function_name))
+                future.add_done_callback(functools.partial(self.log_future_exception, function_name=function_name))
                 command = self.commands_queue.get()
 
     @report_errors_to_gui
@@ -150,13 +156,12 @@ class Controller:
         self._send_legend(scalars)
 
     @report_errors_to_gui
-    def connect_to_server(self, project):
+    def load_new_pointcloud(self, project):
         print("Loading all the points... ", project.get_graphUri())
         self.gui.set_statusbar_content("Connecting to server...", 5)
-        # TODO handle graph_url in GUI
         self.sparql_client = SparqlBackend(project)
         print("Connected to server")
-        self.gui.set_statusbar_content("Loading points from server...", 60)
+        self.gui.set_statusbar_content("Loading points from server...", 600)
         coords, colors = self.sparql_client.get_all()
         print("Points received from db")
         self.gui.set_statusbar_content("Points loaded", 5)
@@ -320,7 +325,7 @@ class Controller:
         self.project = Project(project_name)
         self.app_state.set_projectName(self.project.get_name())
         self.gui.set_statusbar_content(f"Opened project: {project_name}", 5)
-        self.connect_to_server(self.project)
+        self.load_new_pointcloud(self.project)
 
     def create_project(self, project_name, db_url, graph_uri, graph_namespace, is_local, original_path, onto_namespace):
         print("Creating project: ", project_name)

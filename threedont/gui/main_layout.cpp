@@ -315,7 +315,7 @@ void MainLayout::setProjectList(const QStringList &projects) {
   }
 }
 
-QByteArray MainLayout::sendViewerCommand(const QByteArray &message) {
+QByteArray MainLayout::sendViewerCommand(const QByteArrayView &message) {
   const char* data = message.constData();
   qint64 size = message.size();
   return viewer->processCommand(data, size);

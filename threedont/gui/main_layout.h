@@ -48,7 +48,7 @@ private slots:
   void on_actionUpdate_Sensors_and_Reason_triggered();
   void setProjectList(const QStringList &projects);
 
-  [[nodiscard]] QByteArray sendViewerCommand(const QByteArray &message);
+  [[nodiscard]] QByteArray sendViewerCommand(const QByteArrayView &message);
   [[nodiscard]] QStringList getPropertiesMapping(const QStringList &properties, const QStringList &words, const QStringList &defaults);
 
 private:
