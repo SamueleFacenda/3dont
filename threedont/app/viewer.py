@@ -18,7 +18,7 @@ Rendered docs avaiable [here](https://heremaps.github.io/pptk/)
 
 
 class Viewer:
-    def __init__(self, port):
+    def __init__(self, send_fn):
         """ Opens a point cloud viewer
 
         Examples:
@@ -43,18 +43,7 @@ class Viewer:
             >>> v.set(point_size=0.005)
 
         """
-        self._portNumber = port
-
-    def close(self):
-        """ Closes the point cloud viewer
-
-        Examples:
-
-            >>> v.close()
-
-        """
-        self._process.kill()
-        pass
+        self._send_fn = send_fn
 
     def clear(self):
         """ Removes the current point cloud in the viewer
@@ -384,30 +373,6 @@ class Viewer:
             # todo: need to check whether write succeeded
             #       ideally, capture(...) should return filename
 
-    def wait(self):
-        """
-
-        Blocks until :kbd:`Enter`/:kbd:`Return` key is pressed in viewer
-
-        Examples:
-
-            >>> v = pptk.Viewer(xyz)
-            >>> v.wait()
-
-        Press enter in viewer to return control to python terminal.
-
-        """
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('localhost', self._portNumber))
-        s.send(struct.pack('b', 7))
-        s.setblocking(1)
-        buf = b''
-        while len(buf) == 0:
-            buf += s.recv(1)
-        if buf != b'x':
-            raise RuntimeError('expecting return code \'x\'')
-        s.close()
-
     def __load(self, positions):
         # if no points, then done
         if positions.size == 0:
@@ -420,40 +385,28 @@ class Viewer:
         self.__send(msg)
 
     def __send(self, msg):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('localhost', self._portNumber))
-        totalSent = 0
-        while totalSent < len(msg):
-            sent = s.send(msg)
-            if sent == 0:
-                raise RuntimeError("socket connection broken")
-            totalSent = totalSent + sent
-        s.close()
+        self._send_fn(msg, False) # no response expected
 
     def __query(self, msg):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # s.setsockopt(socket.SOL_SOCKET,socket.TCP_NODELAY,1)
-        s.connect(('localhost', self._portNumber))
-        totalSent = 0
-        while totalSent < len(msg):
-            sent = s.send(msg)
-            if sent == 0:
-                raise RuntimeError("socket connection broken")
-            totalSent = totalSent + sent
+        ret = self._send_fn(msg, True) # response expected
+
         # layout of response message:
         # 0: data type (0 - error msg, 1 - char, 2 - float, 3 - int, 4 - uint)
         # 1: number of dimensions (quint64)
         # 9: dimensions (quint64)
         # ?: body
         lookupSize = {0: 1, 1: 1, 2: 4, 3: 4, 4: 4}
-        dataType = ord(s.recv(1))
-        numDims = struct.unpack('Q', _recv_from_socket(8, s))[0]
-        dims = struct.unpack(str(numDims) + 'Q',
-                             _recv_from_socket(numDims * 8, s))
+        i = 0
+        dataType = ret[i]
+        i += 1
+        numDims = struct.unpack('Q', ret[i: i+8])[0]
+        i += 8
+        dims = struct.unpack(str(numDims) + 'Q', ret[i: i + numDims * 8])
+        i += numDims * 8
         numElts = numpy.prod(dims)
         bodySize = lookupSize[dataType] * numElts
-        body = _recv_from_socket(bodySize, s)
-        s.close()
+        body = ret[i: i + bodySize]
+        i += bodySize
 
         if dataType == 0:
             raise ValueError(body)
@@ -463,14 +416,6 @@ class Viewer:
             body = numpy.array(list(body)).reshape(dims)
         # return body as is if type is char (0)
         return body
-
-
-def _recv_from_socket(n, s):
-    # receive n bytes from socket s
-    buf = b''
-    while len(buf) < n:
-        buf += s.recv(n - len(buf))
-    return buf
 
 
 def _fix_poses_ts_input(poses, ts):

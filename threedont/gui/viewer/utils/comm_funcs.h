@@ -25,91 +25,84 @@ namespace comm {
     static const unsigned char value = 4;
   };
 
-  // Non-template functions moved to source file
-  void receiveBytes(char *destination, const qint64 bytesExpected,
-                    QTcpSocket *clientConnection);
-  void sendBytes(const char *source, const qint64 size,
-                 QTcpSocket *clientConnection);
-  void sendError(const char *msg, const quint64 size,
-                 QTcpSocket *clientConnection);
+  template<typename T>
+  QByteArray sendError(const char *msg, const quint64 size) {
+    QByteArray out;
+    // send data type
+    unsigned char dataType = 0;
+    out.append((char *) &dataType, 1);
+
+    // send number of dimensions
+    quint64 numDims = 1;
+    out.append((char *) &numDims, sizeof(quint64));
+
+    // send dimensions
+    out.append((char *) &size, sizeof(quint64));
+
+    // send array elements
+    out.append((char *) msg, sizeof(char) * size);
+    return out;
+  }
 
   // Template functions remain in header
   template<typename T>
-  void sendScalar(const T value, QTcpSocket *clientConnection) {
+  QByteArray sendScalar(const T value) {
     // send data type
     unsigned char dataType = TypeCode<T>::value;
-    sendBytes((char *) &dataType, 1, clientConnection);
+    QByteArray out;
+    out.append((char *) &dataType, 1);
 
     // send number of dimensions
     quint64 numDims = 1;
-    sendBytes((char *) &numDims, sizeof(quint64), clientConnection);
+    out.append((char *) &numDims, sizeof(quint64));
 
     // send dimensions
     quint64 numElts = 1;
-    sendBytes((char *) &numElts, sizeof(quint64), clientConnection);
+    out.append((char *) &numElts, sizeof(quint64));
 
     // send data
-    sendBytes((char *) &value, sizeof(T), clientConnection);
+    out.append((char *) &value, sizeof(T));
+    return out;
   }
 
   template<typename T>
-  void sendArray(const T *source, const quint64 size,
-                 QTcpSocket *clientConnection) {
+  QByteArray sendArray(const T *source, const quint64 size) {
+    QByteArray out;
     // send data type
     unsigned char dataType = TypeCode<T>::value;
-    sendBytes((char *) &dataType, 1, clientConnection);
+    out.append((char *) &dataType, 1);
 
     // send number of dimensions
     quint64 numDims = 1;
-    sendBytes((char *) &numDims, sizeof(quint64), clientConnection);
+    out.append((char *) &numDims, sizeof(quint64));
 
     // send dimensions
-    sendBytes((char *) &size, sizeof(quint64), clientConnection);
+    out.append((char *) &size, sizeof(quint64));
 
     // send array elements
-    sendBytes((char *) source, sizeof(T) * size, clientConnection);
+    out.append((char *) source, sizeof(T) * size);
+    return out;
   }
 
   template<typename T>
-  void sendMatrix(const T *source, // in column major order
-                  const quint64 numRows, const quint64 numCols,
-                  QTcpSocket *clientConnection) {
+  QByteArray sendMatrix(const T *source, // in column major order
+                  const quint64 numRows, const quint64 numCols) {
+    QByteArray out;
     // send data type
     unsigned char dataType = TypeCode<T>::value;
-    sendBytes((char *) &dataType, 1, clientConnection);
+    out.append((char *) &dataType, 1);
 
     // send number of dimensions
     quint64 numDims = 2;
-    sendBytes((char *) &numDims, sizeof(quint64), clientConnection);
+    out.append((char *) &numDims, sizeof(quint64));
 
     // send dimensions
     quint64 dims[2] = {numRows, numCols};
-    sendBytes((char *) &dims[0], 2 * sizeof(quint64), clientConnection);
+    out.append((char *) &dims[0], 2 * sizeof(quint64));
 
     // send array elements
-    sendBytes((char *) source, sizeof(T) * numRows * numCols, clientConnection);
-  }
-
-  template<typename T>
-  void sendMultiDimArray(const T *source, const std::vector<quint64> &dims,
-                         QTcpSocket *clientConnection) {
-    // send data type
-    unsigned char dataType = TypeCode<T>::value;
-    sendBytes((char *) &dataType, 1, clientConnection);
-
-    // send number of dimensions
-    quint64 numDims = dims.size();
-    sendBytes((char *) &numDims, sizeof(quint64), clientConnection);
-
-    // send dimensions
-    quint64 numElts = 1;
-    for (std::size_t i = 0; i < dims.size(); i++) {
-      sendBytes((char *) &dims[i], sizeof(quint64), clientConnection);
-      numElts *= dims[i];
-    }
-
-    // send array elements
-    sendBytes((char *) source, sizeof(T) * numElts, clientConnection);
+    out.append((char *) source, sizeof(T) * numRows * numCols);
+    return out;
   }
 } // namespace comm
 #endif // __COMMFUNCS_H__

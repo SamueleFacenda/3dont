@@ -28,10 +28,6 @@ MainLayout::~MainLayout() {
   delete ui;
 }
 
-int MainLayout::getViewerServerPort() {
-  return viewer->getServerPort();
-}
-
 void MainLayout::closeEvent(QCloseEvent *event) {
   qDebug() << "Closing main layout";
   controllerWrapper->stop();
@@ -317,6 +313,12 @@ void MainLayout::setProjectList(const QStringList &projects) {
       controllerWrapper->openProject(project.toStdString());
     });
   }
+}
+
+QByteArray MainLayout::sendViewerCommand(const QByteArrayView &message) {
+  const char* data = message.constData();
+  qint64 size = message.size();
+  return viewer->processCommand(data, size);
 }
 
 void MainLayout::on_actionCreate_project_triggered() {

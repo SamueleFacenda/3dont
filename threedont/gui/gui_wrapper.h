@@ -25,8 +25,6 @@ static int GuiWrapper_init(GuiWrapperObject *self, PyObject *args, PyObject *kwd
 
 static PyObject *GuiWrapper_run(GuiWrapperObject *self, PyObject *args);
 
-static PyObject *GuiWrapper_get_viewer_server_port(GuiWrapperObject *self, PyObject *args);
-
 static PyObject *GuiWrapper_view_node_details(GuiWrapperObject *self, PyObject *args);
 
 static PyObject *GuiWrapper_plot_tabular(GuiWrapperObject *self, PyObject *args);
@@ -40,6 +38,8 @@ static PyObject *GuiWrapper_set_legend(GuiWrapperObject *self, PyObject *args);
 static PyObject *GuiWrapper_set_project_list(GuiWrapperObject *self, PyObject *args);
 
 static PyObject *GuiWrapper_get_properties_mapping(GuiWrapperObject *self, PyObject *args);
+
+static PyObject *GuiWrapper_send_viewer_command(GuiWrapperObject *self, PyObject *args);
 
 extern PyTypeObject GuiWrapperType;
 

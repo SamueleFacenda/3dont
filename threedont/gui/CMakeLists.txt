@@ -22,7 +22,6 @@ add_library(gui MODULE
         viewer/camera/camera_dolly.cpp
         viewer/components/look_at.cpp
         viewer/components/point_cloud.cpp
-        viewer/utils/comm_funcs.cpp
         viewer/components/selection_box.cpp
         dialogs/create_project_dialog.cpp
 )
