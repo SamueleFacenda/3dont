@@ -35,6 +35,9 @@ View, query and manually annotate pointclouds ontologies.
 - [x] investigate big point glitch
 - [x] avoid startup lag for dependency dowload
 - [x] remove viewer self tcp connection
+- [ ] use highlightColor from config
+- [ ] adjust create project dialog
+- [ ] investigate segfaults on select constitutes
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
