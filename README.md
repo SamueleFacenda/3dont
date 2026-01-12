@@ -38,6 +38,7 @@ View the `docs` directory for the user and development manual.
 - [x] avoid startup lag for dependency dowload
 - [x] remove viewer self tcp connection
 - [x] use highlightColor from config
+- [x] use scalar color scheme from config
 - [ ] adjust create project dialog
 - [ ] plot predicate with subpredicates (path to property)
 - [ ] scalar plot of discrete result (URIs)

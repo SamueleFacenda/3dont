@@ -167,6 +167,8 @@ class Controller:
         self.gui.set_statusbar_content("Points loaded", 5)
         self.viewer_client.set(point_size=self.config.get_visualizer_pointsSize())
         self.viewer_client.load(coords, colors)
+        self.viewer_client.color_map(self.config.get_visualizer_scalarColorScheme())
+
 
     def view_point_details(self, id):
         iri = self.sparql_client.get_point_iri(id)
@@ -206,7 +208,7 @@ class Controller:
         step = (maximum - minimum) / NUMBER_OF_LABELS_IN_LEGEND
         # TODO better float format
         labels = [f"{minimum + step * i:.2f}" for i in range(NUMBER_OF_LABELS_IN_LEGEND)]
-        colors = get_color_map()
+        colors = get_color_map(self.config.get_visualizer_scalarColorScheme())
         # it's a numpy array of shape (N, 3), convert to list of hex colors
         colors = ["#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255)) for (r, g, b) in colors]
         self.gui.set_legend(colors, labels)
@@ -349,7 +351,7 @@ class Controller:
         self.open_project(project_name)  # maybe remove this
 
     def set_color_scale(self, low, high):
-        self.viewer_client.color_map("jet", (low, high))
+        self.viewer_client.color_map(self.config.get_visualizer_scalarColorScheme(), (low, high))
 
     def rotate_around(self, n_steps=12):
         theta = self.viewer_client.get('theta')[0]
