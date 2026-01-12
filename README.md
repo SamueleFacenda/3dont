@@ -2,6 +2,8 @@
 
 View, query and manually annotate pointclouds ontologies.
 
+View the `docs` directory for the user and development manual.
+
 ### TODO
 - [x] select query box
 - [x] natural language query box
