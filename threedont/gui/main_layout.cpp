@@ -156,13 +156,17 @@ void MainLayout::onTreeViewContexMenuRequested(const QPoint &pos) {
   QModelIndex index = treeView->indexAt(pos);
   if (!index.isValid()) return;
 
-  QString predicate = graphTreeModel->getPredicate(index);
+  QStringList predicatePath = graphTreeModel->getPredicatePath(index);
+  std::vector <std::string> predicatePathStd;
+  for (const auto &p: predicatePath)
+    predicatePathStd.push_back(p.toStdString());
+
   QString object = graphTreeModel->getObject(index);
 
   QMenu contextMenu;
   QAction *plotAction = contextMenu.addAction("Plot predicate");
-  connect(plotAction, &QAction::triggered, [this, predicate]() {
-    controllerWrapper->scalarWithPredicate(predicate.toStdString());
+  connect(plotAction, &QAction::triggered, [this, predicatePathStd]() {
+    controllerWrapper->scalarWithPredicate(predicatePathStd);
   });
 
   QAction *annotate = contextMenu.addAction("Annotate");
@@ -183,8 +187,8 @@ void MainLayout::onTreeViewContexMenuRequested(const QPoint &pos) {
   });
 
   QAction *selectAll = contextMenu.addAction("Select all");
-  connect(selectAll, &QAction::triggered, [this, predicate, object]() {
-    controllerWrapper->selectAllSubjects(predicate.toStdString(), object.toStdString());
+  connect(selectAll, &QAction::triggered, [this, predicatePathStd, object]() {
+    controllerWrapper->selectAllSubjects(predicatePathStd, object.toStdString());
   });
 
   if (!index.parent().isValid()) {

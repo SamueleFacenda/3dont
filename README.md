@@ -40,7 +40,7 @@ View the `docs` directory for the user and development manual.
 - [x] use highlightColor from config
 - [x] use scalar color scheme from config
 - [x] adjust create project dialog
-- [ ] plot predicate with subpredicates (path to property)
+- [x] plot predicate with subpredicates (path to property)
 - [ ] scalar plot of discrete result (URIs)
 - [ ] investigate segfaults on select constitutes
 - [ ] scalar templates

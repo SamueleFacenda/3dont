@@ -62,8 +62,9 @@ Expanding a `Constitutes` row will highligh the object points.
 
 It's possible to make some quick queries from the tree menu, right clicking a row will allow three types of actions:
 - plot predicate: run a scalar query on the selected predicate and show the results for every point, useful to plot quickly a simple
-property
-- select all: highligh all the points that has this predicate-object (e.g. all the points that constitutes an object)
+property. It uses the predicate path, to in can plot the height of the object a point constitutes.
+- select all: highligh all the points that has this predicate-object path (e.g. all the points that constitutes an object that constitutes
+object X
 - annotate: instert a new triple for that subject with the specified predicate and object.
 
 ### Keybindings

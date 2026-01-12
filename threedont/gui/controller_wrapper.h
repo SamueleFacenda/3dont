@@ -3,7 +3,7 @@
 
 #include <Python.h>
 #include <cstdarg>
-#include <stdexcept>
+#include <vector>
 #include <string>
 
 class ControllerWrapper {
@@ -42,10 +42,10 @@ public:
   void stop();
   void viewPointDetails(unsigned int index);
   void viewNodeDetails(const std::string &node_id);
-  void scalarWithPredicate(const std::string &predicate);
+  void scalarWithPredicate(const std::vector<std::string> &predicate);
   void start();
   void annotateNode(const std::string &subject, const std::string &predicate, const std::string &object, const std::string &author);
-  void selectAllSubjects(const std::string &predicate, const std::string &object);
+  void selectAllSubjects(const std::vector<std::string> &predicate, const std::string &object);
   void tabularQuery(const std::string &query);
   void naturalLanguageQuery(const std::string &query);
   void configureAWSConnection(const std::string &access_key_id, const std::string &secret_access_key, const std::string &region, const std::string &profile_name);

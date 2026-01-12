@@ -107,8 +107,28 @@ class SparqlBackend:
         out = list(map(tuple, results.tuple_iterator(['p', 'o'])))
         return out
 
-    def execute_predicate_query(self, predicate):
-        predicate = self.uniform_iri(predicate)
+    @staticmethod
+    def chain_predicate(predicateList):
+        '''
+        From ['a', 'b', 'c'] to
+            a ?a1 .
+        ?a1 b ?a2 .
+        ?a2 c
+        '''
+        predicate = ''
+        prev = ''
+        for i, p in enumerate(predicateList[:-1]):
+            current = '?a' + str(i)
+            predicate += f'{prev} {p} {current} .\n'
+            prev = current
+
+        predicate += f'{prev} {predicateList[-1]} '
+        return predicate
+
+    def execute_predicate_query(self, predicateList):
+        predicates = [self.uniform_iri(p) for p in predicateList]
+        predicate = self.chain_predicate(predicates)
+
         query = PREDICATE_QUERY.format(graph=self.graph_uri, predicate=predicate, namespace=self.onto_namespace)
         return self.execute_scalar_query(query)
 
@@ -118,8 +138,11 @@ class SparqlBackend:
                                      namespace=self.onto_namespace)
         self.storage.update(query)
 
-    def select_all_subjects(self, predicate, object):
-        predicate, object = self.uniform_iri(predicate), self.uniform_iri(object)
+    def select_all_subjects(self, predicateList, object):
+        predicates = [self.uniform_iri(p) for p in predicateList]
+        predicate = self.chain_predicate(predicates)
+
+        object = self.uniform_iri(object)
         query = SELECT_ALL_WITH_PREDICATE.format(graph=self.graph_uri, predicate=predicate, object=object,
                                                  namespace=self.onto_namespace)
         iris = self.storage.query(query)['p']

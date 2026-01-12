@@ -1,5 +1,7 @@
 #include "controller_wrapper.h"
 
+#include <stdexcept>
+
 void ControllerWrapper::callPythonMethod(PyObject *object, const char *methodName, const char *format, ...) {
   va_list args;
   va_start(args, format);
@@ -66,8 +68,15 @@ void ControllerWrapper::viewNodeDetails(const std::string &node_id) {
   callPythonMethod(controller, "view_node_details", "s", node_id.c_str());
 }
 
-void ControllerWrapper::scalarWithPredicate(const std::string &predicate) {
-  callPythonMethod(controller, "scalar_with_predicate", "s", predicate.c_str());
+void ControllerWrapper::scalarWithPredicate(const std::vector<std::string> &predicate) {
+  PyGILState_STATE gil = PyGILState_Ensure();
+  PyObject *list = PyList_New(predicate.size());
+  for (Py_ssize_t i = 0; i < predicate.size(); i++)
+    PyList_SetItem(list, i, PyUnicode_FromString(predicate[i].c_str()));
+
+  callPythonMethod(controller, "scalar_with_predicate", "O", list);
+  Py_XDECREF(list);
+  PyGILState_Release(gil);
 }
 
 void ControllerWrapper::start() {
@@ -78,8 +87,15 @@ void ControllerWrapper::annotateNode(const std::string &subject, const std::stri
   callPythonMethod(controller, "annotate_node", "ssss", subject.c_str(), predicate.c_str(), object.c_str(), author.c_str());
 }
 
-void ControllerWrapper::selectAllSubjects(const std::string &predicate, const std::string &object) {
-  callPythonMethod(controller, "select_all_subjects", "ss", predicate.c_str(), object.c_str());
+void ControllerWrapper::selectAllSubjects(const std::vector<std::string> &predicate, const std::string &object) {
+  PyGILState_STATE gil = PyGILState_Ensure();
+  PyObject *list = PyList_New(predicate.size());
+  for (Py_ssize_t i = 0; i < predicate.size(); i++)
+    PyList_SetItem(list, i, PyUnicode_FromString(predicate[i].c_str()));
+
+  callPythonMethod(controller, "select_all_subjects", "Os", list, object.c_str());
+  Py_XDECREF(list);
+  PyGILState_Release(gil);
 }
 
 void ControllerWrapper::tabularQuery(const std::string &query) {

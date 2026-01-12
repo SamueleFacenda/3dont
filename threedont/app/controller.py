@@ -144,13 +144,13 @@ class Controller:
         self.viewer_client.set(curr_attribute_id=1)
         self._send_legend(scalars)
 
-    def scalar_with_predicate(self, predicate):
-        print("Controller: ", predicate)
+    def scalar_with_predicate(self, predicatePath):
+        print("Controller: ", predicatePath)
         if self.sparql_client is None:
             print("No connection to server")
             return
 
-        scalars = self.sparql_client.execute_predicate_query(predicate)
+        scalars = self.sparql_client.execute_predicate_query(predicatePath)
         self.viewer_client.attributes(self.sparql_client.colors, scalars)
         self.viewer_client.set(curr_attribute_id=1)
         self._send_legend(scalars)
@@ -191,8 +191,8 @@ class Controller:
             obj = getattr(onto, object_name_or_value)
         smf.command_manual_annotation(self.sensorArgs, subject, predicate, obj, author_name)
 
-    def select_all_subjects(self, predicate, object):
-        selected_colors = self.sparql_client.select_all_subjects(predicate, object)
+    def select_all_subjects(self, predicates, object):
+        selected_colors = self.sparql_client.select_all_subjects(predicates, object)
         self.viewer_client.attributes(self.sparql_client.colors, selected_colors)
         self.viewer_client.set(curr_attribute_id=1)
 

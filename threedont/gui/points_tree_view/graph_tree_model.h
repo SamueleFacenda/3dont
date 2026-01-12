@@ -35,6 +35,7 @@ public:
   void addTopLevelItem(const QString &object, const QString &predicate);
   void onChildrenLoaded(const QString &parentId, QStringList children);
   [[nodiscard]] QString getPredicate(const QModelIndex &index) const;
+  [[nodiscard]] QStringList getPredicatePath(const QModelIndex &index) const;
   [[nodiscard]] QString getObject(const QModelIndex &index) const;
 
 public slots:

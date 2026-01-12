@@ -142,6 +142,17 @@ QString GraphTreeModel::getPredicate(const QModelIndex &index) const {
   return itemFromIndex(index)->data(0, false).toString();
 }
 
+QStringList GraphTreeModel::getPredicatePath(const QModelIndex &index) const {
+  if (!index.isValid()) return {};
+  QStringList out;
+  GraphTreeItem *item = itemFromIndex(index);
+  while (item && item->parent() != rootItem) {
+    out.prepend(item->data(0, false).toString());
+    item = item->parent();
+  }
+  return out;
+}
+
 QString GraphTreeModel::getObject(const QModelIndex &index) const {
   if (!index.isValid()) return {};
   return itemFromIndex(index)->data(1, false).toString();
@@ -152,7 +163,7 @@ void GraphTreeModel::onRowExpanded(const QModelIndex &index) {
   GraphTreeItem *item = itemFromIndex(index);
 
   if (item->data(0) == "Constitutes")
-    controllerWrapper->selectAllSubjects(item->data(0, false).toString().toStdString(),
+    controllerWrapper->selectAllSubjects({item->data(0, false).toString().toStdString()},
                                          item->data(1, false).toString().toStdString());
 
   highlightedIndex = index.sibling(index.row(), 1);
