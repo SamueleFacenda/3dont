@@ -43,6 +43,7 @@ private:
   QPushButton *m_ontologyBrowseButton;
   QLabel *m_pathLabel;
   QLabel *m_urlLabel;
+  QLabel *m_graphUriLabel;
   QWidget *m_localWidget;
   QWidget *m_serverWidget;
 };

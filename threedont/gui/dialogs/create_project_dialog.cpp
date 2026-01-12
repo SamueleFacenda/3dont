@@ -19,10 +19,12 @@ void CreateProjectDialog::setupUI() {
   auto *mainLayout = new QVBoxLayout(this);
 
   // Project name
-  auto *formLayout = new QFormLayout();
+  auto *projectNameLayout = new QHBoxLayout();
+  auto *projectNameLabel = new QLabel("Project Name:", this);
   m_projectNameEdit = new QLineEdit(this);
-  formLayout->addRow("Project Name:", m_projectNameEdit);
-  mainLayout->addLayout(formLayout);
+  projectNameLayout->addWidget(projectNameLabel);
+  projectNameLayout->addWidget(m_projectNameEdit);
+  mainLayout->addLayout(projectNameLayout);
 
   // Source type selection
   auto *sourceGroup = new QGroupBox("Project Source", this);
@@ -49,14 +51,23 @@ void CreateProjectDialog::setupUI() {
 
   // Server URL section
   m_serverWidget = new QWidget(sourceGroup);
-  auto *serverLayout = new QHBoxLayout(m_serverWidget);
+  auto *serverLayout = new QVBoxLayout(m_serverWidget);
   serverLayout->setContentsMargins(0, 0, 0, 0);
 
   m_urlLabel = new QLabel("Server URL:", sourceGroup);
   m_serverUrlEdit = new QLineEdit(m_serverWidget);
-  m_serverUrlEdit->setPlaceholderText("http://example.com/project.zip");
+  m_serverUrlEdit->setPlaceholderText("http://example.com/sparql");
 
-  serverLayout->addWidget(m_serverUrlEdit);
+  auto *serverUrlLayout = new QHBoxLayout();
+  serverUrlLayout->addWidget(m_serverUrlEdit);
+  serverLayout->addLayout(serverUrlLayout);
+
+  m_graphUriLabel = new QLabel("Graph URI:", sourceGroup);
+  m_graphUriEdit = new QLineEdit(m_serverWidget);
+  m_graphUriEdit->setText("http://localhost:8890/Nettuno");
+
+  serverLayout->addWidget(m_graphUriLabel);
+  serverLayout->addWidget(m_graphUriEdit);
 
   sourceLayout->addWidget(m_pathLabel);
   sourceLayout->addWidget(m_localWidget);
@@ -69,9 +80,6 @@ void CreateProjectDialog::setupUI() {
   auto *paramsGroup = new QGroupBox("Project Parameters", this);
   auto *paramsLayout = new QFormLayout(paramsGroup);
 
-  m_graphUriEdit = new QLineEdit(paramsGroup);
-  m_graphUriEdit->setText("http://localhost:8890/Nettuno");
-  paramsLayout->addRow("Graph URI:", m_graphUriEdit);
 
   m_ontologyNamespaceEdit = new QLineEdit(paramsGroup);
   m_ontologyNamespaceEdit->setText("http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontology");
