@@ -5,13 +5,12 @@ import numpy as np
 from .queries import *
 from .exceptions import WrongResultFormatException
 from .storage import StorageFactory
-
-HIGHLIGHT_COLOR = [1.0, 0.0, 0.0]  # TODO make this a parameter
+from .state import Config
 
 __all__ = ['SparqlBackend']
 
 class SparqlBackend:
-    def __init__(self, project):
+    def __init__(self, project, config):
         self.graph_uri = project.get_graphUri()
         onto_namespace = project.get_ontologyNamespace()
         if onto_namespace.endswith('#'):
@@ -24,6 +23,10 @@ class SparqlBackend:
         self.coords_to_id = {}
         self.id_to_iri = []
         self.colors = None
+        highlight = config.get_visualizer_highlightColor()
+        # convert from FF0000 to [0.1, 0.0, 0.0]
+        self.highlight_color = np.array([int(highlight[i:i+2], 16) for i in (0, 2, 4)], dtype=np.float32) / 255.0
+        print("Highlight color: ", self.highlight_color)
 
 
     def get_all(self):
@@ -60,7 +63,7 @@ class SparqlBackend:
                 i = self.iri_to_id[p]
             except KeyError:
                 continue  # not all the results of a select are points
-            colors[i] = HIGHLIGHT_COLOR
+            colors[i] = self.highlight_color
 
         return colors
 
@@ -126,7 +129,7 @@ class SparqlBackend:
                 i = self.iri_to_id[p]
             except KeyError:
                 continue  # not all the results of a select are points
-            colors[i] = HIGHLIGHT_COLOR
+            colors[i] = self.highlight_color
         return colors
 
     def raw_query(self, query):
@@ -149,7 +152,7 @@ class SparqlBackend:
                     i = self.coords_to_id[tuple(coord)]
                 except KeyError:
                     continue  # not all the results of a select are points
-                colors[i] = HIGHLIGHT_COLOR
+                colors[i] = self.highlight_color
             return colors, "select"
 
         if 'x1' in columns and 'y1' in columns and 'z1' in columns:

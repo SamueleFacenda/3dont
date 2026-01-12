@@ -37,8 +37,10 @@ View the `docs` directory for the user and development manual.
 - [x] investigate big point glitch
 - [x] avoid startup lag for dependency dowload
 - [x] remove viewer self tcp connection
-- [ ] use highlightColor from config
+- [x] use highlightColor from config
 - [ ] adjust create project dialog
+- [ ] plot predicate with subpredicates (path to property)
+- [ ] scalar plot of discrete result (URIs)
 - [ ] investigate segfaults on select constitutes
 - [ ] scalar templates
 - [ ] refactor input dialogs

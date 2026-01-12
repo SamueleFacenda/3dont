@@ -11,7 +11,7 @@ DEFAULT_CONFIG = {
     "visualizer": {
         "pointsSize": 0.01,
         "scalarColorScheme": "jet",
-        "highlightColor": "#FF0000",
+        "highlightColor": "FF0000",
     },
     "general": {
         "loadLastProject": True,
