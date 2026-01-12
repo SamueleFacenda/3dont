@@ -115,6 +115,14 @@ void MainLayout::plotTabular(const QStringList &header, const QStringList &rows)
 
   for (int i = 0; i < rows.size() / nVars; ++i) {
     for (int j = 0; j < nVars; ++j) {
+      if (header[j].contains("olor")) { // heuristic to detect color columns
+        QTableWidgetItem *colorItem = new QTableWidgetItem();
+        QColor color(rows[i * nVars + j]);
+        colorItem->setBackground(color);
+        tableWidget->setItem(i, j, colorItem);
+        continue;
+      }
+
       QTableWidgetItem *item = new QTableWidgetItem(rows[i * nVars + j]);
       tableWidget->setItem(i, j, item);
     }

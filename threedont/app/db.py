@@ -89,13 +89,12 @@ class SparqlBackend:
         for subject, scalar in zip(s, results_x):
             i = self.iri_to_id[subject]
             scalars[i] = scalar
-        return scalars
+        return scalars, None
 
     def convert_scalar_class_result(self, s, x):
         unique_classes = list(set(x))
         colors_list = self.get_n_classes_colors(len(unique_classes))
         class_to_color = {a:b for a, b in zip(unique_classes, colors_list)}
-
 
         if len(s) != len(set(s)):
             print("Warning: duplicate subjects in class query result, the result may be incorrect.")
@@ -107,7 +106,10 @@ class SparqlBackend:
             except KeyError:
                 continue  # not all the results of a select are points
             scalars[i] = class_to_color[cls]
-        return scalars
+
+        # TODO generalize for sparql endpoint (astype)
+        rows = [(a.astype(str),"#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))) for a,(r, g, b) in class_to_color.items()]
+        return scalars, {'header': ['class', 'color'], 'content': rows}
 
     @staticmethod
     def is_iri(value):

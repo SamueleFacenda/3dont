@@ -139,10 +139,10 @@ class Controller:
             print("No connection to server")
             return
 
-        scalars = self.sparql_client.execute_scalar_query(query)
+        scalars, legend_info = self.sparql_client.execute_scalar_query(query)
         self.viewer_client.attributes(self.sparql_client.colors, scalars)
         self.viewer_client.set(curr_attribute_id=1)
-        self._send_legend(scalars)
+        self._send_legend(scalars, legend_info)
 
     def scalar_with_predicate(self, predicatePath):
         print("Controller: ", predicatePath)
@@ -150,10 +150,10 @@ class Controller:
             print("No connection to server")
             return
 
-        scalars = self.sparql_client.execute_predicate_query(predicatePath)
+        scalars, legend_info = self.sparql_client.execute_predicate_query(predicatePath)
         self.viewer_client.attributes(self.sparql_client.colors, scalars)
         self.viewer_client.set(curr_attribute_id=1)
-        self._send_legend(scalars)
+        self._send_legend(scalars, legend_info)
 
     @report_errors_to_gui
     def load_new_pointcloud(self, project):
@@ -202,10 +202,13 @@ class Controller:
         rows = list(map(lambda r: tuple(map(str, r)), content))
         self.gui.plot_tabular(header, rows)
 
-    def _send_legend(self, scalars):
+    def _send_legend(self, scalars, legend_info=None):
         # check shape of scalars
         if len(scalars.shape) != 1:
-            print("Cannot create legend for non-scalar values")
+            if legend_info is None:
+                print("Cannot create legend for non-scalar values")
+                return
+            self.gui.plot_tabular(legend_info['header'], legend_info['content'])
             return
         minimum = float(min(scalars))
         maximum = float(max(scalars))

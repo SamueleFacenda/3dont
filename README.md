@@ -41,8 +41,9 @@ View the `docs` directory for the user and development manual.
 - [x] use scalar color scheme from config
 - [x] adjust create project dialog
 - [x] plot predicate with subpredicates (path to property)
-- [ ] scalar plot of discrete result (URIs)
+- [x] scalar plot of discrete result (URIs)
 - [ ] choose ontology per project
+- [ ] support scalar class result in nl queries
 - [ ] investigate segfaults on select constitutes
 - [ ] scalar templates
 - [ ] refactor input dialogs
