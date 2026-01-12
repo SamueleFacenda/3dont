@@ -1,6 +1,7 @@
 from time import time
 
 import numpy as np
+import colorsys
 
 from .queries import *
 from .exceptions import WrongResultFormatException
@@ -67,22 +68,64 @@ class SparqlBackend:
 
         return colors
 
-    def execute_scalar_query(self, query):
-        results = self.storage.query(query)
-        if not results.has_var('x') or not results.has_var('s'):
-            raise WrongResultFormatException(['s', 'x'], results.vars())
+    @staticmethod
+    def get_n_classes_colors(n: int):
+        gr = 0.61803398875
+        h = 0.0
+        colors = []
+        for _ in range(n):
+            h = (h + gr) % 1.0
+            colors.append(colorsys.hsv_to_rgb(h, 0.8, 0.8))
+        return colors
 
+    def convert_scalar_float_result(self, s, x):
         # convert to float
-        results_x = np.fromiter(results['x'], dtype=np.float32)
+        results_x = np.fromiter(x, dtype=np.float32)
         minimum = results_x.min()
         maximum = results_x.max()
         print("Scalar query min: ", minimum, " max: ", maximum)
         default = minimum - (maximum - minimum) / 10
         scalars = np.full(len(self.colors), default, dtype=np.float32)
-        for subject, scalar in zip(results['s'], results_x):
+        for subject, scalar in zip(s, results_x):
             i = self.iri_to_id[subject]
             scalars[i] = scalar
         return scalars
+
+    def convert_scalar_class_result(self, s, x):
+        unique_classes = list(set(x))
+        colors_list = self.get_n_classes_colors(len(unique_classes))
+        class_to_color = {a:b for a, b in zip(unique_classes, colors_list)}
+
+
+        if len(s) != len(set(s)):
+            print("Warning: duplicate subjects in class query result, the result may be incorrect.")
+
+        scalars = np.copy(self.colors)
+        for subject, cls in zip(s, x):
+            try:
+                i = self.iri_to_id[subject]
+            except KeyError:
+                continue  # not all the results of a select are points
+            scalars[i] = class_to_color[cls]
+        return scalars
+
+    @staticmethod
+    def is_iri(value):
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        if isinstance(value, np.bytes_):
+            value = value.astype(str)
+        return hasattr(value, 'startswith') and (value.startswith('http') or value.startswith('<http'))
+
+    def execute_scalar_query(self, query):
+        results = self.storage.query(query)
+        if not results.has_var('x') or not results.has_var('s'):
+            raise WrongResultFormatException(['s', 'x'], results.vars())
+
+        if self.is_iri(results['x'][0]):
+            return self.convert_scalar_class_result(results['s'], results['x'])
+
+        return self.convert_scalar_float_result(results['s'], results['x'])
 
     @staticmethod
     def uniform_iri(iri):

@@ -203,6 +203,10 @@ class Controller:
         self.gui.plot_tabular(header, rows)
 
     def _send_legend(self, scalars):
+        # check shape of scalars
+        if len(scalars.shape) != 1:
+            print("Cannot create legend for non-scalar values")
+            return
         minimum = float(min(scalars))
         maximum = float(max(scalars))
         step = (maximum - minimum) / NUMBER_OF_LABELS_IN_LEGEND
