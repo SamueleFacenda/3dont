@@ -45,6 +45,7 @@ View the `docs` directory for the user and development manual.
 - [ ] choose ontology per project
 - [ ] support scalar class result in nl queries
 - [ ] investigate segfaults on select constitutes
+- [ ] keep queries in properties buffer
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.

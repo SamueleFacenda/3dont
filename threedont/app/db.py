@@ -4,6 +4,7 @@ import numpy as np
 import colorsys
 
 from .queries import *
+from .viewer import get_color_map
 from .exceptions import WrongResultFormatException
 from .storage import StorageFactory
 from .state import Config
@@ -24,6 +25,7 @@ class SparqlBackend:
         self.coords_to_id = {}
         self.id_to_iri = []
         self.colors = None
+        self.color_map = config.get_visualizer_scalarColorScheme()
         highlight = config.get_visualizer_highlightColor()
         # convert from FF0000 to [0.1, 0.0, 0.0]
         self.highlight_color = np.array([int(highlight[i:i+2], 16) for i in (0, 2, 4)], dtype=np.float32) / 255.0
@@ -89,7 +91,8 @@ class SparqlBackend:
         for subject, scalar in zip(s, results_x):
             i = self.iri_to_id[subject]
             scalars[i] = scalar
-        return scalars, None
+        colors = get_color_map(self.color_map)
+        return scalars, scalars, colors
 
     def convert_scalar_class_result(self, s, x):
         unique_classes = list(set(x))
@@ -107,9 +110,7 @@ class SparqlBackend:
                 continue  # not all the results of a select are points
             scalars[i] = class_to_color[cls]
 
-        # TODO generalize for sparql endpoint (astype)
-        rows = [(a.astype(str),"#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))) for a,(r, g, b) in class_to_color.items()]
-        return scalars, {'header': ['class', 'color'], 'content': rows}
+        return scalars, unique_classes, colors_list
 
     @staticmethod
     def is_iri(value):

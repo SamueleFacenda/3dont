@@ -139,10 +139,10 @@ class Controller:
             print("No connection to server")
             return
 
-        scalars, legend_info = self.sparql_client.execute_scalar_query(query)
+        scalars, values, colors = self.sparql_client.execute_scalar_query(query)
         self.viewer_client.attributes(self.sparql_client.colors, scalars)
         self.viewer_client.set(curr_attribute_id=1)
-        self._send_legend(scalars, legend_info)
+        self._send_legend(values, colors)
 
     def scalar_with_predicate(self, predicatePath):
         print("Controller: ", predicatePath)
@@ -150,10 +150,10 @@ class Controller:
             print("No connection to server")
             return
 
-        scalars, legend_info = self.sparql_client.execute_predicate_query(predicatePath)
+        scalars, values, colors = self.sparql_client.execute_predicate_query(predicatePath)
         self.viewer_client.attributes(self.sparql_client.colors, scalars)
         self.viewer_client.set(curr_attribute_id=1)
-        self._send_legend(scalars, legend_info)
+        self._send_legend(values, colors)
 
     @report_errors_to_gui
     def load_new_pointcloud(self, project):
@@ -202,22 +202,19 @@ class Controller:
         rows = list(map(lambda r: tuple(map(str, r)), content))
         self.gui.plot_tabular(header, rows)
 
-    def _send_legend(self, scalars, legend_info=None):
-        # check shape of scalars
-        if len(scalars.shape) != 1:
-            if legend_info is None:
-                print("Cannot create legend for non-scalar values")
-                return
-            self.gui.plot_tabular(legend_info['header'], legend_info['content'])
-            return
-        minimum = float(min(scalars))
-        maximum = float(max(scalars))
-        step = (maximum - minimum) / NUMBER_OF_LABELS_IN_LEGEND
-        # TODO better float format
-        labels = [f"{minimum + step * i:.2f}" for i in range(NUMBER_OF_LABELS_IN_LEGEND)]
-        colors = get_color_map(self.config.get_visualizer_scalarColorScheme())
-        # it's a numpy array of shape (N, 3), convert to list of hex colors
+    def _send_legend(self, values, colors):
         colors = ["#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255)) for (r, g, b) in colors]
+        # check if inputs is labeled colors or not
+        if len(values) == len(colors):
+            values = [str(v) for v in values]
+            rows = list(zip(values, colors))
+            self.gui.plot_tabular(['Label', 'Color'], rows)
+            return
+        minimum = float(min(values))
+        maximum = float(max(values))
+        step = (maximum - minimum) / NUMBER_OF_LABELS_IN_LEGEND
+        labels = [f"{minimum + step * i:.2f}" for i in range(NUMBER_OF_LABELS_IN_LEGEND)]
+        # it's a numpy array of shape (N, 3), convert to list of hex colors
         self.gui.set_legend(colors, labels)
 
     @report_errors_to_gui
