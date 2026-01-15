@@ -43,7 +43,7 @@ static PyObject *PyQlever_setup_storage(PyQleverObject *self, PyObject *args, Py
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &identifier))
     return nullptr;
 
-  self->config->inputFiles_.emplace_back(std::string(""), qlever::Filetype::NQuad, identifier, false);
+  self->config->inputFiles_.emplace_back(std::string(""), qlever::Filetype::NQuad, identifier, false, true);
 
   Py_RETURN_NONE;
 }
