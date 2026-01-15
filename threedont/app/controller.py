@@ -308,7 +308,7 @@ class Controller:
             header = result.vars()
             content = result.tuple_iterator(header)
             rows = list(map(lambda r: tuple(map(str, r)), content))
-            self.gui.plot_tabular(result[0], rows)
+            self.gui.plot_tabular(header, rows)
         elif query_type == "scalar":
             self.viewer_client.attributes(self.sparql_client.colors, result)
             self.viewer_client.set(curr_attribute_id=1)
