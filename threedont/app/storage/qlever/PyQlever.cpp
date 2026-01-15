@@ -103,6 +103,8 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args) {
   }
 
   bool indexBuild = true;
+  std::string err;
+
   Py_BEGIN_ALLOW_THREADS
 
   try {
@@ -110,14 +112,16 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args) {
     self->qlever = new qlever::Qlever(qlever::EngineConfig(*self->config));
   } catch (const std::exception& e) {
     std::cerr << "Building the index failed: " << e.what() << std::endl;
-    PyErr_SetString(PyExc_RuntimeError, e.what());
+    err = e.what();
     indexBuild = false;
   }
 
   Py_END_ALLOW_THREADS
 
-  if (!indexBuild)
+  if (!indexBuild) {
+    PyErr_SetString(PyExc_RuntimeError, err.c_str());
     return nullptr;
+  }
 
   Py_RETURN_NONE;
 }

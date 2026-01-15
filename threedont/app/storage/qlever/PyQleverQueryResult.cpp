@@ -120,6 +120,8 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
   std::string result;
   std::ostringstream logStream;
   bool success = true;
+  std::string err;
+  PyObject* excType = nullptr;
 
   Py_BEGIN_ALLOW_THREADS
   ad_utility::LogstreamChoice::get().setStream(&logStream);
@@ -128,16 +130,20 @@ static PyObject *PyQleverQueryResult_perform_query(PyQleverQueryResultObject *se
   try {
     result = self->qlever->query(queryStr, ad_utility::MediaType::csv);
   } catch (const std::exception& e) {
-    PyErr_SetString(PyExc_ValueError, e.what());
+    excType = PyExc_ValueError;
+    err = e.what();
     success = false;
   } catch (...) {
-    PyErr_SetString(PyExc_RuntimeError, "Unknown error during query execution");
+    excType = PyExc_RuntimeError;
+    err = "Unknown error during query execution";
     success = false;
   }
   Py_END_ALLOW_THREADS
 
-  if (!success)
+  if (!success) {
+    PyErr_SetString(excType, err.c_str());
     return nullptr;
+  }
 
   ad_utility::LogstreamChoice::get().setStream(&std::cout); // reset log stream
   auto [rows, cols] = getResultShape(logStream.str());
