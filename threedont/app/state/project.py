@@ -79,6 +79,8 @@ class Project(AbstractConfig):
             path = assets_folder / "Heritage_Ontology.rdf"
         elif "urban" in namespace:
             path = assets_folder / "Urban_Ontology.rdf"
+        elif "core" in namespace:
+            path = assets_folder / "3DOntCore.rdf"
         else:
             raise Exception("Namespace not recognized: " + namespace)  # TODO make better
         if not path.exists():
