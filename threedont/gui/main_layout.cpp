@@ -113,17 +113,28 @@ void MainLayout::plotTabular(const QStringList &header, const QStringList &rows)
   tableWidget->verticalHeader()->setVisible(false);
   tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
+  std::vector<bool> isColorColumn(nVars, false);
+  for (int j = 0; j < nVars; ++j) {
+    if (header[j].contains("olor")) // heuristic to detect color columns
+      isColorColumn[j] = true;
+  }
+
   for (int i = 0; i < rows.size() / nVars; ++i) {
     for (int j = 0; j < nVars; ++j) {
-      if (header[j].contains("olor")) { // heuristic to detect color columns
-        QTableWidgetItem *colorItem = new QTableWidgetItem();
+        QTableWidgetItem *item = new QTableWidgetItem();
+      if (isColorColumn[j]) {
         QColor color(rows[i * nVars + j]);
-        colorItem->setBackground(color);
-        tableWidget->setItem(i, j, colorItem);
-        continue;
+        item->setBackground(color);
       }
+      QString content = rows[i * nVars + j];
+      if (content.contains('#'))
+        // split by #, remove prefix of URI
+        content = content.split('#')[1];
 
-      QTableWidgetItem *item = new QTableWidgetItem(rows[i * nVars + j]);
+      if (content.endsWith("'"))
+        content = content.left(content.length() - 1);
+
+      item->setText(content);
       tableWidget->setItem(i, j, item);
     }
   }
