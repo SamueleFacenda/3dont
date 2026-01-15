@@ -75,23 +75,11 @@ def add_commas_and_quotes(parsed_query):
     return parsed_query
 
 
-def remove_point_classes(ontology_schema, class_list):
-    classes_to_be_removed = []
-    for cl in class_list:
-        if cl != ontology_schema.Points.name:
-            if cl in [cl.name for cl in list(ontology_schema.Points.descendants())]:
-                classes_to_be_removed.append(cl)
-    for cl in classes_to_be_removed:
-        class_list.remove(cl)
-    return class_list
-
-
 def parse_ontology_schema(
         ontology_schema,
 ):  # it expects an already loaded ontology object. it returns a list of lists containing the string names of the various resources of the ontology schema
 
     class_list = [x.name for x in ontology_schema.classes()]
-    class_list = remove_point_classes(ontology_schema, class_list)
     data_prop_list = [x.name for x in ontology_schema.data_properties()]
     relationships_list = [x.name for x in ontology_schema.object_properties()]
     individuals_list = [x.name for x in ontology_schema.individuals()]
@@ -673,9 +661,9 @@ def single_paths_annotation(query_subgraph, ML1, ML2, base):
     for occurrence_row in ML2:
         root_word = occurrence_row[1]
         occurrence = occurrence_row[0]
-        # controllo se la root word, nell'ontologia, è una sottoclasse di Points
+        # controllo se la root word, nell'ontologia, è una sottoclasse di Point
         ont_obj = getattr(base, f"{root_word}")
-        if ont_obj in base.Points.descendants() and all(
+        if ont_obj in base.Point.descendants() and all(
                 coordinate_occurrence not in occurrence_row[2]
                 for coordinate_occurrence in ["x1", "y1", "z1"]
         ):
