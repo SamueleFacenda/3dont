@@ -41,9 +41,10 @@ View the `docs` directory for the user and development manual.
 - [x] use scalar color scheme from config
 - [x] adjust create project dialog
 - [x] plot predicate with subpredicates (path to property)
-- [ ] scalar plot of discrete result (URIs)
-- [ ] choose ontology per project
-- [ ] investigate segfaults on select constitutes
+- [x] scalar plot of discrete result (URIs)
+- [x] investigate segfaults on select constitutes (wrong input numrows)
+- [ ] keep queries in properties buffer (harder than expected)
+- [ ] support scalar class result in nl queries
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.

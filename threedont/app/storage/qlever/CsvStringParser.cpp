@@ -112,8 +112,7 @@ void CsvStringParser::parse() {
   for (auto& worker : workers)
     worker.join();
 
-  if (rows == -1)
-    computeNumRows();
+  computeNumRows(); // input num rows is not reliable!!
   Py_END_ALLOW_THREADS
   merge();
 }
