@@ -48,6 +48,30 @@ bool PointAttributes::set(const std::vector<char> &data, const Octree &octree) {
   return true;
 }
 
+bool PointAttributes::append(const std::vector<char> &data, const Octree &octree) {
+  // append to existing attributes
+  unsigned int num_points = octree.getNumPoints();
+  size_t prev_attr_size = _attr.size();
+
+  // fill in _attr* arrays
+  if (!_unpack_append(data, num_points)) return false;
+
+  // nothing to do if there are no points in octree
+  if (num_points == 0) return true;
+
+  // for each attribute set
+  for (std::size_t i = prev_attr_size; i < _attr.size(); i++) {
+    if (_attr_size[i] == 1) continue;
+
+    // reorder attributes according to octree
+    _reorder(i, octree);
+
+    // compute LOD averages
+    _compute_LOD(i, octree);
+  }
+  return true;
+}
+
 void PointAttributes::reset() {
   _attr.clear();
   _attr_size.clear();
@@ -132,6 +156,40 @@ bool PointAttributes::_unpack(const std::vector<char> &data, unsigned int expect
   _attr.swap(attr);
   _attr_size.swap(attr_size);
   _attr_dim.swap(attr_dim);
+  return true;
+}
+
+bool PointAttributes::_unpack_append(const std::vector<char> &data, unsigned int expected_size) {
+  if (data.empty()) return false;
+
+  // initialize ptr into data stream
+  const char *ptr = (char *) &data[0];
+  const char *ptr_end = ptr + data.size();
+
+  // get number of attribute sets
+  quint64 num_attr;
+  if (!_unpack_number(num_attr, ptr, ptr_end)) return false;
+
+  // parse attribute sets
+  size_t base = _attr.size();
+  _attr.resize(_attr.size() + num_attr);
+  _attr_size.resize(_attr_size.size() + num_attr);
+  _attr_dim.resize(_attr_dim.size() + num_attr);
+  for (quint64 i = base; i < base + num_attr; i++) {
+    // record attribute size of current set
+    if (!_unpack_number(_attr_size[i], ptr, ptr_end)) return false;
+    if (_attr_size[i] != expected_size && _attr_size[i] != 1) return false;
+
+    // record attribute dimension of current set
+    if (!_unpack_number(_attr_dim[i], ptr, ptr_end)) return false;
+
+    // record attribute values
+    _attr[i].resize(_attr_size[i] * _attr_dim[i]);
+    if (!_unpack_array(_attr[i], ptr, ptr_end)) return false;
+  }
+  // _attr.swap(attr);
+  // _attr_size.swap(attr_size);
+  // _attr_dim.swap(attr_dim);
   return true;
 }
 

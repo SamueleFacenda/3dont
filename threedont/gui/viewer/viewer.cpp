@@ -522,6 +522,21 @@ QByteArray Viewer::processCommand(const char* msg, size_t len) {
       updateSlow();
       break;
     }
+    case 11: { // append point attributes
+      //  receive length of payload
+      quint64 payloadLength = *(quint64*) msg;
+      msg += sizeof(quint64);
+
+      // receive payload
+      std::vector<char> payload(msg, msg + payloadLength);
+
+      makeCurrent();
+      _points->loadAttributes(payload);
+      _points->appendAttributes(payload);
+      doneCurrent();
+      updateSlow();
+      break;
+    }
     default: // unrecognized message type
       break;
       // do nothing
