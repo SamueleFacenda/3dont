@@ -43,7 +43,14 @@ static PyObject *PyQlever_setup_storage(PyQleverObject *self, PyObject *args, Py
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &identifier))
     return nullptr;
 
-  self->config->inputFiles_.emplace_back(std::string(""), qlever::Filetype::NQuad, identifier, false, true);
+  // parallel parsing on macos is broken (some locks undefined behaviours that works on linux but not on macos)
+#ifdef linux
+  bool parallelParsing = true;
+#else
+  bool parallelParsing = false;
+#endif
+
+  self->config->inputFiles_.emplace_back(std::string(""), qlever::Filetype::NQuad, identifier, parallelParsing, true);
 
   Py_RETURN_NONE;
 }
@@ -87,7 +94,6 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "s", &filePath))
     return nullptr;
 
-  // Requires the input in N-Quad format for now
   self->config->inputFiles_[0].filename_ = std::string(filePath);
   // check extension (nquad or turtle)
   std::string extension = std::filesystem::path(filePath).extension().string();
