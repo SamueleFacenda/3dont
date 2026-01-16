@@ -211,7 +211,7 @@ class SparqlBackend:
         # TODO refactor
         result = self.storage.query(query)
         columns = result.vars()
-        if 'x1' in columns and 'y1' in columns and 'z1' in columns:
+        if 'x1' in columns and 'y1' in columns and 'z1' in columns and len(columns) == 3:
             # select query
             print("Detected select query, columns: ", columns)
             colors = np.copy(self.colors)
@@ -220,20 +220,19 @@ class SparqlBackend:
                 try:
                     i = self.coords_to_id[tuple(coord)]
                 except KeyError:
+                    print("Coordinate not found in point cloud (very strange): ", coord)
                     continue  # not all the results of a select are points
                 colors[i] = self.highlight_color
             return colors, "select"
 
         if 'x1' in columns and 'y1' in columns and 'z1' in columns:
             print("Detected scalar query, columns: ", columns)
-            minimum = float(min(result['x1']))
-            maximum = float(max(result['x1']))
-            default = minimum - (maximum - minimum) / 10
-            scalars = np.full(len(self.colors), default, dtype=np.float32)
+            scalar_col = [col for col in columns if col not in ('x1', 'y1', 'z1')][0]
             coords = np.array((result['x1'], result['y1'], result['z1'])).T.astype(np.float32)
-            for coord, scalar in zip(coords, result['x1']):
-                i = self.coords_to_id[tuple(coord)]
-                scalars[i] = scalar
-            return scalars, "scalar"
+            ids = [self.coords_to_id[tuple(coord)] for coord in coords]
+            if self.is_iri(result[scalar_col][0]):
+                return self.convert_scalar_class_result(ids, result[scalar_col]), "scalar"
+
+            return self.convert_scalar_float_result(ids, result[scalar_col]), "scalar"
 
         return result, "tabular"

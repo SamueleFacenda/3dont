@@ -315,9 +315,10 @@ class Controller:
             rows = list(map(lambda r: tuple(map(str, r)), content))
             self.gui.plot_tabular(header, rows)
         elif query_type == "scalar":
-            self.viewer_client.attributes(self.sparql_client.colors, result)
+            scalars, values, colors = result
+            self.viewer_client.attributes(self.sparql_client.colors, scalars)
             self.viewer_client.set(curr_attribute_id=1)
-            self._send_legend(result)
+            self._send_legend(values, colors)
         elif query_type == "select":
             self.viewer_client.attributes(self.sparql_client.colors, result)
             self.viewer_client.set(curr_attribute_id=1)
