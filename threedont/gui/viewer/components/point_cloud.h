@@ -23,6 +23,7 @@ public:
   void loadPoints(std::vector<float> &positions);
   void clearPoints();
   void loadAttributes(const std::vector<char> &data);
+  void appendAttributes(const std::vector<char> &data);
   void loadAttributes(const std::vector<float> &attr, quint64 attr_size, quint64 attr_dim);
   void clearAttributes();
 

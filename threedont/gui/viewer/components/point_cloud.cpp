@@ -110,6 +110,10 @@ void PointCloud::loadAttributes(const std::vector<char> &data) {
   initColors();
 }
 
+void PointCloud::appendAttributes(const std::vector<char> &data) {
+  _attributes.append(data, _octree);
+}
+
 void PointCloud::loadAttributes(const std::vector<float> &attr, quint64 attr_size, quint64 attr_dim) {
   _attributes.set(attr, attr_size, attr_dim);
   initColors();

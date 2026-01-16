@@ -19,6 +19,7 @@ public:
 
   bool set(const std::vector<float> &attr, quint64 attr_size, quint64 attr_dim);
   bool set(const std::vector<char> &data, const Octree &octree);
+  bool append(const std::vector<char> &data, const Octree &octree);
   void reset();
 
   const std::vector<float> &operator[](int i) const;
@@ -33,6 +34,7 @@ public:
 
 private:
   bool _unpack(const std::vector<char> &data, unsigned int expected_size);
+  bool _unpack_append(const std::vector<char> &data, unsigned int expected_size);
   void _reorder(std::size_t attr_idx, const Octree &octree);
   void _compute_LOD(std::size_t attr_idx, const Octree &octree);
   void _compute_rgba_LOD_helper(std::size_t attr_idx, const Octree::Node *node);
