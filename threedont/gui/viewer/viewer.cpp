@@ -531,7 +531,6 @@ QByteArray Viewer::processCommand(const char* msg, size_t len) {
       std::vector<char> payload(msg, msg + payloadLength);
 
       makeCurrent();
-      _points->loadAttributes(payload);
       _points->appendAttributes(payload);
       doneCurrent();
       updateSlow();

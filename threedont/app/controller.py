@@ -129,8 +129,8 @@ class Controller:
             return
 
         selected_colors = self.sparql_client.execute_select_query(query)
-        self.viewer_client.attributes(self.sparql_client.colors, selected_colors)
-        self.viewer_client.set(curr_attribute_id=1)
+        self.viewer_client.attributes(selected_colors, append=True)
+        self.viewer_client.set(curr_attribute_id=self.viewer_client.get('num_attributes')[0]-1)
 
     @report_errors_to_gui
     def scalar_query(self, query):
@@ -140,8 +140,8 @@ class Controller:
             return
 
         scalars, values, colors = self.sparql_client.execute_scalar_query(query)
-        self.viewer_client.attributes(self.sparql_client.colors, scalars)
-        self.viewer_client.set(curr_attribute_id=1)
+        self.viewer_client.attributes(scalars, append=True)
+        self.viewer_client.set(curr_attribute_id=self.viewer_client.get('num_attributes')[0]-1)
         self._send_legend(values, colors)
 
     def scalar_with_predicate(self, predicatePath):
@@ -151,8 +151,8 @@ class Controller:
             return
 
         scalars, values, colors = self.sparql_client.execute_predicate_query(predicatePath)
-        self.viewer_client.attributes(self.sparql_client.colors, scalars)
-        self.viewer_client.set(curr_attribute_id=1)
+        self.viewer_client.attributes(scalars, append=True)
+        self.viewer_client.set(curr_attribute_id=self.viewer_client.get('num_attributes')[0]-1)
         self._send_legend(values, colors)
 
     @report_errors_to_gui
@@ -193,8 +193,8 @@ class Controller:
 
     def select_all_subjects(self, predicates, object):
         selected_colors = self.sparql_client.select_all_subjects(predicates, object)
-        self.viewer_client.attributes(self.sparql_client.colors, selected_colors)
-        self.viewer_client.set(curr_attribute_id=1)
+        self.viewer_client.attributes(selected_colors, append=True)
+        self.viewer_client.set(curr_attribute_id=self.viewer_client.get('num_attributes')[0]-1)
 
     @report_errors_to_gui
     def tabular_query(self, query):
@@ -316,12 +316,12 @@ class Controller:
             self.gui.plot_tabular(header, rows)
         elif query_type == "scalar":
             scalars, values, colors = result
-            self.viewer_client.attributes(self.sparql_client.colors, scalars)
-            self.viewer_client.set(curr_attribute_id=1)
+            self.viewer_client.attributes(scalars, append=True)
+            self.viewer_client.set(curr_attribute_id=self.viewer_client.get('num_attributes')[0]-1)
             self._send_legend(values, colors)
         elif query_type == "select":
-            self.viewer_client.attributes(self.sparql_client.colors, result)
-            self.viewer_client.set(curr_attribute_id=1)
+            self.viewer_client.attributes(result, append=True)
+            self.viewer_client.set(curr_attribute_id=self.viewer_client.get('num_attributes')[0]-1)
         else:
             print("Error, unknown query type: ", query_type)  # TODO remove, shouldn't happen
 
