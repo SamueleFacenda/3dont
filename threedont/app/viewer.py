@@ -560,6 +560,12 @@ def _init_color_maps():
          [0, 1, 0],
          [1, 1, 0],
          [1, 0, 0]], dtype=numpy.float32)
+    _color_maps['jet_pastel'] = numpy.array(
+        [[0.16, 0.16, 0.8],
+         [0.16, 0.8, 0.8],
+        [0.16, 0.8, 0.16],
+        [0.8, 0.8, 0.16],
+        [0.8, 0.16, 0.16]], dtype=numpy.float32)
     _color_maps['hsv'] = numpy.array(
         [[1, 0, 0],
          [0, 1, 0],
