@@ -21,6 +21,8 @@ public:
                           QWidget *parent = nullptr)
       : QDialog(parent) {
 
+    QStringList sortedOptions = options;
+    sortedOptions.sort();
     setWindowTitle("Manual Mapping");
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
@@ -36,7 +38,7 @@ public:
     for (int i = 0; i < words.size(); ++i) {
       auto *wordLabel = new QLabel(words[i], this);
       auto *comboBox = new QComboBox(this);
-      comboBox->addItems(options);
+      comboBox->addItems(sortedOptions);
       if (defaults.size() > i)
         comboBox->setCurrentText(defaults[i]);
       else
