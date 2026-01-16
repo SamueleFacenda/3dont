@@ -90,7 +90,7 @@ void CsvStringParser::computeNumRows() {
 void CsvStringParser::parse() {
   Py_BEGIN_ALLOW_THREADS
   std::vector<std::thread> workers;
-  int chunkSize = length / threadsCount;
+  size_t chunkSize = length / threadsCount;
   int chunkRows = rows / threadsCount; // only a rough estimate
   for (int threadId = 0; threadId < threadsCount; threadId++) {
     if (rows != -1) { // preallocate only if we know the number of rows
@@ -105,8 +105,8 @@ void CsvStringParser::parse() {
       }
     }
 
-    int start = threadId * chunkSize;
-    int end = (threadId == threadsCount - 1) ? length : (threadId + 1) * chunkSize;
+    size_t start = threadId * chunkSize;
+    size_t end = (threadId == threadsCount - 1) ? length : (threadId + 1) * chunkSize;
     workers.emplace_back(&CsvStringParser::worker, this, threadId, start, end);
   }
   for (auto& worker : workers)
@@ -117,7 +117,7 @@ void CsvStringParser::parse() {
   merge();
 }
 
-void CsvStringParser::worker(int threadId, int start, int end) {
+void CsvStringParser::worker(int threadId, size_t start, size_t end) {
   char const *current = const_cast<char *>(data) + start; // move to start row
   if (threadId != 0) {
     while (*current++ != '\n'); // move to next line

@@ -43,8 +43,8 @@ View the `docs` directory for the user and development manual.
 - [x] plot predicate with subpredicates (path to property)
 - [x] scalar plot of discrete result (URIs)
 - [x] investigate segfaults on select constitutes (wrong input numrows)
+- [x] support scalar class result in nl queries
 - [ ] keep queries in properties buffer (harder than expected)
-- [ ] support scalar class result in nl queries
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.

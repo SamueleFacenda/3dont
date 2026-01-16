@@ -13,7 +13,7 @@
 class CsvStringParser {
 public:
   CsvStringParser(const std::string& csvString, int resultLen, int numCols)
-      : data(csvString.data()), length(static_cast<int>(csvString.size())),
+      : data(csvString.data()), length(csvString.size()),
         rows(resultLen), cols(numCols) {
     init();
   }
@@ -23,7 +23,8 @@ public:
   std::vector<bool> getIsStringColumn() const { return isStringColumn; }
 private:
   const char* data;
-  int length, rows, cols, threadsCount;
+  size_t length;
+  int rows, cols, threadsCount;
   std::vector<std::vector<std::vector<const char*>>> stringColumns; // [col][thread][rel row]
   std::vector<std::vector<std::vector<size_t>>> stringLengths;
   std::vector<std::vector<std::vector<float>>> floatColumns;
@@ -31,7 +32,7 @@ private:
   std::vector<std::string> colNames;
   std::vector<PyObject*> result;
 
-  void worker(int threadId, int start, int end);
+  void worker(int threadId, size_t start, size_t end);
   void merge();
   void computeNumRows();
   PyObject* mergeStringColumn(int col);
