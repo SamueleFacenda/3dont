@@ -203,6 +203,7 @@ class Controller:
         self.gui.plot_tabular(header, rows)
 
     def _send_legend(self, values, colors):
+        self.viewer_client.set(color_map_scale=[0,0]) # reset scale
         colors = ["#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255)) for (r, g, b) in colors]
         # check if inputs is labeled colors or not
         if len(values) == len(colors):
