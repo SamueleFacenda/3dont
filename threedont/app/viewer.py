@@ -145,7 +145,7 @@ class Viewer:
         self.attributes(*attr)
         self.color_map(color_map, scale)
 
-    def attributes(self, *attr):
+    def attributes(self, *attr, append=False):
         """ Loads point attributes
 
         The loaded attributes are used to color the currently loaded point
@@ -195,7 +195,7 @@ class Viewer:
             else:
                 raise ValueError('%d-th ' % i +
                                  'attribute array shape is not supported')
-        msg = struct.pack('b', 10) + struct.pack('Q', len(msg)) + msg
+        msg = struct.pack('b', 11 if append else 10) + struct.pack('Q', len(msg)) + msg
         self.__send(msg)
 
     def color_map(self, c, scale=None):
