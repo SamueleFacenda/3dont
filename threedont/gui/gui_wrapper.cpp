@@ -115,7 +115,7 @@ static PyObject *GuiWrapper_run(GuiWrapperObject *self, PyObject *args) {
 
   qDebug() << "GUI event loop exited";
 
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *GuiWrapper_view_node_details(GuiWrapperObject *self, PyObject *args) {
@@ -158,7 +158,7 @@ static PyObject *GuiWrapper_view_node_details(GuiWrapperObject *self, PyObject *
   QString parentIdString = QString(parentId);
 
   QMetaObject::invokeMethod(self->mainLayout, "displayNodeDetails", Qt::QueuedConnection, Q_ARG(QStringList, detailsList), Q_ARG(QString, parentIdString));
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *GuiWrapper_plot_tabular(GuiWrapperObject *self, PyObject *args) {
@@ -201,7 +201,7 @@ static PyObject *GuiWrapper_plot_tabular(GuiWrapperObject *self, PyObject *args)
   }
 
   QMetaObject::invokeMethod(self->mainLayout, "plotTabular", Qt::QueuedConnection, Q_ARG(QStringList, headerList), Q_ARG(QStringList, rowsList));
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *GuiWrapper_set_statusbar_content(GuiWrapperObject *self, PyObject *args) {
@@ -216,7 +216,7 @@ static PyObject *GuiWrapper_set_statusbar_content(GuiWrapperObject *self, PyObje
     return nullptr;
 
   QMetaObject::invokeMethod(self->mainLayout, "setStatusbarContent", Qt::QueuedConnection, Q_ARG(QString, QString(content)), Q_ARG(int, seconds));
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *GuiWrapper_set_query_error(GuiWrapperObject *self, PyObject *args) {
@@ -230,7 +230,7 @@ static PyObject *GuiWrapper_set_query_error(GuiWrapperObject *self, PyObject *ar
     return nullptr;
 
   QMetaObject::invokeMethod(self->mainLayout, "setQueryError", Qt::QueuedConnection, Q_ARG(QString, QString(error)));
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *GuiWrapper_set_legend(GuiWrapperObject *self, PyObject *args) {
@@ -254,7 +254,7 @@ static PyObject *GuiWrapper_set_legend(GuiWrapperObject *self, PyObject *args) {
     return nullptr; // Error already set in pyListToQStringList
 
   QMetaObject::invokeMethod(self->mainLayout, "setLegend", Qt::QueuedConnection, Q_ARG(QStringList, colors), Q_ARG(QStringList, labels));
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *GuiWrapper_set_project_list(GuiWrapperObject *self, PyObject *args) {
@@ -273,7 +273,7 @@ static PyObject *GuiWrapper_set_project_list(GuiWrapperObject *self, PyObject *a
     return nullptr; // Error already set in pyListToQStringList
 
   QMetaObject::invokeMethod(self->mainLayout, "setProjectList", Qt::QueuedConnection, Q_ARG(QStringList, projects));
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *GuiWrapper_get_properties_mapping(GuiWrapperObject *self, PyObject *args) {
