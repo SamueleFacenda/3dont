@@ -452,13 +452,12 @@ def onto_to_graph(
             subj_name = get_local_name(subj)
             pred_name = get_local_name(pred)
             obj_name = get_local_name(obj)
-            print(f"discarded standard triple:{subj_name},{pred_name},{obj_name}")
+            
             continue
         # Get local names for the subject, predicate, and object
         subj_name = get_local_name(subj)
         pred_name = get_local_name(pred)
         obj_name = get_local_name(obj)
-        print(f"considering triple:{subj_name},{pred_name},{obj_name}")
 
         if pred in standard_properties:
             # Add nodes with local names and treat standard properties as edges
@@ -467,11 +466,6 @@ def onto_to_graph(
             if obj_name not in G:
                 G.add_node(obj_name, label=obj_name)
             G.add_edge(subj_name, obj_name, label=pred_name)
-            print(f"added triple:{subj_name},{pred_name},{obj_name}")
-
-        else:
-            print(f"ignored triple:{subj_name},{pred_name},{obj_name}")
-
     """
     pos = nx.spring_layout(G)
     nx.draw(
@@ -1648,9 +1642,11 @@ def find_object_declaration(relationship_instance, ML2, triples_rdf_list):
     for row in ML2:
         if row[0] == relationship_instance:
             object = row[3][1]
+            break
     for row in ML2:
-        if row[0] == object:
+        if row[0] == str(object):
             rt_obj = row[1]
+            break
     for index, triple_with_metadata in enumerate(triples_rdf_list):
         if (triple_with_metadata[1], triple_with_metadata[2]) == (object, rt_obj):
             obj_declaration = triple_with_metadata
@@ -1670,6 +1666,18 @@ def find_data_variable_declaration(property_instance, ML2, triples_rdf_list):
             var_declaration = triple_with_metadata
             break
     return var_declaration, index
+
+def flatten_iter(x):
+    out = []
+    stack = [x]
+    while stack:
+        cur = stack.pop()
+        if isinstance(cur, list):
+            # per mantenere l'ordine originale
+            stack.extend(reversed(cur))
+        else:
+            out.append(cur)
+    return out
 
 
 def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1):
@@ -1694,7 +1702,7 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                                             path_list.append(path_with_metadata)
                                             break
                                 elif type(log_op_row[1]) == str:  # inner or
-                                    conditions = log_op_row[2]
+                                    conditions = flatten_iter(log_op_row[2])
                                     occurrence = log_op_row[1]
                                     ##############################################
                                     for filter in filters_list:
@@ -1725,6 +1733,7 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                             occurrence = path_with_metadata[2]
                             if occurrence == negatum:
                                 path_list.append(path_with_metadata)
+                                print("PATH WITH META FOUND FOR NEGATED RELATIONSHIP: ", str(path_with_metadata))
                                 if (
                                         check_for_occ_type(occurrence, ML2, ML1)
                                         == "relationship"
@@ -1732,8 +1741,10 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                                     path_with_meta, _ = find_object_declaration(
                                         occurrence, ML2, triples_rdf_list
                                     )
-                                    path_list.append(path_with_meta)
-                                    object_declaration_path_list.append(path_with_meta)
+                                    if path_with_meta is not None:  # IF IT IS NONE THEN THE OBJECT IS AN INDIVIDUAL AND AS SUCH HAS NO CLASS DECLARATION
+                                        path_list.append(path_with_meta)
+                                        print("PATH WITH META FOUND FOR NEGATED OBJECT DECLARATION: ", str(path_with_meta))
+                                        object_declaration_path_list.append(path_with_meta)
                                 break
                 if type(negatum) == list:
                     if len(negatum) == 2:
@@ -1780,7 +1791,9 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                                 filter_temp_list.append(filter)
                                 """
             temp_path = ["FILTER NOT EXISTS {"]
+            print("ASSEMBLING NEGATED PATH: ", str(path_list))
             for path_with_metadata in path_list:
+                print("PROCESSING PATH WITH META: ", str(path_with_metadata))
                 if not (path_with_metadata in object_declaration_path_list):
                     triples_rdf_list.remove(path_with_metadata)
                 for triple in path_with_metadata[0]:
@@ -1847,7 +1860,7 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
             for filter in filter_temp_list:
                 temp_path.append(filter)
             temp_path.append("}")
-            temp_path = list(set(temp_path))
+            print("NEGATED PATH ASSEMBLED: ", str(temp_path))
             triples_rdf_list.append([temp_path, None, logical_operator])
         # caso 1: INNER PROPERTY OR (qui uso ||) [ora supporta anche blocchi conjuncted, ottimi per intervalli]
         elif "OR" in logical_operator and type(logical_operator_row[1]) == str:
@@ -1968,7 +1981,6 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                         new_filter = new_filter + ")"
 
             filters_list.append(new_filter)
-
             for filter in direct_temp_filter_list:
                 if filter in filters_list:
                     filters_list.remove(filter)
@@ -1993,6 +2005,7 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                                         for path_with_metadata in triples_rdf_list:
                                             occurrence = path_with_metadata[2]
                                             if occurrence == element:
+                                                print("APPENDING NESTED OR/NOT PATH WITH META: ", str(path_with_metadata))
                                                 branch_path_list.append(
                                                     path_with_metadata
                                                 )
@@ -2000,7 +2013,7 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                                                     path_with_metadata
                                                 )
                                     elif type(log_op_row[1]) == str:  # inner or
-                                        conditions = log_op_row[2]
+                                        conditions = flatten_iter(log_op_row[2])
                                         occurrence = log_op_row[1]
                                         for filter in filters_list:
                                             if all(
@@ -2026,7 +2039,7 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                                                     """
                         else:
                             for path_with_metadata in triples_rdf_list:
-                                occurrence = path_with_metadata[2]
+                                occurrence = path_with_metadata[2]                             
                                 if occurrence == element:
                                     branch_path_list.append(path_with_metadata)
                                     temp_path_list.append(path_with_metadata)
@@ -2037,7 +2050,8 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                                         path_with_meta, _ = find_object_declaration(
                                             occurrence, ML2, triples_rdf_list
                                         )
-                                        branch_path_list.append(path_with_meta)
+                                        if path_with_meta is not None: # IF IT IS NONE THEN THE OBJECT IS AN INDIVIDUAL AND AS SUCH HAS NO CLASS DECLARATION
+                                            branch_path_list.append(path_with_meta)
                                         # temp_path_list.append(path_with_meta) COMMENTO PERCHè NON VOGLIO CHE IL PATH DELLA DICHIARAZIONE DI VARIABILE DI ISTANZA VENGA ELIMINATO DAL CORPO CENTRALE DELLA QUERY
                                     break
                     if type(element) == list:
@@ -2090,6 +2104,7 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                                     branch_filter_temp_list.append(filter)
                                     """
                 if i == 1:
+                    print("BUILDING FIRST BRANCH OF UNION: " + str(branch_path_list))
                     new_path.append("{")
                     for path_with_metadata in branch_path_list:
                         for triple in path_with_metadata[0]:
@@ -2236,7 +2251,22 @@ def logical_operators_applications(ML3, filters_list, triples_rdf_list, ML2, ML1
                     for filter in branch_filter_temp_list:
                         new_path.append(filter)
                     new_path.append("}")
-            new_path = list(set(new_path))
+            # qui rimuovo duplicati che non siano parentesi oppure UNION
+            control = []
+            remove = []
+            filter_not_exists_flag = False
+            for line in new_path:
+                if "FILTER NOT EXISTS {" in line:
+                    filter_not_exists_flag = True
+                if line == "}" and filter_not_exists_flag == True:
+                    filter_not_exists_flag = False
+                if line in control and line not in ["{", "}", "UNION"] and filter_not_exists_flag == False:
+                    remove.append(line)
+                if line not in control and line not in ["{", "}", "UNION"] and filter_not_exists_flag == False:
+                    control.append(line)
+            for line in remove:
+                new_path.remove(line)
+            new_path = list(new_path)
             triples_rdf_list.append([new_path, None, logical_operator])
             for path_with_metadata in temp_path_list:
                 if path_with_metadata in triples_rdf_list:
@@ -2313,6 +2343,8 @@ def having_clean(grouping_list):
     return grouping_list
 
 
+
+
 def generate_query(
         query_head, triples_rdf_list, filters_list, grouping_list, superlatives_list
 ):
@@ -2330,6 +2362,41 @@ def generate_query(
         query.append(row)
     for row in superlatives_list:
         query.append(row)
+    #fix group by issue for show queries (this would break sub queries)
+    show_flag = False
+    for row in query:
+        if "SELECT DISTINCT ?x1 ?y1 ?z1" in row:
+            show_flag = True
+            break
+    if show_flag == True:
+        new_row = None
+        for idx, row in enumerate(query):
+            if "GROUP BY" in row:
+                if row[-1] == " ":
+                    pass
+                else:
+                    row = row + " "
+                new_row = row + "?x1 ?y1 ?z1"
+                break
+        if new_row is not None:
+            query[idx] = new_row
+
+    #remove eventual bad duplicates
+    remove = []
+    control = []
+    filter_not_exists_flag = False
+    for line in query:
+        if "FILTER NOT EXISTS {" in line:
+            filter_not_exists_flag = True
+        if line == "}" and filter_not_exists_flag == True:
+            filter_not_exists_flag = False
+        if line in control and line not in ["{", "}", "UNION"] and filter_not_exists_flag == False:
+            remove.append(line)
+        if line not in control and line not in ["{", "}", "UNION"] and filter_not_exists_flag == False:
+            control.append(line)
+    for line in remove:
+        query.remove(line)
+    query = list(query)
     return query
 
 
