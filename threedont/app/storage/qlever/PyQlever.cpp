@@ -101,6 +101,7 @@ static PyObject *PyQlever_load_file(PyQleverObject *self, PyObject *args) {
     self->config->inputFiles_[0].filetype_ = qlever::Filetype::NQuad;
   } else if (extension == ".ttl" || extension == ".turtle") {
     self->config->inputFiles_[0].filetype_ = qlever::Filetype::Turtle;
+    self->config->inputFiles_[0].parseInParallel_ = false; // will probably throw an exception
   } else {
     std::string errorMsg = "Unsupported file extension: " + extension + ". Supported extensions are .nt, .nq, .nquad, .ttl, .turtle.";
     std::cerr << errorMsg << std::endl;
