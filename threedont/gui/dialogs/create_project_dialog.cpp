@@ -82,12 +82,12 @@ void CreateProjectDialog::setupUI() {
 
 
   m_ontologyNamespaceEdit = new QLineEdit(paramsGroup);
-  m_ontologyNamespaceEdit->setText("http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontology");
+  m_ontologyNamespaceEdit->setText("http://3DOntCore");
   paramsLayout->addRow("Ontology Namespace:", m_ontologyNamespaceEdit);
 
   // auto *ontologyLayout = new QHBoxLayout(paramsGroup);
   m_graphNamespaceEdit = new QLineEdit(paramsGroup);
-  m_graphNamespaceEdit->setText("http://www.semanticweb.org/mcodi/ontologies/2024/3/Urban_Ontolog/YTU3D");
+  m_graphNamespaceEdit->setText("http://3DOntCore/populated");
   // m_ontologyBrowseButton = new QPushButton("Browse...", paramsGroup);
   // ontologyLayout->addWidget(m_graphNamespaceEdit);
   // ontologyLayout->addWidget(m_ontologyBrowseButton);
