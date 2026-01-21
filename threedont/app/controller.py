@@ -366,3 +366,7 @@ class Controller:
         lookat = self.viewer_client.get('lookat')
         poses = [[*lookat, i * pi * 2 / n_steps + current_phi, theta, distance] for i in range(n_steps + 1)]
         self.viewer_client.play(poses, repeat=True)
+
+    def reset_query_result_buffer(self):
+        if self.sparql_client is not None:
+            self.viewer_client.attributes(self.sparql_client.colors)

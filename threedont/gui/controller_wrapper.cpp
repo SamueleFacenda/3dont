@@ -138,3 +138,7 @@ void ControllerWrapper::setColorScale(double min, double max) {
 void ControllerWrapper::rotateAround() {
   callPythonMethod(controller, "rotate_around", "");
 }
+
+void ControllerWrapper::resetQueryResultBuffer() {
+  callPythonMethod(controller, "reset_query_result_buffer", "");
+}

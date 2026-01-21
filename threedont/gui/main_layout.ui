@@ -33,7 +33,7 @@
      <x>0</x>
      <y>0</y>
      <width>646</width>
-     <height>33</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="defaultUp">
@@ -54,6 +54,7 @@
     </property>
     <addaction name="actionLegend"/>
     <addaction name="actionRotate_camera_around"/>
+    <addaction name="actionReset_query_results_buffer"/>
    </widget>
    <widget class="QMenu" name="menuSensors">
     <property name="title">
@@ -187,7 +188,7 @@
   <action name="actionUpdate_Sensors_and_Reason">
    <property name="text">
     <string>Update Sensors and Reason</string>
-    </property>
+   </property>
   </action>
   <action name="actionCreate_project">
    <property name="text">
@@ -197,6 +198,11 @@
   <action name="actionRotate_camera_around">
    <property name="text">
     <string>Rotate camera around</string>
+   </property>
+  </action>
+  <action name="actionReset_query_results_buffer">
+   <property name="text">
+    <string>Reset query results buffer</string>
    </property>
   </action>
  </widget>

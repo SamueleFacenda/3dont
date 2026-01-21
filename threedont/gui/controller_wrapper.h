@@ -57,6 +57,7 @@ public:
   void askProjectList();
   void setColorScale(double min, double max);
   void rotateAround();
+  void resetQueryResultBuffer();
 };
 
 #endif // THREEDONT_CONTROLLER_WRAPPER_H

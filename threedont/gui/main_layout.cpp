@@ -399,4 +399,8 @@ void MainLayout::on_actionRotate_camera_around_triggered() {
   controllerWrapper->rotateAround();
 }
 
+void MainLayout::on_actionReset_query_results_buffer_triggered() {
+  controllerWrapper->resetQueryResultBuffer();
+}
+
 #include "moc_main_layout.cpp"
