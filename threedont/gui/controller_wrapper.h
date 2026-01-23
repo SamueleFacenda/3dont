@@ -58,6 +58,7 @@ public:
   void setColorScale(double min, double max);
   void rotateAround();
   void resetQueryResultBuffer();
+  void displaySurfaceValue();
 };
 
 #endif // THREEDONT_CONTROLLER_WRAPPER_H

@@ -15,6 +15,7 @@ from .viewer import Viewer, get_color_map
 from ..gui import GuiWrapper
 from ..nl_2_sparql import nl_2_sparql, init_client
 from ..sensor_manager import SensorArgs, sensor_management_functions as smf, aws_iot_interface as aws
+from .surface_value import SurfaceValueCalculator
 
 __all__ = ["Controller"]
 
@@ -84,6 +85,7 @@ class Controller:
         self.sparql_client = None
         self.sensorArgs = SensorArgs()
         self.project = None
+        self.surface_value_calculator = None
 
     def stop(self):
         print("Stopping controller...")
@@ -168,6 +170,11 @@ class Controller:
         self.viewer_client.set(point_size=self.config.get_visualizer_pointsSize())
         self.viewer_client.load(coords, colors)
         self.viewer_client.color_map(self.config.get_visualizer_scalarColorScheme())
+
+        if project.get_resolution() < 0:
+            self.surface_value_calculator = SurfaceValueCalculator(points=coords)
+        else:
+            self.surface_value_calculator = SurfaceValueCalculator(resolution=project.get_resolution())
 
 
     def view_point_details(self, id):
@@ -370,3 +377,10 @@ class Controller:
     def reset_query_result_buffer(self):
         if self.sparql_client is not None:
             self.viewer_client.attributes(self.sparql_client.colors)
+
+    def display_surface_value(self):
+        if self.surface_value_calculator is None:
+            print("Surface value calculator not initialized")
+            return
+        surface_value = self.surface_value_calculator.compute_surface_value(self.sparql_client.last_query_len)
+        self.gui.plot_tabular(["Surface Value"], [(str(surface_value),)])

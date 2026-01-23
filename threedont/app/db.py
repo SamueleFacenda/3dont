@@ -26,10 +26,10 @@ class SparqlBackend:
         self.id_to_iri = []
         self.colors = None
         self.color_map = config.get_visualizer_scalarColorScheme()
+        self.last_query_len = 0
         highlight = config.get_visualizer_highlightColor()
         # convert from FF0000 to [0.1, 0.0, 0.0]
         self.highlight_color = np.array([int(highlight[i:i+2], 16) for i in (0, 2, 4)], dtype=np.float32) / 255.0
-        print("Highlight color: ", self.highlight_color)
 
 
     def get_all(self):
@@ -51,6 +51,7 @@ class SparqlBackend:
             colors = colors / (1 << 8)  # 8 bit color
         self.colors = colors
         print("Time to process query result: ", time() - start)
+        self.last_query_len = len(results)
         return coords, colors
 
     # returns the colors with highlighted points
@@ -68,6 +69,7 @@ class SparqlBackend:
                 continue  # not all the results of a select are points
             colors[i] = self.highlight_color
 
+        self.last_query_len = len(results)
         return colors
 
     @staticmethod
@@ -128,6 +130,7 @@ class SparqlBackend:
         if self.is_iri(results['x'][0]):
             return self.convert_scalar_class_result(results['s'], results['x'])
 
+        self.last_query_len = len(results)
         return self.convert_scalar_float_result(results['s'], results['x'])
 
     @staticmethod
@@ -199,6 +202,8 @@ class SparqlBackend:
             except KeyError:
                 continue  # not all the results of a select are points
             colors[i] = self.highlight_color
+
+        self.last_query_len = len(iris)
         return colors
 
     def raw_query(self, query):
@@ -223,6 +228,8 @@ class SparqlBackend:
                     print("Coordinate not found in point cloud (very strange): ", coord)
                     continue  # not all the results of a select are points
                 colors[i] = self.highlight_color
+
+            self.last_query_len = len(result)
             return colors, "select"
 
         if 'x1' in columns and 'y1' in columns and 'z1' in columns:
@@ -233,6 +240,7 @@ class SparqlBackend:
             if self.is_iri(result[scalar_col][0]):
                 return self.convert_scalar_class_result(ids, result[scalar_col]), "scalar"
 
+            self.last_query_len = len(result)
             return self.convert_scalar_float_result(ids, result[scalar_col]), "scalar"
 
         return result, "tabular"

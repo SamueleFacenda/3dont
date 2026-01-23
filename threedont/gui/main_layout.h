@@ -37,6 +37,7 @@ private slots:
   void on_actionLegend_toggled(bool checked);
   void on_actionRotate_camera_around_triggered();
   void on_actionReset_query_results_buffer_triggered();
+  void on_actionDisplay_surface_value_triggered();
   void displayNodeDetails(const QStringList &details, const QString &parentId);
   void plotTabular(const QStringList &header, const QStringList &rows);
   void setQueryError(const QString &error);

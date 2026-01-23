@@ -55,6 +55,7 @@
     <addaction name="actionLegend"/>
     <addaction name="actionRotate_camera_around"/>
     <addaction name="actionReset_query_results_buffer"/>
+    <addaction name="actionDisplay_surface_value"/>
    </widget>
    <widget class="QMenu" name="menuSensors">
     <property name="title">
@@ -203,6 +204,11 @@
   <action name="actionReset_query_results_buffer">
    <property name="text">
     <string>Reset query results buffer</string>
+   </property>
+  </action>
+  <action name="actionDisplay_surface_value">
+   <property name="text">
+    <string>Display surface value</string>
    </property>
   </action>
  </widget>
