@@ -29,7 +29,6 @@ class SparqlBackend:
         highlight = config.get_visualizer_highlightColor()
         # convert from FF0000 to [0.1, 0.0, 0.0]
         self.highlight_color = np.array([int(highlight[i:i+2], 16) for i in (0, 2, 4)], dtype=np.float32) / 255.0
-        print("Highlight color: ", self.highlight_color)
 
 
     def get_all(self):

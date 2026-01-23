@@ -109,6 +109,7 @@
               psutil
               # oxrdflib
               # pyoxigraph
+              scikit-learn
             ];
           };
         } // pkgs._custom_deps; # expose custom deps as packages

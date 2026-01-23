@@ -20,6 +20,7 @@ DEFAULT_PROJECT_CONFIG = {
     "isLocal": False,  # whether the project is local or a sparql endpoint
     "originalPath": "",  # path to the original ontology file, if any
     "ontoPath": "",  # path to the unpopulated ontology file used in the project, if any
+    "resolution": -1.0,
 }
 
 PROJECT_SCHEMA = {
@@ -31,6 +32,7 @@ PROJECT_SCHEMA = {
     "isLocal": bool,
     "originalPath": str,
     "ontoPath": str,
+    "resolution": float,
 }
 
 
