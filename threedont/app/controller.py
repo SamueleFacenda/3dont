@@ -377,3 +377,10 @@ class Controller:
     def reset_query_result_buffer(self):
         if self.sparql_client is not None:
             self.viewer_client.attributes(self.sparql_client.colors)
+
+    def display_surface_value(self):
+        if self.surface_value_calculator is None:
+            print("Surface value calculator not initialized")
+            return
+        surface_value = self.surface_value_calculator.compute_surface_value(self.sparql_client.last_query_len)
+        self.gui.plot_tabular(["Surface Value"], [(str(surface_value),)])

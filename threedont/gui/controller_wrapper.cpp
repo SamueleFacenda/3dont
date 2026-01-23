@@ -142,3 +142,7 @@ void ControllerWrapper::rotateAround() {
 void ControllerWrapper::resetQueryResultBuffer() {
   callPythonMethod(controller, "reset_query_result_buffer", "");
 }
+
+void ControllerWrapper::displaySurfaceValue() {
+  callPythonMethod(controller, "display_surface_value", "");
+}

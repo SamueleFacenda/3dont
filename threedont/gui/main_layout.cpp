@@ -403,4 +403,8 @@ void MainLayout::on_actionReset_query_results_buffer_triggered() {
   controllerWrapper->resetQueryResultBuffer();
 }
 
+void MainLayout::on_actionDisplay_surface_value_triggered() {
+  controllerWrapper->displaySurfaceValue();
+}
+
 #include "moc_main_layout.cpp"
