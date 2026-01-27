@@ -7,7 +7,6 @@ from .queries import *
 from .viewer import get_color_map
 from .exceptions import WrongResultFormatException
 from .storage import StorageFactory
-from .state import Config
 
 __all__ = ['SparqlBackend']
 
@@ -74,11 +73,11 @@ class SparqlBackend:
 
     @staticmethod
     def get_n_classes_colors(n: int):
-        gr = 0.61803398875
+        golden_ratio = 0.61803398875
         h = 0.0
         colors = []
         for _ in range(n):
-            h = (h + gr) % 1.0
+            h = (h + golden_ratio) % 1.0
             colors.append(colorsys.hsv_to_rgb(h, 0.8, 0.8))
         return colors
 

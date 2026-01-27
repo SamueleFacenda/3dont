@@ -45,6 +45,7 @@ View the `docs` directory for the user and development manual.
 - [x] investigate segfaults on select constitutes (wrong input numrows)
 - [x] support scalar class result in nl queries
 - [x] keep queries in properties buffer
+- [x] more configuration options (e.g. select color)
 - [ ] scalar templates
 - [ ] refactor input dialogs
 - [ ] import pointclouds etc.
@@ -53,11 +54,9 @@ View the `docs` directory for the user and development manual.
 - [ ] better loading screen
 - [ ] gui error report (generic)
 - [ ] override config with cli arguments
-- [ ] investigate empty view on heritage loading
-- [ ] more configuration options (e.g. select color) and settings dialog
+- [ ] settings dialog
 - [ ] fix lookat lines width
 - [ ] use QOpenglBuffer for buffer management
-- [ ] investigate projects not showing sometimes
 - [ ] test queries with type:point
 - [ ] plot 3d graph with relations
 - [ ] check [this](https://github.com/csse-uoft/owlready2/blob/master/src/owlready2/namespace.py) owlready alternative
