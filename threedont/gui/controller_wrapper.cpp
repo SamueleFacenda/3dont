@@ -146,3 +146,7 @@ void ControllerWrapper::resetQueryResultBuffer() {
 void ControllerWrapper::displaySurfaceValue() {
   callPythonMethod(controller, "display_surface_value", "");
 }
+
+void ControllerWrapper::setClassQueryLod(int lod) {
+  callPythonMethod(controller, "set_class_query_lod", "i", lod);
+}

@@ -59,6 +59,7 @@ public:
   void rotateAround();
   void resetQueryResultBuffer();
   void displaySurfaceValue();
+  void setClassQueryLod(int lod);
 };
 
 #endif // THREEDONT_CONTROLLER_WRAPPER_H

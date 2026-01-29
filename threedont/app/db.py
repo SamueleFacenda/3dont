@@ -1,10 +1,12 @@
 from time import time
+import heapq
 
 import numpy as np
 import colorsys
 from collections import Counter
 
 from .queries import *
+from .state import AppState
 from .viewer import get_color_map
 from .exceptions import WrongResultFormatException
 from .storage import StorageFactory
@@ -12,7 +14,7 @@ from .storage import StorageFactory
 __all__ = ['SparqlBackend']
 
 class SparqlBackend:
-    def __init__(self, project, config):
+    def __init__(self, project, config, app_state):
         self.graph_uri = project.get_graphUri()
         onto_namespace = project.get_ontologyNamespace()
         if onto_namespace.endswith('#'):
@@ -30,6 +32,7 @@ class SparqlBackend:
         highlight = config.get_visualizer_highlightColor()
         # convert from FF0000 to [0.1, 0.0, 0.0]
         self.highlight_color = np.array([int(highlight[i:i+2], 16) for i in (0, 2, 4)], dtype=np.float32) / 255.0
+        self.app_state = app_state
 
 
     def get_all(self):
@@ -99,27 +102,37 @@ class SparqlBackend:
     def convert_scalar_class_result(self, s, x):
         counted_classes = Counter(x)
 
-        colors_list = self.get_n_classes_colors(len(counted_classes))
-        class_to_color = {a:b for a, b in zip(counted_classes.keys(), colors_list)}
+        subject_classes = {a:[] for a in s}
+        for subject, cls in zip(s, x):
+            subject_classes[subject].append(cls)
 
-        if len(s) != len(set(s)):
+        if len(s) != len(subject_classes):
             print("Warning: duplicate subjects in class query result, the result will display only the least frequent class for each point.")
 
+        lod = self.app_state.get_classQueryLOD()
+        # Get the corresponding class, based on level of detail (or level of abstraction if negative)
+        if lod == 0:
+            chooser = lambda x: min(x, key=counted_classes.get) # min is a more useful default, although not correct
+        elif lod > 0:
+            chooser = lambda x: heapq.nlargest(lod, x, key=counted_classes.get)[-1]
+        else:
+            chooser = lambda x: heapq.nsmallest(-lod, x, key=counted_classes.get)[-1]
+
+        subject_classes = {k: chooser(v) for k,v in subject_classes.items()}
+
+        final_classes = list(set(subject_classes.values()))
+        colors_list = self.get_n_classes_colors(len(final_classes))
+        class_to_color = {a:b for a, b in zip(final_classes, colors_list)}
+
         scalars = np.copy(self.colors)
-        class_chosen_count = np.full(len(self.colors), len(s) + 1, dtype=np.int32) # default to max
-        for subject, cls in zip(s, x):
-            try:
-                i = self.iri_to_id[subject]
-            except KeyError:
+        for subject, cls in subject_classes.items():
+            if not self.is_iri(subject):
                 continue  # not all the results of a select might be points
 
-            if counted_classes[cls] >= class_chosen_count[i]:
-                continue  # already assigned a less frequent class (choose the more specific one)
-
+            i = self.iri_to_id[subject]
             scalars[i] = class_to_color[cls]
-            class_chosen_count[i] = counted_classes[cls]
 
-        return scalars, list(counted_classes.keys()), colors_list
+        return scalars, final_classes, colors_list
 
     @staticmethod
     def is_iri(value):
