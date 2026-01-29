@@ -48,6 +48,7 @@ private slots:
   void on_actionSet_Arguments_PROVISIONAL_triggered();
   void on_actionAdd_Sensor_triggered();
   void on_actionUpdate_Sensors_and_Reason_triggered();
+  void on_actionSet_ClassQueryLOD_triggered();
   void setProjectList(const QStringList &projects);
 
   [[nodiscard]] QByteArray sendViewerCommand(const QByteArrayView &message);

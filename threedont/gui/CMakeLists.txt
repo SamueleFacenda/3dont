@@ -24,6 +24,7 @@ add_library(gui MODULE
         viewer/components/point_cloud.cpp
         viewer/components/selection_box.cpp
         dialogs/create_project_dialog.cpp
+        dialogs/class_query_lod_dialog.cpp
 )
 
 target_sources(gui PRIVATE

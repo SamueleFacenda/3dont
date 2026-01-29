@@ -1,6 +1,7 @@
 #include "main_layout.h"
 #include "dialogs/properties_mapping_selection.h"
 #include "dialogs/create_project_dialog.h"
+#include "dialogs/class_query_lod_dialog.h"
 #include <QAction>
 #include <QDebug>
 #include <QDockWidget>
@@ -405,6 +406,13 @@ void MainLayout::on_actionReset_query_results_buffer_triggered() {
 
 void MainLayout::on_actionDisplay_surface_value_triggered() {
   controllerWrapper->displaySurfaceValue();
+}
+
+void MainLayout::on_actionSet_ClassQueryLOD_triggered() {
+    ClassQueryLodDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        controllerWrapper->setClassQueryLod(dialog.lodValue());
+    }
 }
 
 #include "moc_main_layout.cpp"

@@ -384,3 +384,6 @@ class Controller:
             return
         surface_value = self.surface_value_calculator.compute_surface_value(self.sparql_client.last_query_len)
         self.gui.plot_tabular(["Surface Value"], [(str(surface_value),)])
+
+    def set_class_query_lod(self, lod):
+        self.app_state.set_classQueryLOD(lod)
