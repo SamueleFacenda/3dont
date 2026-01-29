@@ -14,6 +14,7 @@ DEFAULT_STATE = {
     "lastQuery": "",
     "showLegend": True,
     "projectName": "",
+    "levelOfAbstraction": 0,
 }
 
 STATE_SCHEMA = {
@@ -23,6 +24,7 @@ STATE_SCHEMA = {
     "lastQuery": str,
     "showLegend": bool,
     "projectName": str,
+    "levelOfAbstraction": int,
 }
 
 
