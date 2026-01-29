@@ -102,7 +102,7 @@ class SparqlBackend:
         colors_list = self.get_n_classes_colors(len(counted_classes))
         class_to_color = {a:b for a, b in zip(counted_classes.keys(), colors_list)}
 
-        if len(x) != len(counted_classes):
+        if len(s) != len(set(s)):
             print("Warning: duplicate subjects in class query result, the result will display only the least frequent class for each point.")
 
         scalars = np.copy(self.colors)
