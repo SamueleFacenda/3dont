@@ -14,7 +14,7 @@ from .storage import StorageFactory
 __all__ = ['SparqlBackend']
 
 class SparqlBackend:
-    def __init__(self, project, config):
+    def __init__(self, project, config, app_state):
         self.graph_uri = project.get_graphUri()
         onto_namespace = project.get_ontologyNamespace()
         if onto_namespace.endswith('#'):
@@ -32,6 +32,7 @@ class SparqlBackend:
         highlight = config.get_visualizer_highlightColor()
         # convert from FF0000 to [0.1, 0.0, 0.0]
         self.highlight_color = np.array([int(highlight[i:i+2], 16) for i in (0, 2, 4)], dtype=np.float32) / 255.0
+        self.app_state = app_state
 
 
     def get_all(self):
@@ -108,7 +109,7 @@ class SparqlBackend:
         if len(s) != len(subject_classes):
             print("Warning: duplicate subjects in class query result, the result will display only the least frequent class for each point.")
 
-        lod = 0 # TODO get from app state
+        lod = self.app_state.get_classQueryLOD()
         # Get the corresponding class, based on level of detail (or level of abstraction if negative)
         if lod == 0:
             chooser = lambda x: min(x, key=counted_classes.get) # min is a more useful default, although not correct

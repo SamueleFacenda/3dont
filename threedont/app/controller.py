@@ -161,7 +161,7 @@ class Controller:
     def load_new_pointcloud(self, project):
         print("Loading all the points... ", project.get_graphUri())
         self.gui.set_statusbar_content("Connecting to server...", 5)
-        self.sparql_client = SparqlBackend(project, self.config)
+        self.sparql_client = SparqlBackend(project, self.config, self.app_state)
         print("Connected to server")
         self.gui.set_statusbar_content("Loading points from server...", 600)
         coords, colors = self.sparql_client.get_all()
