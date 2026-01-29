@@ -2,6 +2,7 @@ from time import time
 
 import numpy as np
 import colorsys
+from collections import Counter
 
 from .queries import *
 from .viewer import get_color_map
@@ -96,22 +97,29 @@ class SparqlBackend:
         return scalars, scalars, colors
 
     def convert_scalar_class_result(self, s, x):
-        unique_classes = list(set(x))
-        colors_list = self.get_n_classes_colors(len(unique_classes))
-        class_to_color = {a:b for a, b in zip(unique_classes, colors_list)}
+        counted_classes = Counter(x)
 
-        if len(s) != len(set(s)):
-            print("Warning: duplicate subjects in class query result, the result may be incorrect.")
+        colors_list = self.get_n_classes_colors(len(counted_classes))
+        class_to_color = {a:b for a, b in zip(counted_classes.keys(), colors_list)}
+
+        if len(x) != len(counted_classes):
+            print("Warning: duplicate subjects in class query result, the result will display only the least frequent class for each point.")
 
         scalars = np.copy(self.colors)
+        class_chosen_count = np.full(len(self.colors), len(s) + 1, dtype=np.int32) # default to max
         for subject, cls in zip(s, x):
             try:
                 i = self.iri_to_id[subject]
             except KeyError:
-                continue  # not all the results of a select are points
-            scalars[i] = class_to_color[cls]
+                continue  # not all the results of a select might be points
 
-        return scalars, unique_classes, colors_list
+            if counted_classes[cls] >= class_chosen_count[i]:
+                continue  # already assigned a less frequent class (choose the more specific one)
+
+            scalars[i] = class_to_color[cls]
+            class_chosen_count[i] = counted_classes[cls]
+
+        return scalars, list(counted_classes.keys()), colors_list
 
     @staticmethod
     def is_iri(value):
